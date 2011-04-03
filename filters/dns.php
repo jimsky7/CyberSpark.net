@@ -37,43 +37,49 @@ function dnsScan($content, $args, $privateStore) {
 	//   First check SOA
 	
 	
-	$isSOA = checkdnsrr($domain, "SOA");
-	echoIfVerbose("SOA? $isSOA \n");
+	try {
+		$isSOA = checkdnsrr($domain, "SOA");
+		echoIfVerbose("SOA? $isSOA \n");
 	
 //	DNS_A, DNS_CNAME, DNS_HINFO, DNS_MX, DNS_NS, DNS_PTR, DNS_SOA, DNS_TXT, DNS_AAAA, DNS_SRV, 
 //  DNS_NAPTR, DNS_A6, DNS_ALL or DNS_ANY
-	$da = dns_get_record($domain,DNS_ALL);
-	
+//		$da = dns_get_record($domain, DNS_ALL);
 //	print_rIfVerbose($da);
 	
-	////// SOA
-	$da = dns_get_record($domain, DNS_SOA);
-	$da0 = $da[0];
-	// Note: don't include ttl because it counts down dynamically - everything else can be used
-	$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname'].". serial:".$da0['serial']." refresh:".$da0['refresh']." retry:".$da0['retry']." expire:".$da0['expire']." min-ttl:".$da0['minimum-ttl'];
-	echoIfVerbose("$soa \n");
-	if (strcmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
-		$result = "DNS";
-		$message .= "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" To \"$soa\"\n";
+		////// SOA
+		$da = dns_get_record($domain, DNS_SOA);
+		if ($da !== false) {
+			$da0 = $da[0];
+			// Note: don't include ttl because it counts down dynamically - everything else can be used
+			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname'].". serial:".$da0['serial']." refresh:".$da0['refresh']." retry:".$da0['retry']." expire:".$da0['expire']." min-ttl:".$da0['minimum-ttl'];
+			echoIfVerbose("$soa \n");
+			if (strcmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
+				$result = "DNS";
+				$message .= "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" To \"$soa\"\n";
+			}
+			$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
+	
+			////// MX
+			list ($message, $result) = checkEntriesByType($domain, DNS_MX, "MX", $privateStore, $filterName, $message, 'target');
+		
+			////// NS
+			list ($message, $result) = checkEntriesByType($domain, DNS_NS, "NS", $privateStore, $filterName, $message, 'target');
+		
+			////// TXT
+			list ($message, $result) = checkEntriesByType($domain, DNS_TXT, "TXT", $privateStore, $filterName, $message, 'txt');
+		
+			////// A     (use fqdn)
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_A, "A", $privateStore, $filterName, $message, array('host', 'ip'));
+		
+			////// AAAA  (use fqdn)
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA, "AAAA", $privateStore, $filterName, $message, array('host', 'ip'));
+		}
 	}
-	$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
-
-	////// MX
-	list ($message, $result) = checkEntriesByType($domain, DNS_MX, "MX", $privateStore, $filterName, $message, 'target');
-	
-	////// NS
-	list ($message, $result) = checkEntriesByType($domain, DNS_NS, "NS", $privateStore, $filterName, $message, 'target');
-	
-	////// TXT
-	list ($message, $result) = checkEntriesByType($domain, DNS_TXT, "TXT", $privateStore, $filterName, $message, 'txt');
-	
-	////// A     (use fqdn)
-	list ($message, $result) = checkEntriesByType($fqdn, DNS_A, "A", $privateStore, $filterName, $message, array('host', 'ip'));
-	
-	////// AAAA  (use fqdn)
-	list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA, "AAAA", $privateStore, $filterName, $message, array('host', 'ip'));
-	
-	
+	catch (Exception $dax) {
+		$result = "DNS";
+		$message .= INDENT . "Exception in filters:dns:dnsScan() $dax \n";
+		echoIfVerbose("Exception in fliters:dns:dnsScan() $dax\n");	
+	}
 
 
 	return array($message, $result, $privateStore);
