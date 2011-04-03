@@ -80,6 +80,13 @@ $logEntry	= '';			// this will be written to a log file
 $exclude    = array();		// strings that cause file/directory to be ignored
 							// PHP executables will still be examined
 $wordpress  = array('w3tc','cache');	// directories or files PRESENCE to ignore for WordPress
+$checkSignatures = array (
+	'eval('=>'[PHP/javascript]',
+	'gzinflate('=>'[PHP]',
+	'base64_decode'=>'[PHP]',
+	'document.write'=>'[javascript]',
+	'unescape'=>'[javascript]'
+);
 
 function readCode($path) {
 	global $removeMe;
@@ -332,6 +339,7 @@ function spiderThis($baseDirectory, $maxDepth)
     global $totalFiles;
     global $logEntry;
     global $exclude;
+    global $checkSignatures;
     
 	// Be sure we're working with a directory
 	if (is_dir($baseDirectory) && ($maxDepth>$depth)) {
@@ -405,17 +413,12 @@ function spiderThis($baseDirectory, $maxDepth)
 							fclose($thisFile);
 							$phpFiles++;
 							if (strlen($thisContents) > 0) {
-								if (stripos($thisContents, "eval(") !== false) {
-									echoAndLog("Found eval():  -> $thisEntry");
-									$newSuspect++;
-								}
-								else if (stripos($thisContents, "gzinflate(") !== false) {
-									echoAndLog("Found gzinflate():  -> $thisEntry ");
-									$newSuspect++;
-								}
-								else if (stripos($thisContents, "base64_decode(") !== false) {
-									echoAndLog( "Found base64_decode():  -> $thisEntry ");
-									$newSuspect++;
+								// check for PHP and javascript active code
+								foreach ($checkSignatures as $signature=>$value) {
+									if (stripos($thisContents, $signature !== false) {
+										echoAndLog("Found '$signature' $value: -> $thisEntry");
+										$newSuspect++;
+									}
 								}
 							}
 						}
