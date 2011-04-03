@@ -53,8 +53,9 @@ function gsbScan($content, $args, $privateStore) {
 				if (strncmp(strtoupper($body), "OK", 2) == 0) {
 					// URL is safe
 				}
-				else {
+				elseif (strlen($body) > 0) {
 					// URL is unsafe
+					// It's possible to get an empty $body, in which case (elseif above) we ignore the result
 					$result = "Malware";
 					$message .= $prefix . "This link from the main page needs attention: $checkLink... Google Safe Browsing says \"$body\"\n";
 					$prefix = INDENT;
