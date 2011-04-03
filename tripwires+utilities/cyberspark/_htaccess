@@ -1,0 +1,12 @@
+# Use this in .htaccess within the /cyberspark directory
+#   so Apache will never serve anything from the directory.
+<IfModule mod_alias.c>
+	# Never serve anything from /cyberspark
+    RedirectMatch 404 ^(.*)cyberspark/(.*)
+</IfModule>
+#
+#
+# OR use this in your Apache configuration file
+#		<Directory /PATH_TO_DOCROOT/cyberspark/>
+#			deny from all
+#		</Directory>

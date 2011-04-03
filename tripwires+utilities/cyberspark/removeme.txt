@@ -1,0 +1,3 @@
+This file should contain EXACTLY what you wish to clean from active files in the site.
+
+That extends right down to the type of line-break you have in your files (CR or CRLF or LF).
