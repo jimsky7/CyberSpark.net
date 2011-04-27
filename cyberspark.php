@@ -157,6 +157,8 @@ if ($isDaemon) {
 			
 			$loopStartTime = time();		// seconds (Unix time)
 
+			echoIfVerbose("\n/////////////////////////////////////////////////////\nLoop begins " . $loop . "\n");
+
 			// Check for existence of properties file.
 			// If someone deletes it while this daemon is running,
 			//   then we want to just quit gracefully.
@@ -208,7 +210,6 @@ if ($isDaemon) {
 			if (isset($properties['subject'])) {
 				$subject	= $properties['subject'];
 			}
-			$messageSeed= $properties['message'];
 			if (isset($properties['time'])) {
 				$time		= $properties['time'];
 			}
@@ -227,7 +228,8 @@ if ($isDaemon) {
 			if (isset($properties['timeout'])) {
 				$timeout	= $properties['timeout'];
 			}
-			$message = $messageSeed;
+			// Seed value for messages
+			$message = $properties['message'];
 		
 			echoIfVerbose("Verbose\n");
 	
@@ -277,10 +279,19 @@ if ($isDaemon) {
 					echoIfVerbose("No store exists yet\n");
 				}
 				if ($store['cyberspark']['tripwire']==true) {
-					writeLogAlert("Ouch that hurt! Apparently I wasn't shut down correctly - may have crashed.");
-					echoIfVerbose("$ID Ouch that hurt! Apparently I wasn't shut down correctly - may have crashed.\n");
+					writeLogAlert("Ouch that hurt! Apparently this process wasn't shut down correctly - may have crashed.");
+					echoIfVerbose("$ID Ouch that hurt! Apparently this process wasn't shut down correctly - may have crashed.\n");
 				}
 				$store['cyberspark']['tripwire'] = true;
+				if (isset($store['cyberspark']['notifiedtoday'])) {
+					$properties['notifiedtoday'] = $store['cyberspark']['notifiedtoday'];
+				}
+				else {
+					$properties['notifiedtoday'] = false;
+				}
+			}
+			else {
+				// Reset values of things that are in the store but not the properties file
 				$properties['notifiedtoday'] = $store['cyberspark']['notifiedtoday'];
 			}
 	 		// Add filters (only if there are none yet - first time around)
@@ -302,7 +313,8 @@ if ($isDaemon) {
 			///////////////////////////////////////////////////////////////////////////////////
 			
 			sendMail($scanResults, $properties);
-			
+			$store['cyberspark']['notifiedtoday'] = $properties['notifiedtoday'];
+
 			///////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////
 	

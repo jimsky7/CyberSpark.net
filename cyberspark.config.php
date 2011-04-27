@@ -11,7 +11,7 @@
 //   any veriables declared herein.
 
 // Process-related variables and constants
-define('INSTANCE_ID', "CS9");							// "serial number" for this Cyberspark instance
+define('INSTANCE_ID', "CS8");							// "serial number" for this Cyberspark instance
 
 define('DEFAULT_IDENTITY', "CyberSpark Version 4.01=PHP+SSL 20110207 http://cyberspark.net/agent;");
 define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version 4.01=PHP+SSL 20110207 http://cyberspark.net/agent;) Ubuntu/10.04");

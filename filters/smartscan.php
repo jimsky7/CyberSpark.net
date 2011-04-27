@@ -50,7 +50,7 @@ function smartscanScan($content, $args, $privateStore) {
 		
 		// There may be multiple <html></html> blocks within a page, which isn't proper form, 
 		//   but is tolerated by browsers.
-		$firstHTMLPosition = stripos($content, "</html>");	// not case-sensitive, AND blanks already were stripped
+		$firstHTMLPosition   = stripos($content, "</html>");	// not case-sensitive, AND blanks already were stripped
 		if ($firstHTMLPosition === false) {
 			// The page does not contain a closing </HTML>
 			$alertCount++;
@@ -95,6 +95,27 @@ function smartscanScan($content, $args, $privateStore) {
 					echoIfVerbose("$message\n)");
 				}
 			}
+		}
+		
+		// Check for <SCRIPT> before opening <HTML>
+		$firstHTMLPosition   = stripos($content, "<html");	// not case-sensitive, AND blanks already were stripped
+		$firstSCRIPTPosition = stripos($content, "<script");	// not case-sensitive, AND blanks already were stripped
+		if (($firstHTMLPosition !== false) && ($firstSCRIPTPosition !== false) && ($firstSCRIPTPosition < $firstHTMLPosition)) {
+			// There's javascript before the opening <HTML>
+			$alertCount++;
+			echoIfVerbose("Alert count $alertCount in [$filterName]\n");
+			$result = "Warning";
+			$message .= "There's a SCRIPT before the opening <HTML> on this page. \n";
+			$message .= INDENT . "  This almost certainly indicates the presence of malware. \n";
+			if ($alertCount == SMARTSCAN_MAX_ALERTS) {
+				$message .= INDENT . "  Similar alerts will be suppressed for up to 24 hours. \n";
+			}
+			$message .= INDENT . "  Here is the code that appears at the beginning of the page. \n";
+			$message .= INDENT . "  Do NOT click any links that appear in the code below. \n";
+			$message .= INDENT . "  '<' and '>' have been replaced by '{' and '}' for safety. \n";
+			$excess  = str_replace(array('<', '>'), array('{', '}'), substr($content, 0, $firstHTMLPosition));
+			$message .= INDENT . "  $excess \n";
+			echoIfVerbose("$message\n)");
 		}
 	}
 	else {
