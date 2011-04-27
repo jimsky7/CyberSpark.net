@@ -1,0 +1,54 @@
+#! /bin/sh
+
+### CyberSpark.net monitoring
+# Provides:		cybersparkd
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	CyberSpark.net
+# Description:	CyberSpark monitoring software
+### 
+
+. /lib/lsb/init-functions
+. /etc/default/rcS
+
+set -e
+
+ID="CS8"
+CSPATH="/usr/local/cyberspark"
+INITDPATH="/etc/init.d"
+DESCRIPTION="CyberSpark daemon"
+
+
+case "$1" in
+  start)
+	# If PID files exist, then warn user to run 'stop' or to delete the files and processes
+	if test -f "$CSPATH/$ID.pid"; then
+	    log_daemon_msg "CyberSpark - maybe running already? $CSPATH/$ID.pid exists."
+	    log_daemon_msg "CyberSpark - to restart, run 'stop' then 'start' separately."
+		log_end_msg 1
+	fi
+	log_daemon_msg "Starting CyberSpark monitoring daemon $ID" "cybersparkd"
+	CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
+	if start-stop-daemon --start --quiet --oknodo --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH" --startas /usr/bin/php -- $CSOPTIONS; then
+	    log_end_msg 0
+	else
+	    log_end_msg 1
+	fi
+	;;
+  stop)
+	log_daemon_msg "Stopping CyberSpark monitoring daemon $ID" "cybersparkd"
+	CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
+	if start-stop-daemon --stop --quiet --oknodo --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH"; then
+	    log_end_msg 0
+	else
+	    log_end_msg 1
+	fi
+	;;
+  *)
+	log_action_msg "Usage: $INITDPATH/cyberspark {start|stop}"
+	exit 1
+esac
+
+exit 0
