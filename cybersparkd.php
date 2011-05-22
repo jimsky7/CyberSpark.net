@@ -66,6 +66,7 @@ getArgs($argv);
 	
 //$propsFileName	= $propsDir . $ID . PROPS_EXT;
 $pidFileName		= $path . $ID . PID_EXT;
+$heartbeatParent	= $path . $ID . HEARTBEAT_EXT;
 $running 			= true;
 
 ///////////////////////////////// 
@@ -81,10 +82,11 @@ catch (Exception $x) {
 ///////////////////////////////// 
 // Write process ID to a file.  This is for this monitoring 'overlord' only
 try {
+	@unlink($heartbeatParent);
 	@unlink($pidFileName);
 }
 catch (Exception $x) {
-	echo "Warning: Unable to delete cybersparkd's process ID file.\n";
+	echo "Warning: Unable to delete cybersparkd's process ID (or heartbeat) file(s). ".$x->getMessage()."\n";
 }
 try {
 	// This writes this process's ID out to the pid file
@@ -132,7 +134,7 @@ $subID--;						// back off by one to be accurate with end of the array
 $timeStamp = date("r");
 $subject = "$ID cybersparkd launched $timeStamp";
 $message = "$ID cybersparkd launched $timeStamp";
-textMail($emergency, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 
 
@@ -140,15 +142,40 @@ textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SER
 ///////////////////////////////////////////////////////////////////////////////////
 // Loop until someone shuts this script down with SIGINT or SIGTERM
 //
-while ($running) {
+while ($running) {		
+	///////////////////////////////////////////////////////////////////////////
+	// Save a heartbeat file for this, the parent, process
+	// You may well ask "who is monitoring this file?" and the answer is "nobody, for now."
+	try {
+		$heartbeatTime  = time();	// current time in seconds (Unix time)
+		$heartbeatTime += $sleepTime*3;		// use sleep time x3 as time someone should call for help
+		@file_put_contents($heartbeatParent, "$heartbeatTime");	// save next run time
+//      echo "Writing heartbeat $heartbeatTime in $heartbeatParent\n";
+	}
+	catch (Exception $x) {
+		echo "Warning: $ID was unable to write a 'heartbeat' file. $heartbeatParent\n";
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	// Report in once a day
+	$dateString = date("r");
+	if (strpos(date("r"), (' '.DEFAULT_NOTIFY_HOUR.':')) !== false) {
+		$subject = "$ID daemon OK $timeStamp";
+		$message = "$ID (the parent) daemon reports that it's running.";
+		textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+		textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+	}
+	
+	///////////////////////////////////////////////////////////////////////////
+	// Sleep a while
 	$sleepResult = sleep($sleepTime);		// sleep (seconds)
+	$loopStartTime = time();				// seconds (Unix time)
 	$loop++;
-		
+
 	///////////////////////////////////////////////////////////////////////////
 	// Check on child processes and report if any disappear
 	// These are the 'sh' processes, not the cyberspark.php processes
 	$i = 0;
-	$loopStartTime = time();		// seconds (Unix time)
 	while (($i <= $subID) && $running) {
 		$timeStamp = date("r");
 		try {
@@ -268,6 +295,7 @@ function shutdownProcesses() {
 	global $process;
 	global $pipes;
 	global $pidFileName;
+	global $heartbeatParent;
 	global $path;
 	global $running;
 		
@@ -319,14 +347,21 @@ function shutdownProcesses() {
 	catch (Exception $x) {
 		echo "\n  Exception: " . $x->getMessage() . "\n";	
 	}
-	echo "\nAll monitors have been shut down.\n";	
+	echo "\nAll monitors (children of this process) have been shut down.\n";	
 	
 	try {
 		@unlink($pidFileName);
+		echo "Removed my PID file.\n";	
 	}
 	catch (Exception $x) {
 	}
-	
+	try {
+		@unlink($heartbeatParent);
+		echo "Removed my heartbeat file.\n";	
+	}
+	catch (Exception $x) {
+	}
+
 	exit;
 }
 
