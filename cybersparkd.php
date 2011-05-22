@@ -68,6 +68,7 @@ getArgs($argv);
 $pidFileName		= $path . $ID . PID_EXT;
 $heartbeatParent	= $path . $ID . HEARTBEAT_EXT;
 $running 			= true;
+$notified			= false;		// daily notification sent?
 
 ///////////////////////////////// 
 // Register shutdown functions
@@ -157,13 +158,19 @@ while ($running) {
 	}
 
 	///////////////////////////////////////////////////////////////////////////
-	// Report in once a day
+	// Report in once a day to say "I'm OK"
 	$dateString = date("r");
 	if (strpos(date("r"), (' '.DEFAULT_NOTIFY_HOUR.':')) !== false) {
-		$subject = "$ID daemon OK $timeStamp";
-		$message = "$ID (the parent) daemon reports that it's running.";
-		textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
-		textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+		if (!$notified) {
+			$subject = "$ID daemon OK $timeStamp";
+			$message = "$ID (the parent) daemon reports that it's running.";
+			textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+			textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+			$notified = true;
+		}
+	}
+	else {
+		$notified = false;
 	}
 	
 	///////////////////////////////////////////////////////////////////////////
