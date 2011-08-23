@@ -79,7 +79,11 @@ function sendMail($scanResults, &$properties) {
 	if ($properties['verbose']) {
 		$sendMessage = true;
 	}
-	$message = $properties['message'] . "\n";	// 'seed' the message
+	// 'seed' the message
+	$message = '';
+	if (isset($properties['message'])) {
+		$message = $properties['message'] . "\n";	
+	}
 	// Get defaults
 	$to = $properties['to'];
 	$from = $properties['from'];
@@ -89,7 +93,9 @@ function sendMail($scanResults, &$properties) {
 	$message .= $timeStamp . "\n";
 	$message .= "$identity \n\n"; 
 	$message .= "CyberSpark.net monitoring and alerting software-- This open source software is provided free of charge under a Creative Commons by-nc-sa license. See http://cyberspark.net/license for more information.\n";
-	$message .= $properties['ID'] . "\n";
+	if (isset($properties['ID'])) {
+		$message .= $properties['ID'] . "\n";
+	}
 //	$message .= "Timestamp " . $timeStamp . "\n\n";
 
 	if (isNotifyHour($properties['notify'])) {

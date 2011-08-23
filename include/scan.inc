@@ -30,9 +30,13 @@ function scan($properties, $filters, &$store) {
 		$elapsedTime = time() - $before;
 
 		echoIfVerbose("HTTP result code " . $httpResult['code'] . "\n");
-		echoIfVerbose("HTTP error       " . $httpResult['error'] . "\n");
-		echoIfVerbose("HTTP length      " . strlen($httpResult['body']) . "\n");
-		echoIfVerbose("Elapsed time     " . $elapsedTime . "\n\n");
+		$httpError = '';
+		if (isset($httpResult['error'])) {
+			$httpError = $httpResult['error'];
+		}
+		echoIfVerbose("HTTP error       $httpError \n");
+		echoIfVerbose('HTTP length      ' . strlen($httpResult['body']) . "\n");
+		echoIfVerbose("Elapsed time     $elapsedTime \n\n");
 		
 		$scanResults[$urlNumber] = "";
 		/////////////////////////////////////////////////////////
@@ -126,7 +130,7 @@ function scan($properties, $filters, &$store) {
 						// OR its name is 'basic'
 						echoIfVerbose("Applying filter '$filterName' to URL $url \n");		
 						
-						$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsetTime);
+						$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
 						
 						try {
 							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);

@@ -83,6 +83,11 @@ function destroyFilters($properties, $filters, &$store) {
 		$filterName = $filters[$rankIndex]->name;
 		if (isset($filters[$rankIndex]->destroy)) {
 			echoIfVerbose("[$filterName] " . $filters[$rankIndex]->destroy . "\n");
+			// Create 'dummies' that will be the least harmful if the filter messes up
+			$conditions  = array();
+			$url         = '';
+			$httpResult  = array();
+			$elapsedTime = 0;
 			$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
 			try {
 				list($mess, $result, $st) = call_user_func($filters[$rankIndex]->destroy, null, $filterArgs, $store[$filters[$rankIndex]->name]);

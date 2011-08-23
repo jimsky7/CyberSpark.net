@@ -18,7 +18,9 @@ function findAndAddFilters($dirName, $properties) {
 			if ($handle = @opendir($dirName)) {
 				// Make an array of things that the functions can use
 				$setupArgs = array();
-				$setupArgs['id'] = $properties['id'];
+				if (isset($properties['id'])) {
+					$setupArgs['id'] = $properties['id'];
+				}
 				// Run through all files in the directory, setting up functions
 				while (($file = @readdir($handle)) !== false) {
 					try {

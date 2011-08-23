@@ -17,8 +17,17 @@ function initFilters($filters, $properties, &$store) {
 		$filterName = $filters[$rankIndex]->name;
 		if (isset($filters[$rankIndex]->init)) {
 			echoIfVerbose("[$filterName] " . $filters[$rankIndex]->init . "\n");
+			// Create 'dummies' that will be the least harmful if the filter messes up
+			$conditions  = array();
+			$url         = '';
+			$httpResult  = array();
+			$elapsedTime = 0;
 			$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
 			try {
+				// Ensure there's a 'store' defined for every filter
+				if (!isset($store[$filters[$rankIndex]->name])) {
+					$store[$filters[$rankIndex]->name] = array('cyberspark'=>'(initialized by cyberspark)');
+				}
 				list($mess, $result, $st) = call_user_func($filters[$rankIndex]->init, null, $filterArgs, $store[$filters[$rankIndex]->name]);
 				if (isset($st)) {
 					// Save this filter's private store

@@ -47,6 +47,7 @@ function basicScan($content, $args, $privateStore) {
 	$filterName = "basic";
 	$result   = "OK";						// default result
 	$url = $args['url'];
+	$message = '';
 	$contentLength = strlen($content);
 	$elapsedTime = $args['elapsedtime'];
 	$httpResult  = $args['httpresult'];

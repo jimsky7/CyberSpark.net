@@ -10,7 +10,7 @@
 function echoIfVerbose($string) {
 	global $properties;
 	
-	if ($properties['verbose']) {
+	if (isset($properties['verbose']) && $properties['verbose']) {
 		echo $string;
 	}
 }
@@ -19,7 +19,7 @@ function echoIfVerbose($string) {
 function print_rIfVerbose($structure) {
 	global $properties;
 	
-	if ($properties['verbose']) {
+	if (isset($properties['verbose']) && $properties['verbose']) {
 		print_r($structure);
 	}
 }

@@ -45,7 +45,6 @@ $to				= EMAIL_TO;						// (from config)
 $replyTo		= EMAIL_REPLYTO;				// (from config)
 $abuseTo		= EMAIL_ABUSETO;				// (from config)
 $administrator	= EMAIL_ADMINISTRATOR;			// (from config)
-$emergency		= EMAIL_EMERGENCY;				// (from config)
 $sleepTime 		= KEEPALIVE_LOOP_SLEEP_TIME;	// (from config)
 
 $isDeamon		= false;				// required by args.inc but not used herein
@@ -70,6 +69,8 @@ $heartbeatParent	= $path . $ID . HEARTBEAT_EXT;
 $running 			= true;
 $notified			= false;		// daily notification sent?
 
+$timeStamp = date("r");
+
 ///////////////////////////////// 
 // Register shutdown functions
 try {
@@ -77,7 +78,7 @@ try {
 	pcntl_signal(SIGINT,  'shutdownProcesses');		// Ctrl-C
 }
 catch (Exception $x) {
-	echo "Warning: Unable to register shutdown functions.\n";
+	echo "Warning: Unable to register shutdown functions. $timeStamp\n";
 }
 	
 ///////////////////////////////// 
@@ -87,14 +88,14 @@ try {
 	@unlink($pidFileName);
 }
 catch (Exception $x) {
-	echo "Warning: Unable to delete cybersparkd's process ID (or heartbeat) file(s). ".$x->getMessage()."\n";
+	echo "Warning: Unable to delete cybersparkd's process ID (or heartbeat) file(s). $timeStamp Exception: ".$x->getMessage()."\n";
 }
 try {
 	// This writes this process's ID out to the pid file
 	@file_put_contents($pidFileName, (string)posix_getpid());	// save process ID
 }
 catch (Exception $x) {
-	echo "Warning: Failed to write cybersparkd's process ID to a 'pid' file. \n  " . $x->getMessage() . "\n";
+	echo "Warning: Failed to write cybersparkd's process ID to a 'pid' file. $timeStamp Exception: ".$x->getMessage()."\n";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -102,7 +103,8 @@ catch (Exception $x) {
 // Find the properties files and launch a monitoring instance for each one
 $subID = 0;
 while (file_exists($propsDir . "/$ID-$subID" . PROPS_EXT)) {
-	echo "$ID is launching $ID-$subID\n";	
+	$timeStamp = date("r");
+	echo "$ID is launching $ID-$subID : $timeStamp\n";	
 	$descriptorspec = array(
   		0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
   		1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
@@ -135,7 +137,6 @@ $subID--;						// back off by one to be accurate with end of the array
 $timeStamp = date("r");
 $subject = "$ID cybersparkd launched $timeStamp";
 $message = "$ID cybersparkd launched $timeStamp";
-textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 
 
@@ -147,6 +148,7 @@ while ($running) {
 	///////////////////////////////////////////////////////////////////////////
 	// Save a heartbeat file for this, the parent, process
 	// You may well ask "who is monitoring this file?" and the answer is "nobody, for now."
+	$timeStamp = date("r");
 	try {
 		$heartbeatTime  = time();	// current time in seconds (Unix time)
 		$heartbeatTime += $sleepTime*3;		// use sleep time x3 as time someone should call for help
@@ -154,7 +156,7 @@ while ($running) {
 //      echo "Writing heartbeat $heartbeatTime in $heartbeatParent\n";
 	}
 	catch (Exception $x) {
-		echo "Warning: $ID was unable to write a 'heartbeat' file. $heartbeatParent\n";
+		echo "Warning: $ID was unable to write a 'heartbeat' file for myself. $heartbeatParent : $timeStamp\n";
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -164,7 +166,6 @@ while ($running) {
 		if (!$notified) {
 			$subject = "$ID daemon OK $timeStamp";
 			$message = "$ID (the parent) daemon reports that it's running.";
-			textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 			textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 			$notified = true;
 		}
@@ -197,23 +198,72 @@ while ($running) {
 					list($heartbeatTime) = sscanf($heartbeatContents, "%d");
 					if ($loopStartTime > ($heartbeatTime+HEARTBEAT_LATE)) {
 						// The process hasn't updated its heartbeat file recently - might be stalled
-						echo "$ID-$i unresponsive. Predicted=$heartbeatTime Current=$timeStamp\n";
+						echo "$ID-$i unresponsive. Predicted=$heartbeatTime Current=$loopStartTime $timeStamp \n";
 						$subject = "$ID-$i Unresponsive $timeStamp";
 						$message = "$ID reports $ID-$i is unresponsive. Predicted=$heartbeatTime Current time=$loopStartTime\n";
-						textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+						$remainingTime = 0;
+						if (RESTART_ON_FAILURE) {
+							$blue = HEARTBEAT_BLUE;
+							$blueLate = HEARTBEAT_LATE;
+							$lateSeconds = $loopStartTime - $heartbeatTime;
+							$remainingTime = $blue - ($lateSeconds);
+							$message .= "$ID-$i has been unresponsive for $lateSeconds seconds (".floor($lateSeconds/60)." minutes).\n";
+							if ($remainingTime > 0 ) {
+								$message .= "$ID-$i will be terminated in $remainingTime seconds.\n";
+							}
+							echo "$ID-$i will be terminated in $remainingTime seconds. $timeStamp\n";
+						}
+						if ($remainingTime < 0 ) {
+							$subject = "$ID-$i Terminated (was unresponsive) $timeStamp";
+							$message .= "$ID-$i is being terminated NOW.\n";
+							echo "$ID-$i is being terminated NOW. $timeStamp\n";
+							// Remember there are two layers below this daemon.
+							// The topmost is a PHP process that launched the monitor (the child)
+							// The monitor itself is a child of that PHP process, and has written
+							//   its PID and its heartbeat information into files.
+							// Let the top PHP process keep running - it will detect that its child
+							//   process has been terminated and it will also terminate.
+							// First, read 'Child' PID from file
+							$pfn = "$path/$ID-$i". PID_EXT;
+							$childPidString = '';
+							if (file_exists($pfn)) {
+								try {
+									$pidNumber = file_get_contents($pfn, PID_FILESIZE_LIMIT);
+								}
+								catch (Exception $x) {
+									$message .= "Couldn't read the PID file $pfn. Error: ".$x->getMessage()."\n";
+									echo "Couldn't read the PID file $pfn. $timeStamp Error: ".$x->getMessage()."\n";
+								}
+								// Kill the monitor process;
+								if (strlen($pidNumber) > 0) {
+									echo "$ID-$i is being terminated with 'kill -KILL $pidNumber' at $timeStamp\n";
+									$message .= "$ID-$i is being terminated.\n";
+									shell_exec ("kill -KILL $pidNumber");	// terminate as if CTRL-C ... this is "graceful"
+								}
+								// When the monitor is restarted (next time around the loop) it will
+								// remove its PID file "$ID-$i.pid" and its heartbeat file "$ID-$i.next";
+							}
+							else {
+								$message .= "$ID-$i There's no PID file for the child process.\nYou'll have to deal with this manually.\n";
+								echo "$ID-$i There's no PID file for the child process.\nYou'll have to deal with this manually. $timeStamp\n";
+							}
+							// You only want to do this after a SIGNIFICANT TIME has passed - say 30 to 60 minutes. Or number of notifications.
+							// Because processes can go unresponsive just because the sites they're monitoring all get very slow...so you should wait
+							//   enough minutes that the maximum number of GET timeouts could be completely processed.  For example, if you're monitoring
+							//   20 URLs and they all became slow, then it could take 20 minutes or more to go around a loop, and the child process
+							//   might be unresponsive that entire time and yet be functioning perfectly. It would just be updating its heartbeat
+							//   much more slowly than usual.
+						}
+						// Send out mail describing the surgery
 						textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
-// >>>
-// Read PID from file; kill the process; remove the PID file; remove the heartbeat file;
-// >>>
 						$i++;
 						continue;
 					}
 				}				
 				catch (Exception $x) {
-					echo "Critical: $ID unable to read 'heartbeat' file. $heartbeatFileName\n";
+					echo "Critical: $ID unable to read 'heartbeat' file. $heartbeatFileName $timeStamp\n";
 					$subject = "$ID-$i Failure/Critical $timeStamp";
 					$message = "Critical: $ID unable to read 'heartbeat' file. $heartbeatFileName\n";
-					textMail($emergency,     $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 					textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 					$i++;
 					continue;
@@ -240,7 +290,7 @@ while ($running) {
 					}
 					if (!$propsExist) {
 						$message .= "$ID-$i properties file has disappeared.\n";
-						echo "$ID-$i properties file has disappeared. $ID-$i ended.\n";
+						echo "$ID-$i properties file has disappeared. $ID-$i ended. $timeStamp\n";
 						$alertCount[$i] = FAILURE_ALERT_MAX;
 					}
 					if ($alertCount[$i] == FAILURE_ALERT_MAX) {
@@ -248,7 +298,7 @@ while ($running) {
 					}					
 					// Attempt to restart?  This can be set (defined) in the config file
 					if (RESTART_ON_FAILURE && $propsExist) {
-						echo "$ID Restarting $ID-$i\n";
+						echo "$ID Restarting $ID-$i at $timeStamp\n";
 						try {
 							$descriptorspec = array(
   								0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
@@ -260,12 +310,11 @@ while ($running) {
 							$message .= "$ID-$i has been restarted.\n";
 						}
 						catch (Exception $x) {
-							echo "$ID Failed to restart $ID-$i Exception: " . $x->getMessage() . "\n";
+							echo "$ID Failed to restart $ID-$i at $timeStamp Exception: " . $x->getMessage() . "\n";
 							$message .= "The attempt failed. Exception: " . $x->getMessage() . "\n";
 						}
 					}
 					if ($alertCount[$i] <= FAILURE_ALERT_MAX) {
-						textMail($emergency, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 						textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 					}
 				}
@@ -305,8 +354,9 @@ function shutdownProcesses() {
 	global $heartbeatParent;
 	global $path;
 	global $running;
-		
-	echo "\nPlease wait while the monitors (the child processes) shut down.\n";	
+	
+	$timeStamp = date('r');
+	echo "\nPlease wait while the monitors (the child processes) shut down. $timeStamp \n";	
 	$running = false;
 	try {
 		while ($subID >= 0) {
@@ -354,7 +404,8 @@ function shutdownProcesses() {
 	catch (Exception $x) {
 		echo "\n  Exception: " . $x->getMessage() . "\n";	
 	}
-	echo "\nAll monitors (children of this process) have been shut down.\n";	
+	$timeStamp = date('r');
+	echo "\nAll monitors (children of this process) have been shut down. $timeStamp\n";	
 	
 	try {
 		@unlink($pidFileName);

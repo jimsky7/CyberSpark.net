@@ -229,8 +229,11 @@ if ($isDaemon) {
 				$timeout	= $properties['timeout'];
 			}
 			// Seed value for messages
-			$message = $properties['message'];
-		
+			$message = '';
+			if (isset($properties['message'])) {
+				$message = $properties['message'];
+			}
+			
 			echoIfVerbose("Verbose\n");
 	
 			// Write a 'heartbeat' value.  It is the time this process should next wake up.  

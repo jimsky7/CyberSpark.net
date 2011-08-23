@@ -253,7 +253,7 @@ function gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedU
 					// ($body is the response GSB gave us)
 					// URL is unsafe
 					$result = "Malware";
-					$message .= $prefix . "Google Safe Browsing reports a problem with $das  $body  \n";
+					$message .= $prefix . "Google Safe Browsing reports a problem with this URL: $das Problem description: $body  \n";
 					$prefix = INDENT;
 					$message .= $prefix . "How we got there: " . breadcrumbsString($howToGetThere, $url) . " \n";
 					echoIfVerbose("  BAD $body \n");
@@ -262,8 +262,8 @@ function gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedU
 		}
 		else {
 			$bcs = breadcrumbsString($howToGetThere, $das);
-			echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " $das How we got there: $bcs\n");
-			writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " $das How we got there: $bcs");
+			echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " Looking up: $das How we got there: $bcs\n");
+			writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " Looking up: $das How we got there: $bcs");
 			$prefix = INDENT;
 			$failures++;
 
@@ -296,48 +296,59 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 		$numberOfChecks++;
 		if (isset($httpResult['code']) && ($httpResult['code'] == 200)) {
 			$body = $httpResult['body'];
+			
+			if (strlen($body) < GSB_PAGE_SIZE_LIMIT) {
 
-			$dom = new DOMDocument();
-			@$dom->loadHTML($body);
+				$dom = new DOMDocument();
+				@$dom->loadHTML($body);
 
-			// Find all the links on the page
-			$links = extractLinks("a", "href", $dom, array());
-			$links = extractLinks("form", "action", $dom, $links);
-			$links = extractLinks("img", "src", $dom, $links);
-			$links = extractLinks("link", array("rel","href"), $dom, $links);
-			$links = extractLinks("script", "src", $dom, $links);
-			echoIfVerbose (count($links)." links to explore \n");
+				// Find all the links on the page
+				$links = extractLinks("a", "href", $dom, array());
+				$links = extractLinks("form", "action", $dom, $links);
+				$links = extractLinks("img", "src", $dom, $links);
+				$links = extractLinks("link", array("rel","href"), $dom, $links);
+				$links = extractLinks("script", "src", $dom, $links);
+				echoIfVerbose (count($links)." links to explore \n");
 
-			foreach ($links as $link) {
-				if (in_array($link, $checkedURLs) ) {
-					echoIfVerbose("Already checked $link \n");
-					continue;
-				}
+				foreach ($links as $link) {
+					if (in_array($link, $checkedURLs) ) {
+						echoIfVerbose("Already checked $link \n");
+						continue;
+					}
 
-				// Check this link against GSB
-				list($r, $mess) = gsbCheckURL(&$args, $link, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
-				if ($r != "OK") {
-					$result = $r;
-				}
-				$message .= $mess;
-				
-				// Go deeper
-				if (($depth+1) < $maxDepth) {
-					echoIfVerbose ("Going to depth " . ($depth+1) . " maximum " . $maxDepth . "\n");
-					list($r, $mess) = gsbExploreLinks(&$args, $link, $depth+1, $maxDepth, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
-					echoIfVerbose ("Done at depth " . ($depth+1) . " \n");
+					// Check this link against GSB
+					list($r, $mess) = gsbCheckURL(&$args, $link, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
 					if ($r != "OK") {
 						$result = $r;
 					}
 					$message .= $mess;
-				}				
+					
+					// Go deeper
+					if (($depth+1) < $maxDepth) {
+						echoIfVerbose ("Going to depth " . ($depth+1) . " maximum " . $maxDepth . "\n");
+						list($r, $mess) = gsbExploreLinks(&$args, $link, $depth+1, $maxDepth, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
+						echoIfVerbose ("Done at depth " . ($depth+1) . " \n");
+						if ($r != "OK") {
+							$result = $r;
+						}
+						$message .= $mess; 
+					}				
+				}
+			}
+			else {
+					// Page is really too large. This might be just a technical problem, but
+					// we can't trust the "DOMDocument" routines to function on large pages (they go
+					// into 100% CPU loop sometimes), so we will not check overly-large pages.
+					$bcs = breadcrumbsString($howToGetThere, $das);
+					echoIfVerbose ("Page ($url) is too large (".strlen($body).") to check programmatically. How we got there: $bcs\n");
+					$message .= "Page ($url) is really to large (".strlen($body).") to check programmatically. You might want to check manually. How we got there: $bcs\n";
 			}
 		}
 	}
 	catch (Exception $x) {
 		$bcs = breadcrumbsString($howToGetThere, $das);
-		echoIfVerbose("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $link\n");
-		writeLogAlert("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $link\n");
+		echoIfVerbose("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $bcs\n");
+		writeLogAlert("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $bcs\n");
 	}
 
 	array_pop($howToGetThere);
