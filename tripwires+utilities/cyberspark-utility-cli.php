@@ -1,3 +1,4 @@
+#!/usr/bin/php -q
 <?php
 
 /** Version 4.02 on 20110402 **/
@@ -90,11 +91,6 @@ $checkSignatures = array (
 	'unescape'=>'[javascript]'
 );
 
-// Always exclude self from checking for malstrings
-if (($i = strripos($_SERVER['PHP_SELF'], '/')) >= 0) {
-	$exclude[] = substr($_SERVER['PHP_SELF'], $i+1);
-}
-
 function readCode($path) {
 	global $removeMe;
 	global $maxFileSize;
@@ -114,7 +110,7 @@ function readData($path, $base) {
 	global $store;
 	
 	if (isset($base) && (strlen($base)>0)) {
-		$cleanBase = str_replace('/','-',$base);
+		$cleanBase = str_replace('/','-',$base).'-';  // add '-' for CLI version
 	}
 	else {
 		$cleanBase = '';
@@ -140,7 +136,7 @@ function writeData($path, $base) {
 	global $store;
 
 	if (isset($base) && (strlen($base)>0)) {
-		$cleanBase = str_replace('/','-',$base);
+		$cleanBase = str_replace('/','-',$base).'-';  // add '-' for CLI version
 	}
 	else {
 		$cleanBase = '';
@@ -169,61 +165,9 @@ function writeLog($message) {
 function echoAndLog($string) {
 	global $logEntry;
 	if (isset($string)) {
-		echo $string."<br>\n";
+		echo $string."\n";   // no <br> for CLI version
 		$logEntry .= $string."\r\n";
 	}	
-}
-
-function paramValue($paramName) {
-	if (isset($_GET[$paramName]))  {
-		try {
-			if (($md = intval($_GET[$paramName])) > 0)
-				return $md;
-		}
-		catch (Exception $pvx) {
-		}
-	}
-	if (isset($_POST[$paramName]))  {
-		try {
-			if (($md = intval($_POST[$paramName])) > 0)
-				return $md;
-		}
-		catch (Exception $pvx) {
-		}
-	}
-	// No parameter, return "0" which is "failure"
-	return 0;
-}
-
-function paramString($paramName) {
-	if (isset($_GET[$paramName]))  {
-		return $_GET[$paramName];
-	}
-	if (isset($_POST[$paramName]))  {
-		return $_POST[$paramName];
-	}
-	// No parameter, return "" which is usually ignorable
-	return "";
-}
-
-function nValue() {
-	// Several options allow "=n" to specify the spidering depth.  Such as:
-	//    cyberspark-utility.php?report=3
-	// This function looks for the "n" (which means really the value of the
-	//   parameter "repair" "remove" or "report") and sets $maxDepth accordingly.
-	// $maxDepth remains untouched if there is no "=n"
-
-	global $maxDepth;
-	
-	if (($md = paramValue('report')) > 0) {
-		return $md;
-	}
-	if (($md = paramValue('remove')) > 0) {
-		return $md;
-	}
-	if (($md = paramValue('repair')) > 0) {
-		return $md;
-	}
 }
 
 function stripos_array($haystack, $needleArray) {
@@ -244,7 +188,6 @@ function removeCode($baseDirectory, $maxDepth)
 	global $totalFiles;
 	global $phpFiles;
 	global $maxFileSize;
-	global $exclude;
 	
 	if (strlen($removeMe) == 0) {
 		echoAndLog ("There is nothing specified in the file for removal.");
@@ -407,8 +350,8 @@ function spiderThis($baseDirectory, $maxDepth)
 							}
 						}
 					}
-					
-					// And scan PHP/HTML/HTM/JS files for eval and gzinflate and base64
+
+					// And scan PHP files for eval and gzinflate and base64
 					try {
 						$len = strlen($thisEntry);
 						if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
@@ -449,13 +392,11 @@ function spiderThis($baseDirectory, $maxDepth)
 }  
 
 
-
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// MAIN script - this is executed when the file is invoked by HTTP GET or HTTP PUT
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// MAIN program - this is executed when the file is executed
 
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 $path = substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
@@ -474,143 +415,120 @@ if ($diskTotalSpace > 0) {
 	$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
 }
 
-header('Content-Type: text/html; charset=UTF-8');
-
 // '/help'  - - - - - - - - - - - -
-if (isset($_GET['help']) || isset($_POST['help'])) {
+if ($argv[1] == 'help' or $argv[1] == '--help') {
 	//  /help
-	echo "<html>\n<body width=600px align=left>
-	/help          <br>
-	/path          <br>
-	/report        <br>
-	/report=n      <br>
-	/report=n&base=xxxxxxx      <br>
-	  <p style='margin-left:30px;width:600px;'>Produces a report on status of all PHP files.
-	  If 'n' (a number) is present the site is spidered only to this maximum depth.
-	  (Start by using 1 or 2 for the depth until you know how quickly your server can
-	  perform this task.)  </p>
-	  <p style='margin-left:30px;width:600px;'>Run several times to establish a baseline, then in the future
-	  you can watch for any significant changes.
-	  </p>
-	  <p style='margin-left:30px;width:600px;'>If base=xxxxxxx is specified then the report starts at
-	  directory /xxxxxxx with respect to where the CyberSpark PHP is located
-	  </p>
-	/ignore=aaa,bbb,ccc      <br>
-	/exclude=aaa,bbb,ccc      <br>
-	/except=aaa,bbb,ccc      <br>
-	  <p style='margin-left:30px;width:570px;'>Excludes/ignores directories and files
-	  containing any of the specified strings ('aaa' 'bbb' 'ccc' separated by commas).  </p>
-	/remove        <br>\n
-	/remove=n      <br>\n
-	/remove=n&base=xxxxxxx      <br>
-	/repair=b&nbsp;&nbsp;&nbsp;&nbsp;(same as -remove-)<br>
-	  <p style='margin-left:30px;width:600px;'>Repairs PHP files by removing code found in file 
-	  'removeme.txt' within '/cyperspark' directory.
-	  If 'n' (a number) is present the site is spidered
-	  only to this maximum depth.
-	  </p>
-	  <p style='margin-left:30px;width:600px;'>If base=xxxxxxx is specified then the report starts at
-	  directory /xxxxxxx with respect to where the CyberSpark PHP is located
-	  </p>
-	</body>\n</html>\n";
-	return;
+	echo 'Use a single parameter:
+--help
+--path 
+  To find out the path to the file.
+--report
+--report n
+--report n /xxxxxxx
+  To run a report.  
+  If "n" is present, spiders (integer) "n" levels deep.
+  Default is 50 levels deep if "=n" is not present.
+  Start by using 1 or 2 and see how your server performs
+    before using a greater depth.
+  If /xxxxxxx is present, start from subdirectory xxxxxxx
+    relative to where the PHP script is located.
+--remove
+--remove n
+--repair
+--repair n
+--repair n /xxxxxxx
+  To repair PHP files that have been hacked.
+  If "n" is present, repairs files (integer) "n" levels deep.
+  Default is 50 levels deep if "=n" is not present.
+  If /xxxxxxx is present, start from subdirectory xxxxxxx
+    relative to where the PHP script is located.
+';
+	exit;
 }
 
 // '/path' - - - - - - - - - - - - -
-if (isset($_GET['path'])) {
+if ($argv[1] == 'path' or $argv[1] == '--path') {
 	//  /path
-	echo "<html>\r\n<body>\r\n<div align='left'> $path </div>\r\n</body>\r\n</html>\r\n";
-	return;
+	echo "$path\n";
+	exit;
 }
 
-// 'except=xxxxxxx' or 'ignore=xxxxxxx' or 'exclude=xxxxxxx'
-// (Note that if you have more than one of them, this code will not work properly)
-$xs = paramString('except') . paramString('ignore') . paramString('exclude');
-if (strlen($xs) > 0) {
-	$exclude = array_merge($exclude, explode(',', $xs));
-}
-
-// 'wordpress'
-if (isset($_GET['wordpress']) || isset($_POST['wordpress'])) {
-	$exclude = array_merge($exclude, $wordpress);
-}
 
 // '/remove'  '/repair' detection  - -
-if (isset($_GET['remove']) or isset($_POST['remove']) or isset($_GET['repair']) or isset($_POST['repair'])) {
+if ($argv[1] == 'remove' or $argv[1] == '--remove' or $argv[1] == 'repair' or $argv[1] == '--repair') {
 	// Set flag for actions to perform
 	$repair = true;
 }
 
 // '/report'  detection  - - - - - - -
-if (isset($_GET['report']) or isset($_POST['report'])) {
+if ($argv[1] == 'report' or $argv[1] == '--report') {
 	// Set flag for actions to perform
 	$report = true;
 }
 
 // '=n'  detection+processing  - - - -
-	$maxDepth = nValue();
+try {
+	$maxDepth = $argv[2];
+}
+catch (Exception $mdx) {
+}
 
-// 'base=xxxxxxx' detection+processing 
-if ($report or $repair) {
-	if (isset($_GET['base'])) {
-		$base = $_GET['base'] . '/';
-	}
-	if (isset($_POST['base'])) {
-		$base = $_POST['base'] . '/';
-	}
+// 'base=' detection+processing  - - -
+try {
+	$base = $argv[3] . '/';
 	if (strpos($base, '..') !== false) {
 		// Don't permit /../ anywhere in the base string
 		// Just fall back to the directory containing this script
 		$base = '';
 	}
 }
+catch (Exception $mdx) {
+}
 
 // header for reports  - - - - - - - -
 if ($report or $repair) {
-	//  /report   or /repair
-	$fullPath = $path . $base;
-	echo "<html>
-	<body width='600px'> 
-	<p style='margin-left:30px;width:570px;'>
-	CyberSpark local agent report<br>
-	Base directory is $fullPath <br>
-	Spidering depth will be $maxDepth <br>
-	Any changes reported below are 'since the last time this script was run.'<br>
-	Do not stop this script or leave this page until it finishes.
-	</p>
-";
-	// The html is closed off later on after the scan has been completed
+	//  /report
+	$cleanBase = $path . $base;
+	echo "
+CyberSpark local agent report
+Base directory is $cleanBase
+Spidering depth is $maxDepth
+Any changes reported below are 'since the last time this script was run.'
+Do not stop this script or leave this page until it finishes.\n\n";
 }
 
 // read previous file status info  - - - -
 readData($path, $base);
 
-$logEntry .= "\r\n///////////////////////////////////\r\n".date('r')."\r\n";
+$logEntry .= "///////////////////////////////////\r\n".date('r')."\r\n";
 $logEntry .= "Base $fullPath\n\rDepth $maxDepth\r\n";
 
 // the bulk of processing HERE   - - - - -
 if ($repair) {
 	readCode($path);
 	removeCode($path . $base, $maxDepth);	// spider with a maximum depth Example: "1" limits to top directory
-	echo "<br>\r\n";
+	echo "\n";
 }
 else if ($report) {
 	spiderThis($path . $base, $maxDepth);	// spider with a maximum depth Example: "1" limits to top directory
-	echo "<br>\r\n";
+	echo "\n";
 }
 
 // reporting out - - - - - - - - - - - - -
 if ($repair) {
-	echo "\r\n<br><br>- - - - - - - - - - - - - - - - -<br>\r\n";
+	echo "\n\n- - - - - - - - - - - - - - - - -\n";
 	echoAndLog ("Summary report");
+	echoAndLog ("Total files: $totalFiles");
+	echoAndLog ("PHP files examined: $views");
+	echoAndLog ("Files repaired: $removals");
 }
 else if ($report) {
-	echo "\r\n<br><br>- - - - - - - - - - - - - - - - -<br>\n";
+	echo "\n\n- - - - - - - - - - - - - - - - -\n";
 	echoAndLog ("Summary report");
 	echoAndLog ("Total files: $totalFiles");
 	if ($phpFiles > 0) {
-		echo "<br>\r\n";
-		echoAndLog( "PHP files examined: $phpFiles");
+		echo "\n";
+		echoAndLog ("PHP files examined: $phpFiles");
 		if (isset($store['phpfiles']) && ($phpFiles != $store['phpfiles'])) {
 			echoAndLog ("-> Warning: The number of PHP files has changed from ".$store['phpfiles']." to $phpFiles");
 		}
@@ -671,9 +589,6 @@ if ($report) {
 		}
 	}
 }
-
-// closing the HTML - - - - - - - - - - - -
-echo "</div>\r\n</body>\r\n</html>\r\n";
 
 if ($report) {
 	writeData($path, $base);

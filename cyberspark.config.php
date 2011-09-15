@@ -8,7 +8,7 @@
 // PUT NOTHING IN HERE THAT WOULD EMIT HTML OR TEXT
 // Include only PHP language statements for configuration purposes.
 // And additionally it would be best if there were nothing executable, or even
-//   any veriables declared herein.
+//   any variables declared herein. Just constants, if you please.
 
 // Process-related variables and constants
 define('INSTANCE_ID', "CS8");							// "serial number" for this Cyberspark instance
@@ -25,9 +25,10 @@ define('SMTP_USER', "aaa@bbb.net");			// default SMTP user
 define('SMTP_PASSWORD', "xxxxxxxx");				// default SMTP password
 // e-Mail default addresses
 define('EMAIL_FROM', "\"Your name\" <email@yourdomain.here>");
+// notifications from cybersparkd.php - child processes cannot override this
 define('EMAIL_ADMINISTRATOR', "email@yourdomain.here");
-define('EMAIL_EMERGENCY', "email@yourdomain.here");
-define('EMAIL_TO', "email@yourdomain.here");
+// notifications from child processes (cyberspark.php "monitors") - properties files can override
+define('EMAIL_TO', "email@yourdomain.here");					
 // Items for email headers
 define('EMAIL_REPLYTO', "email@yourdomain.here");		// MUST BE NO quotes or <> brackets
 define('EMAIL_ABUSETO', "email@yourdomain.here");		// MUST BE NO quotes or <> brackets
@@ -76,5 +77,5 @@ define('KEEPALIVE_LOOP_SLEEP_TIME', 60);	// in seconds
 define('RESTART_ON_FAILURE', true);			// if true, then cybersparkd will restart failed processes
 
 // cyberspark.php items
-
+// NO CR AFTER THE CLOSING OF PHP, PLEASE. IMPORTANT!
 ?>

@@ -17,17 +17,17 @@ function getProperties($propsFileName) {
 		
 		try {
 //echo "Opening " . $propsFileName . "\n";
-			if($readHandle = fopen($propsFileName, "r")) {
+			if($readHandle = fopen($propsFileName, 'r')) {
 				while (!feof($readHandle)) {
 					$line = fgets($readHandle);
 					if (strlen($line) > 0) {
 						$tline = trim($line);
-						if (strncmp($tline, "#", 1) != 0) {
+						if (strncmp($tline, '#', 1) != 0) {
 //echo "$tline \n";
 							// split line at first "="
 							if (strpos($tline, '=') !== false) {
 								// First separate into key=value
-								list($key, $value) = explode("=", $tline, 2);
+								list($key, $value) = explode('=', $tline, 2);
 							}
 							else {
 								$key = $tline;
@@ -38,7 +38,7 @@ function getProperties($propsFileName) {
 								$key = trim($key);
 								$value = trim($value);
 								$value = str_replace(array("\n","\r"), "", $value);
-								if (strcasecmp($key, "url") == 0) {
+								if (strcasecmp($key, 'url') == 0) {
 									// url=uuuuu;ccccc=eeeee
 									//   uuuuu represents the http://url (which might include "=" within it!)
 									//   ccccc represents a comma separated list of conditions
@@ -64,7 +64,7 @@ function getProperties($propsFileName) {
 								}
 /////////// message=
 /////////// (default message "starter")
-								elseif (strcasecmp($key, "message") == 0) {
+								elseif (strcasecmp($key, 'message') == 0) {
 									// message=
 									$properties['messageseed'] = $value;
 									if (isset($overflow)) {
@@ -73,7 +73,7 @@ function getProperties($propsFileName) {
 								}
 /////////// subject=
 /////////// (default subject line for email messages)
-								elseif (strcasecmp($key, "subject") == 0) {
+								elseif (strcasecmp($key, 'subject') == 0) {
 									// subject=
 									$properties['subject'] = $value;
 									if (isset($overflow)) {
@@ -82,47 +82,47 @@ function getProperties($propsFileName) {
 								}
 /////////// notify=
 /////////// (the hour in which to send the 'OK' message)
-								elseif (strcasecmp($key, "notify") == 0) {
+								elseif (strcasecmp($key, 'notify') == 0) {
 									// notify=
 									$properties['notify'] = $value;
 								}
 /////////// pager=
 /////////// (this is for short PAGER notifications < 160 chars) NOT USED ANY MORE IN THE CODE
-								elseif (strcasecmp($key, "pager") == 0 || strcasecmp($key, "sms") == 0) {
+								elseif (strcasecmp($key, 'pager') == 0 || strcasecmp($key, 'sms') == 0) {
 									// pager=
 									$properties['pager'] = $value;
 								}
 /////////// to=
 /////////// (the default "To:" for emails)
-								elseif (strcasecmp($key, "to") == 0) {
+								elseif (strcasecmp($key, 'to') == 0) {
 									// to=
 									$properties['to'] = $value;
 /////////// from=
 /////////// (the default "From:" for emails)
 								}
-								elseif (strcasecmp($key, "from") == 0) {
+								elseif (strcasecmp($key, 'from') == 0) {
 									// from=
 									$properties['from'] = $value;
 //echo "Property From: " . $value . "\n";
 								}
 /////////// user=
 /////////// (user name for SMTP login)
-								elseif (strcasecmp($key, "user") == 0) {
+								elseif (strcasecmp($key, 'user') == 0) {
 									// user=
 									$properties['user'] = $value;
 								}
 /////////// pass=
 /////////// password=
 /////////// (password for SMTP login)
-								elseif (strcasecmp($key, "pass") == 0 || strcasecmp($key, "password") == 0) {
+								elseif (strcasecmp($key, 'pass') == 0 || strcasecmp($key, 'password') == 0) {
 									// pass=
 									$properties['password'] = $value;
 								}
 /////////// verbose=
 /////////// (if 'true' it causes more messages to be emitted, logged or emailed)
-								elseif (strcasecmp($key, "verbose") == 0) {
+								elseif (strcasecmp($key, 'verbose') == 0) {
 									// verbose=
-									if (strcasecmp($value, "true") == 0) {
+									if (strcasecmp($value, 'true') == 0) {
 										$properties['verbose'] = true;
 									}
 									else {
@@ -131,7 +131,7 @@ function getProperties($propsFileName) {
 								}
 /////////// host=
 /////////// (name of this host - used only in messages)
-								elseif (strcasecmp($key, "host") == 0) {
+								elseif (strcasecmp($key, 'host') == 0) {
 									// host=
 									$properties['host'] = $value;
 								}
@@ -139,19 +139,19 @@ function getProperties($propsFileName) {
 /////////// (name or IP address of SMTP server that will be used for notifications)
 /////////// (if this begins "ssl://" then port 465 and SSL will be used to secure the connection)
 
-								elseif (strcasecmp($key, "smtpserver") == 0) {
+								elseif (strcasecmp($key, 'smtpserver') == 0) {
 									// smtpServer=
 									$properties['smtpserver'] = strtolower($value);		// all lowercase
 								}
 /////////// useragent=
 /////////// (a user agent string to be used when doing HTTP GET)
-								elseif (strcasecmp($key, "useragent") == 0) {
+								elseif (strcasecmp($key, 'useragent') == 0) {
 									// useragent=
 									$properties['useragent'] = $value;					// allow upperlower
 								}
 /////////// time=
 /////////// (number of MINUTES to wait before checking URLs again)
-								elseif (strcasecmp($key, "time") == 0) {
+								elseif (strcasecmp($key, 'time') == 0) {
 									// time=minutes
 									try {
 										list($properties['time']) = sscanf($value, "%d");
@@ -161,7 +161,7 @@ function getProperties($propsFileName) {
 								}
 /////////// timeout=
 /////////// (default timeout for HTTP GET - this does not work on Ubuntu 8.04 and 10.04)
-								elseif (strcasecmp($key, "timeout") == 0) {
+								elseif (strcasecmp($key, 'timeout') == 0) {
 									// timeout=seconds
 									try {
 										list($properties['timeout']) = sscanf($value, "%d");
@@ -171,7 +171,7 @@ function getProperties($propsFileName) {
 								}
 /////////// smtpport=
 /////////// (port number for outbound - 25 is regular, 587 is alternate, and 465 triggers an SSL connection)
-								elseif (strcasecmp($key, "smtpport") == 0) {
+								elseif (strcasecmp($key, 'smtpport') == 0) {
 									// smtpServer=
 									try {
 										list($properties['smtpport']) = sscanf($value, "%d");
@@ -182,10 +182,32 @@ function getProperties($propsFileName) {
 /////////// slow=
 /////////// (a number of seconds - if the lag in an HTTP GET is lower than this, then we consider it a 
 ///////////   successful connection, and if higher then we consider it a "slow" connection)
-								elseif (strcasecmp($key, "slow") == 0) {
+								elseif (strcasecmp($key, 'slow') == 0) {
 									// slow=
 									try {
 										list($properties['slow']) = sscanf($value, "%d");
+									}
+									catch (Exception $x) {
+									}
+								}
+/////////// load=
+/////////// (an integer - if the LOADAVG is this or higher then consider sending a warning) 
+/////////// This is use within the 'cyberscan' filter .
+								elseif (strcasecmp($key, 'load') == 0) {
+									// slow=
+									try {
+										list($properties['load']) = sscanf($value, "%d");
+									}
+									catch (Exception $x) {
+									}
+								}
+/////////// disk=
+/////////// (an integer - if the percent space used on "/" is this or higher then consider sending a warning) 
+/////////// This is use within the 'cyberscan' filter. 
+								elseif (strcasecmp($key, 'disk') == 0) {
+									// slow=
+									try {
+										list($properties['disk']) = sscanf($value, "%d");
 									}
 									catch (Exception $x) {
 									}

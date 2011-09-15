@@ -178,12 +178,16 @@ function setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime
 	$filterArgs['conditions']	= $conditions;
 	$filterArgs['httpresult']	= $httpResult;
 	$filterArgs['elapsedtime']	= $elapsedTime;
+	// Transfer certain properties from the 'properties' file
+	// (In the future, consider copying all of them - why eliminate any?)
 	$filterArgs['timeout'] 		= $properties['timeout'];
 	$filterArgs['slow']    		= $properties['slow'];
 	$filterArgs['verbose']    	= $properties['verbose'];
 	$filterArgs['gsbserver']	= $properties['gsbserver'];
 	$filterArgs['notify']		= $properties['notify'];
 	$filterArgs['time']			= $properties['time'];
+	$filterArgs['load']			= $properties['load'];
+	$filterArgs['disk']			= $properties['disk'];
 	return $filterArgs;
 }
 

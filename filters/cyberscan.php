@@ -12,6 +12,10 @@ include_once "include/echolog.inc";
 include_once "include/functions.inc";
 
 define('CYBERSCAN_MAX_ALERTS', 2);
+define('DISKWARNING', 80);
+define('DISKCRITICAL', 90);
+define('LOADWARNING', 2);		// integer only
+define('LOADCRITICAL', 4);		// integer only
 
 ///////////////////////////////// 
 function cyberscanScan($content, $args, $privateStore) {
@@ -45,27 +49,83 @@ function cyberscanScan($content, $args, $privateStore) {
 		"PHP files with suspicious"=>'filessuspicious',
 		"New files"=>'newfiles',
 		"Changed size"=>'changedsize',
-		"Files gone"=>'filesgone'
+		"Files gone"=>'filesgone',
+		"Disk:"=>'disk',
+		"Load:"=>'load'
 	);
 	$first = true;
 	foreach ($phrases as $phrase=>$key) {
+		// Looking for one of the key phrases
 		try {
 			$i = stripos($content, $phrase);
 			if ($i !== false) {
+				// Found one key phrase
 				$iEOL = stripos($content, "\n", $i);	// assume Unix or Windows line breaks
 				if ($iEOL !== false) {
 					$s = flatten(substr($content, $i, $iEOL-$i));
-					if (!$newURL) {
-						// Previously-seen URL
-						if (strcmp($s, $privateStore[$filterName][$url][$key]) != 0) {
-							// Changed
-							$result = "Changed";
-							$message .= ($first?"\n":"").INDENT."Current state (" . $s . ") Previous state (" . $privateStore[$filterName][$url][$key] . ")\n";
-							echoIfVerbose(($first?"\n":"")."NEW $s WAS " . $privateStore[$filterName][$url][$key] . " \n");
-							$first = false;
-						}
+					// Certain results always cause a notification
+					if ($key == 'disk') {
+						// Detect disk almost full
+						$s = condenseBlanks($s);
+						list($beginning, $other) = explode('%', $s, 2);
+						list($beginning, $pct) = explode(' ', $beginning, 2);
+//						// Only notify on change
+//						if (isset($privateStore[$filterName][$url][$key]) && strcmp($s, $privateStore[$filterName][$url][$key]) != 0) {
+							$diskWarningLevel = DISKWARNING;
+							$diskCriticalLevel = DISKCRITICAL;
+							if (isset($args['disk']) && ($args['disk'] > 0) && ($args['disk'] <= 100)) {
+								$diskWarningLevel = $args['disk'];
+								$diskCriticalLevel = (int)(100-((100-$diskWarningLevel)/2));
+							}
+							if ($pct > $diskWarningLevel) {
+								$result = 'Warning';
+								if ($pct > $diskCriticalLevel) {
+									$result = 'Critical';
+								}
+								$message .= ($first?"\n":"").INDENT."Current state '$result' - running out of space (" . $s . ") Previous state (" . $privateStore[$filterName][$url][$key] . ")\n";
+								echoIfVerbose(($first?"\n":"")."NEW $s WAS " . $privateStore[$filterName][$url][$key] . " \n");
+								$first = false;
+							}
+//						}
+					}
+					else if ($key == 'load') {
+						// Detect high LOADAVG
+						$s = condenseBlanks($s);
+						list($beginning, $currentLoad, $previous, $longago) = explode(' ', $s, 4);
+						list($currentLoad, $frax) = explode('.', $currentLoad, 2);
+//						// Only notify on change
+//						if (isset($privateStore[$filterName][$url][$key]) && strcmp($s, $privateStore[$filterName][$url][$key]) != 0) {
+							$loadWarningLevel = LOADWARNING;
+							$loadCriticalLevel = LOADCRITICAL;
+							if (isset($args['load']) && ($args['load'] > 0)) {
+								$loadWarningLevel = $args['load'];
+								$loadCriticalLevel = $loadWarningLevel * 2;
+							}
+							if ($currentLoad >= $loadWarningLevel) {
+								$result = 'Warning';
+								if ($currentLoad >= $loadCriticalLevel) {
+									$result = 'Critical';
+								}
+								$message .= ($first?"\n":"").INDENT."Current state '$result' - load is high (" . $s . ") Previous state (" . $privateStore[$filterName][$url][$key] . ")\n";
+								echoIfVerbose(($first?"\n":"")."NEW $s WAS " . $privateStore[$filterName][$url][$key] . " \n");
+								$first = false;
+							}
+//						}
 					}
 					else {
+						// Most results are just watched for changes
+						if (!$newURL) {
+							// Previously-seen URL
+							if (strcmp($s, $privateStore[$filterName][$url][$key]) != 0) {
+								// Changed
+								$result = "Changed";
+								$message .= ($first?"\n":"").INDENT."Current state (" . $s . ") Previous state (" . $privateStore[$filterName][$url][$key] . ")\n";
+								echoIfVerbose(($first?"\n":"")."NEW $s WAS " . $privateStore[$filterName][$url][$key] . " \n");
+								$first = false;
+							}
+						}
+						else {
+						}
 					}
 					// Old or new URL regardless, save new value
 					$privateStore[$filterName][$url][$key] = $s;

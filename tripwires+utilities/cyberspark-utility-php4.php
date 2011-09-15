@@ -1,5 +1,7 @@
 <?php
 
+/** Version 4.02 on 20110402 **/
+
 /**
 	Spider the site starting in a base directory.
 	Contact CyberSpark for more information -> http://cyberspark.net/webmasters
@@ -18,6 +20,10 @@
 	  It's best to start with 1 or 2 so as not to overburden your server.
 	/report=n&base=xxxxxxx
 	  Prepares a report using "xxxxxxx" as the base subdirectory and a depth of "n"
+	/exclude=aaa,bbb,ccc
+	/except=aaa,bbb,ccc
+	/ignore=aaa,bbb,ccc
+	  Causes file(s) or directory(ies) containing strings 'aaa' or 'bbb' or 'ccc' to be ignored
 	/remove
 	/remove=n
 	/repair
@@ -30,11 +36,28 @@
 	/remove=n&base=xxxxxxx
 	/repair=n&base=xxxxxxx
 	  Performs a repair using "xxxxxxx" as the base subdirectory and a depth of "n"
+
+	Create a directory /cyberspark within the docroot of the web server
+	Make this directory world-writeable (chmod 777    or chmod a+rwx    )
+	Within your Apache (or other) web server configuration, add:
+		<Directory /PATH_TO_DOCROOT/cyberspark/>
+			deny from all
+		</Directory>
+	So the directory cannot be shown to the outside world.
+	Another way to do this is:
+		<IfModule mod_alias.c>
+			# Never serve anything from /cyberspark subdirectory
+    			RedirectMatch 404 ^(.*)cyberspark/(.*)
+		</IfModule>
 **/
 
+DEFINE('CYBERDIR',"cyberspark/");			// MUST have ending slash
 DEFINE('SPIDERFILE',"spiderlength.ds");		// name of file to which data will be marshalled
 DEFINE('STOREFILE', "datastore.ds");		// name of file to which data will be marshalled
-DEFINE('CYBERDIR',"cyberspark/");			// MUST have ending slach
+DEFINE('LOGFILE', "cyberspark.log");		// verbose log file
+DEFINE('REMOVEME',"removeme.txt");			
+DEFINE('DISKWARNING', 85);					// issue a warning when this percent of filesystem is full
+DEFINE('DISKCRITICAL', 95);					// issue a CRITICAL warning when this percent of filesystem is full
 
 $depth      = 0;			// current spidering depth (recursive calls)
 $maxDepth   = 50;			// number of levels 'deep' to spider
@@ -53,10 +76,9 @@ $removeMe   = '';			// the string we're searching for - usually is injected PHP 
 $repair     = false;
 $report     = false;
 $views      = 0;
-//$wrap       = 0;
-//$wrapAt     = 250;
 $maxFileSize= 2000000;		// maximum file size that we will open and inspect
 $maxDataSize= 14000000;		// maximum serialized data file size
+$logEntry	= '';			// this will be written to a log file
 $exclude    = array();		// strings that cause file/directory to be ignored
 $wordpress  = array('w3tc','cache');	// directories or files PRESENCE to ignore for WordPress
 $checkSignatures = array (
@@ -93,13 +115,12 @@ if(!function_exists("strripos")){
 if (($i = strripos($_SERVER['PHP_SELF'], '/')) >= 0) {
 	$exclude[] = substr($_SERVER['PHP_SELF'], $i+1);
 }
-echo "Self: $exclude[0]\r\n";
 
 function readCode($path) {
 	global $removeMe;
 	global $maxFileSize;
 	
-	if($readHandle = fopen("$path"."cyberspark/removeme.txt","r")) {
+	if($readHandle = fopen("$path".CYBERDIR.REMOVEME,"r")) {
 		while (!feof($readHandle)) {
 			$removeMe = fread($readHandle, $maxFileSize);
 		}
@@ -158,6 +179,22 @@ function writeData($path, $base) {
 	}
 }
 
+function writeLog($message) {
+	if($fileHandle = fopen("$path".CYBERDIR.$cleanBase.LOGFILE,"a")) {
+		rewind($fileHandle);
+		fwrite($fileHandle, $message);
+		fclose($fileHandle);
+	}
+}
+
+function echoAndLog($string) {
+	global $logEntry;
+	if (isset($string)) {
+		echo $string."<br>\n";
+		$logEntry .= $string."\r\n";
+	}	
+}
+
 function paramValue($paramName) {
 	if (isset($_GET[$paramName]))  {
 			if (($md = intval($_GET[$paramName])) > 0)
@@ -169,6 +206,17 @@ function paramValue($paramName) {
 	}
 	// No parameter, return "0" which is "failure"
 	return 0;
+}
+
+function paramString($paramName) {
+	if (isset($_GET[$paramName]))  {
+		return $_GET[$paramName];
+	}
+	if (isset($_POST[$paramName]))  {
+		return $_POST[$paramName];
+	}
+	// No parameter, return "" which is usually ignorable
+	return "";
 }
 
 function nValue() {
@@ -207,30 +255,22 @@ function removeCode($baseDirectory, $maxDepth)
 	global $removals;
 	global $views;
 	global $totalFiles;
-//	global $wrap;
-//	global $wrapAt;
 	global $phpFiles;
 	global $maxFileSize;
 	global $exclude;
 	
 	if (strlen($removeMe) == 0) {
-		echo "There is nothing specified in the file for removal.<br>\r\n";
+		echoAndLog ("There is nothing specified in the file for removal.");
 		return;
 	}
 	
 	// Be sure we're working with a directory
 	if (is_dir($baseDirectory) && ($maxDepth>$depth)) {
-//		$wrap = $wrap + 1;
-//		if ($wrap >= $wrapAt) {
-//			echo "<br>\r\n";
-//			$wrap = 1;
-//		}
-//		echo ".";
 			$depth++;
 			$dirContents = dir($baseDirectory);
 			// Run through this directory
 			while (($entry = $dirContents->read()) !== false) {
-	 			// Next entry in the directory
+				// Get an entry from the directory
 				$thisEntry = $baseDirectory.$entry;
 
 				// Check whether this file or directory is to be excluded from scanning or repairing
@@ -239,25 +279,34 @@ function removeCode($baseDirectory, $maxDepth)
 					continue;
 				}
 
+				// Look for '.' or '..' and ignore these entries
 				if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
 					// Next entry is a directory, dive into it
 					removeCode($thisEntry."/", $maxDepth);
 				}
 				else if (is_link($thisEntry)) {
-					// Skip 'link' (not directory, not file) avoids recursion
+					// Skip a 'link' (not directory, not file) avoids recursion, but might
+					// miss something that you want to examine. You can always set up separate
+					// scan that uses 'base=' to target the actual directory you want to examine.
+					// (This also means you can't scan outside the web space. Guess you could
+					//  regard this as a "feature.")
 				}
 				else if (is_file($thisEntry)) {
 					$totalFiles++;
 					// It's a file - check for proper type
 					$len = strlen($thisEntry);
-					if((($len > 4) and (stripos($thisEntry, ".php", $len-4) == ($len-4))) || (($len > 5) and (stripos($thisEntry, ".html", $len-5) == ($len-5))) || (($len > 4) and (stripos($thisEntry, ".htm", $len-4) == ($len-4))) || (($len > 3) and (stripos($thisEntry, ".js", $len-3) == ($len-3)))) {
-						// Filename ends with ".php" or ".PHP" (or ".html" or ".htm" or ".js" so check it
+					if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
+						|| (strripos($thisEntry, ".htm") == ($len-4))
+						|| (strripos($thisEntry, ".html") == ($len-5))
+						|| (strripos($thisEntry, ".js") == ($len-3))
+						)) {
+						// Filename ends with ".php" or ".PHP" or "html" or "htm" or "js" so check it
 						$phpFiles++;
 						if($modHandle = fopen($thisEntry, "r")) {
 							$views = $views + 1;
 							$contents = fread($modHandle, $maxFileSize);
 							if (!feof($modHandle)) {
-								echo "<br>\nWARNING: This file was too big to process and you must fix it by hand: $thisEntry ";
+								echoAndLog ("WARNING: This file was too big to process and you must fix it by hand: $thisEntry ");
 								fclose($modHandle);
 							}
 							else {
@@ -267,20 +316,20 @@ function removeCode($baseDirectory, $maxDepth)
 								$newContents = str_replace($removeMe, "", $contents);
 								if (strlen($newContents) != $ocLen) {
 									// It was found and "deleted" so rewrite the original file
-									echo "<br>\nWARNING: This file was infected: $thisEntry ";
+									echoAndLog ("WARNING: This file was infected: $thisEntry ");
 									$removals = $removals + 1;								
 									// >>>
 									if($writeHandle = fopen($thisEntry, "w+")) {
 										rewind($writeHandle);
 										fwrite($writeHandle, $newContents);
 										fclose($writeHandle);
-										echo "<br>\n&nbsp;The infection was removed.";
+										echoAndLog ("&nbsp;The infection was removed.");
 									}
 								}
 							}
 						}
 						else {
-							echo "<br>\nThis file could not be opened: $thisEntry ";
+							echoAndLog ("This file could not be opened: $thisEntry ");
 						}
 					
 					}
@@ -301,36 +350,29 @@ function spiderThis($baseDirectory, $maxDepth)
     global $status;		// previous 'signatures' of files
     global $newFiles;	// number of new files found during this scan
     global $newSizes;	// number of files that changed size
-//    global $wrap;
-//    global $wrapAt;
     global $newSuspect;	// number of files containing 'suspect' PHP functions eval() base64_decode() etc.
     global $maxFileSize;
     global $phpFiles;
     global $totalFiles;
+    global $logEntry;
+    global $exclude;
     global $checkSignatures;
-	global $exclude;
     
 	// Be sure we're working with a directory
 	if (is_dir($baseDirectory) && ($maxDepth>$depth)) {
-//		$wrap = $wrap + 1;
-//		if ($wrap >= $wrapAt) {
-//			echo "<br>\r\n";
-//			$wrap = 1;
-//		}
-//		echo ".";
 			$depth++;
 			$dirContents = dir($baseDirectory);
 			// Run through this directory
 			while (($entry = $dirContents->read()) !== false) {
-				// Next entry in the directory
+				// Get an entry from the directory
 				$thisEntry = $baseDirectory.$entry;
-
+				
 				// Check whether this file or directory is to be excluded from scanning
 				if ((count($exclude) > 0) && stripos_array($thisEntry, $exclude)) {
-					echo ("<br>\nExcluding: $thisEntry \r\n");
+					echoAndLog ("Excluding: $thisEntry ");
 					continue;
 				}
-
+				
 				// Look for '.' or '..' and ignore these entries
 				if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
 					// Next entry is a directory, dive into it
@@ -357,7 +399,9 @@ function spiderThis($baseDirectory, $maxDepth)
 					$results[$thisEntry] = $fileSize;
 					if ($status[$thisEntry] <> $fileSize) {
 						if ($status[$thisEntry] == 0) {
-							echo "<br>\nNew file: ".$status[$thisEntry]." -> [".$fileSize."] $thisEntry ";
+							// New file
+							// Report the presence of a new file
+							echoAndLog("New file: ".$status[$thisEntry]." -> [".$fileSize."] $thisEntry ");
 							$newFiles++;
 						}
 						else {
@@ -366,13 +410,13 @@ function spiderThis($baseDirectory, $maxDepth)
 								// Note: Ignore files ending in "log"
 								// Note: Ignore files ending with the name of our data file
 								// Otherwise, note a changed size
-								echo "<br>\nNew size: ".$status[$thisEntry]." -> [".$fileSize."] $thisEntry ";
+								echoAndLog("New size: ".$status[$thisEntry]." -> [$fileSize] $thisEntry ");
 								$newSizes++;
 							}
 						}
 					}
 					
-// And scan PHP files for eval and gzinflate and base64
+					// And scan PHP/HTML/HTM/JS files for eval and gzinflate and base64
 						$len = strlen($thisEntry);
 						if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
 						|| (strripos($thisEntry, ".htm") == ($len-4))
@@ -387,7 +431,7 @@ function spiderThis($baseDirectory, $maxDepth)
 								// check for PHP and javascript active code
 								foreach ($checkSignatures as $key => $value) {
 									if (stripos($thisContents, $key) !== false) {
-										echo ("<br>\nFound '$key' $value: -> $thisEntry");
+										echoAndLog("Found '$signature' $value: -> $thisEntry");
 										$newSuspect++;
 									}
 								}
@@ -417,9 +461,24 @@ function spiderThis($baseDirectory, $maxDepth)
 	$targ = strrpos(__FILE__, chr(ord('/')));
 	$path = substr(__FILE__, 0, $targ+1);	// including the last 
 
+// Disk/filesystem space used
+$diskTotalSpace = 0;
+$diskUsedSpace = 0;
+if ( function_exists('disk_total_space')) {
+	$diskTotalSpace = disk_total_space("/");
+}
+if ( function_exists('disk_free_space')) {
+	$diskUsedSpace = disk_free_space("/");
+}
+if ($diskTotalSpace > 0) {
+	// Note: $diskPercentUsed is only defined if total space > 0
+	$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+}
+
+header('Content-Type: text/html; charset=UTF-8');
 
 // '/help'  - - - - - - - - - - - -
-if (isset($_GET['help'])) {
+if (isset($_GET['help']) || isset($_POST['help'])) {
 	//  /help
 	echo "<html>\n<body width=600px align=left>
 	/help          <br>
@@ -510,6 +569,9 @@ if ($report or $repair) {
 // read previous file status info  - - - -
 readData($path, $base);
 
+$logEntry .= "\r\n///////////////////////////////////\r\n".date('r')."\r\n";
+$logEntry .= "Base $fullPath\n\rDepth $maxDepth\r\n";
+
 // the bulk of processing HERE   - - - - -
 if ($repair) {
 	readCode($path);
@@ -524,26 +586,47 @@ else if ($report) {
 // reporting out - - - - - - - - - - - - -
 if ($repair) {
 	echo "\r\n<br><br>- - - - - - - - - - - - - - - - -<br>\r\n";
-	echo "Summary<br><br>\r\n";
-	echo "<br>\r\nTotal files: $totalFiles<br>\r\nPHP, JS or HTML files examined: $views<br>\r\nFiles repaired: $removals<br><br><br>\r\n";
+	echoAndLog ("Summary report");
+	echoAndLog ("Total files: $totalFiles");
+	echoAndLog ("PHP, JS or HTML files examined: $views");
+	echoAndLog ("Files repaired: $removals");
 }
 else if ($report) {
 	echo "\r\n<br><br>- - - - - - - - - - - - - - - - -<br>\n";
-	echo "Summary<br>\n";
+	echoAndLog ("Summary report");
+	echoAndLog ("Total files: $totalFiles");
 	if ($phpFiles > 0) {
-		echo "<br>\r\nPHP files examined: $phpFiles<br>\n";
+		echo "<br>\r\n";
+		echoAndLog( "PHP files examined: $phpFiles");
 		if (isset($store['phpfiles']) && ($phpFiles != $store['phpfiles'])) {
-			echo "-> Warning: The number of PHP/HTML/JS files has changed from ".$store['phpfiles']." to ".$phpFiles."!<br>\n";
+			echoAndLog ("-> Warning: The number of PHP files has changed from ".$store['phpfiles']." to $phpFiles");
 		}
-		echo "PHP files with suspicious code: $newSuspect<br>\n";
+		echoAndLog ("PHP files with suspicious code: $newSuspect");
 		if (isset($store['suspectfiles']) && ($newSuspect != $store['suspectfiles'])) {
-			echo "-> Critical: The number of suspicious files has changed from ".$store['suspectfiles']." to ".$newSuspect."!<br>\n";
+			echoAndLog ("-> Critical: The number of suspicious files has changed from ".$store['suspectfiles']." to $newSuspect");
 		}
 	}
+	// Look for files that are gone but are to be excluded from analysis
+	// (Any file still left in $status at this point was not seen during directory
+	//   traversal, and thus has gone away.)
+	if ((sizeof($status) > 0) && (sizeof($exclude) > 0)) {
+		foreach ($status as $thisEntry=>$value) {
+			foreach ($exclude as $excludeThis) {
+				if (stripos($thisEntry, $excludeThis) !== false) {
+					// This file's name or path is marked to be excluded from analysis
+					// so ignore that it's gone
+					unset($status[$thisEntry]);
+					break;
+				}
+			}
+		}	
+	}
+	// Report the names of files that are gone
 	if (sizeof($status) > 0) {
-		echo "<br>\r\nFiles gone: <br>\n";
+		echo "<br>\r\n";
+		echoAndLog ("Files gone: ");
 		foreach ($status as $key=>$value) {
-			echo "[$value] $key<br>\n";
+			echoAndLog ("[$value] $key");
 		}
 	}
 }
@@ -553,13 +636,27 @@ $store['suspectfiles'] = $newSuspect;
 
 //  /report
 if ($report) {
-	echo "New files:     $newFiles<br>\n";
-	echo "Changed sizes: $newSizes<br>\n";
-	echo "Files gone:    ".sizeof($status)."<br>\n";
+	echoAndLog ("New files:     $newFiles");
+	echoAndLog ("Changed sizes: $newSizes");
+	echoAndLog ("Files gone:    ".sizeof($status));
 	
 	if (function_exists("sys_getloadavg")) {
 		$loads = sys_getloadavg();
-		echo "Load:          ".$loads[0]." ".$loads[1]." ".$loads[2];
+		echoAndLog ("Load:          ".$loads[0]." ".$loads[1]." ".$loads[2]);
+	}
+	
+	// Report on how full the disk/filesystem is
+	if (isset($diskPercentUsed)) {
+		if ($diskPercentUsed > DISKCRITICAL) {
+		;
+			echoAndLog (sprintf('Disk critical: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
+		}
+		else if ($diskPercentUsed > DISKWARNING) {
+			echoAndLog (sprintf('Disk warning: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
+		}
+		else {
+			echoAndLog (sprintf('Disk: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
+		}
 	}
 }
 
@@ -568,6 +665,7 @@ echo "</div>\r\n</body>\r\n</html>\r\n";
 
 if ($report) {
 	writeData($path, $base);
+	writeLog ($logEntry);
 }
 
 ?>

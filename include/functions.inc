@@ -50,6 +50,17 @@ function flatten($s) {
 }
 
 ///////////////////////////////// 
+// Remove double-blanks from a string
+function condenseBlanks($s) {
+	if (isset($s)) {
+		return preg_replace('/\s+/',' ', $s);
+	}
+	else {
+		return $s;
+	}	
+}
+
+///////////////////////////////// 
 function fqdnOnly($url) {
 	$result = str_replace(" ", "", $url);
 	try {

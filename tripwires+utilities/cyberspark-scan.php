@@ -47,6 +47,7 @@ DEFINE('CYBERDIR',"cyberspark/");			// MUST have ending slash
 DEFINE('SPIDERFILE',"spiderlength.ds");		// name of file to which data will be marshalled
 DEFINE('STOREFILE', "datastore.ds");		// name of file to which data will be marshalled
 DEFINE('LOGFILE', "cyberspark.log");		// verbose log file
+DEFINE('REPORTFILE', "cyberspark.html");	// most recent single report
 
 $depth      = 0;			// current spidering depth (recursive calls)
 $maxDepth   = 50;			// number of levels 'deep' to spider
@@ -73,7 +74,10 @@ $checkSignatures = array (
 	'gzinflate('=>'[PHP]',
 	'base64_decode'=>'[PHP]',
 	'document.write'=>'[javascript]',
-	'unescape'=>'[javascript]'
+	'unescape'=>'[javascript]',
+// Some specific injections that we've seen recently
+	'geb7'    =>'[javascript]',
+	'qbaa6fb797447'=>'[javascript]'
 );
 
 function readData($path, $base) {
@@ -287,7 +291,7 @@ function spiderThis($baseDirectory, $maxDepth)
 							if (strlen($thisContents) > 0) {
 								// check for PHP and javascript active code
 								foreach ($checkSignatures as $signature=>$value) {
-									if (stripos($thisContents, $signature !== false) {
+									if (stripos($thisContents, $signature) !== false) {
 										echoAndLog("Found '$signature' $value: -> $thisEntry");
 										$newSuspect++;
 									}
@@ -323,6 +327,20 @@ function spiderThis($baseDirectory, $maxDepth)
 
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 $path = substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
+
+// Disk/filesystem space used
+$diskTotalSpace = 0;
+$diskUsedSpace = 0;
+if ( function_exists('disk_total_space')) {
+	$diskTotalSpace = disk_total_space("/");
+}
+if ( function_exists('disk_free_space')) {
+	$diskUsedSpace = disk_free_space("/");
+}
+if ($diskTotalSpace > 0) {
+	// Note: $diskPercentUsed is only defined if total space > 0
+	$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+}
 
 header('Content-Type: text/html; charset=UTF-8');
 
@@ -476,8 +494,14 @@ if ($report) {
 	echoAndLog ("Changed sizes: $newSizes");
 	echoAndLog ("Files gone:    ".sizeof($status));
 	
+	// Report on system load
 	$loads = sys_getloadavg();
 	echoAndLog ("Load:          ".$loads[0]." ".$loads[1]." ".$loads[2]);
+
+	// Report on how full the disk/filesystem is
+	if (isset($diskPercentUsed)) {
+		echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "/"', $diskPercentUsed, $diskTotalSpace/1000000000));
+	}
 }
 
 // closing the HTML - - - - - - - - - - - -
