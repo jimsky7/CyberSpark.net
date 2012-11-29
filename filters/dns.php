@@ -53,7 +53,7 @@ function dnsScan($content, $args, $privateStore) {
 			// Note: don't include ttl because it counts down dynamically - everything else can be used
 			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname'].". serial:".$da0['serial']." refresh:".$da0['refresh']." retry:".$da0['retry']." expire:".$da0['expire']." min-ttl:".$da0['minimum-ttl'];
 			echoIfVerbose("$soa \n");
-			if (strcmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
+			if (strcasecmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
 				$result = "DNS";
 				$message .= "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" To \"$soa\"\n";
 			}
@@ -155,6 +155,8 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 				else {
 					$keyFieldString = $dmx[$keyField];
 				}
+				// Force lowercase because DNS records don't care about case
+				$keyFieldString = strtolower($keyFieldString);
 				if (!in_array($keyFieldString, $mx)) {
 					$mx[] = $keyFieldString;
 				}

@@ -48,6 +48,7 @@ define('MAX_GSB_DEPTH', 2);							// "legacy" variable
 define('GSB_DEPTH_MAX', 2);							// overall maximum GSB spidering depth
 define('GSB_DEPTH_1', 1);							// GSB spider only the links off the main page
 define('GSB_DEPTH_2', 2);							// GSB the main page, links from it, and links from those pages
+define('GSB_PAGE_SIZE_LIMIT', 500000);					// largest page size we will check - due to DOM bugs
 
 // Paths
 // Set an absolute path to the APP directory
@@ -68,6 +69,7 @@ define('LOG_EXT', ".log");						// extension for log files
 define('PID_EXT', ".pid");						// extension for process-id files
 define('HEARTBEAT_EXT', ".next");				// extension for heartbeat files
 define('HEARTBEAT_LATE',60);					// number of seconds before heartbeat is "late"
+define('HEARTBEAT_BLUE',1800);					// number of seconds before late heartbeat causes code blue (30 minutes)
 
 // cybersparkd.php items
 define('PID_FILESIZE_LIMIT', 100);			// max length of a PID file

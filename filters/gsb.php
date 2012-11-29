@@ -45,7 +45,7 @@ function gsbScan($content, $args, $privateStore) {
 		$checkLink = domainAndSubdirs($link);
 		echoIfVerbose("GSB checking $checkLink\n");	
 		try {
-			$httpResult = httpGet($args['gsbserver'] . "/gsb-check?url=$checkLink", "", 15);
+			$httpResult = httpGet($args['gsbserver'] . "/gsb-check?url=$checkLink", $args['useragent'], 15);
 			$numberOfChecks++;
 			if (isset($httpResult['code']) && ($httpResult['code'] == 200)) {
 				$body = $httpResult['body'];
@@ -236,7 +236,7 @@ function gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedU
 		// Add to array of "already checked" links
 		$checkedDomains[] = $das;
 		
-		$httpResult = httpGet($args['gsbserver'] . "/gsb-check?url=$das", "", 15);
+		$httpResult = httpGet($args['gsbserver'] . "/gsb-check?url=$das", $args['useragent'], 15);
 		$numberOfChecks++;
 		if (isset($httpResult['code']) && ($httpResult['code'] == 200)) {
 			$body = $httpResult['body'];
@@ -292,7 +292,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 	$link = "";						// for proper scope
 	try {
 		// Get the contents of the page
-		$httpResult = httpGet($url, "", 15);
+		$httpResult = httpGet($url, $args['useragent'], 15);
 		$numberOfChecks++;
 		if (isset($httpResult['code']) && ($httpResult['code'] == 200)) {
 			$body = $httpResult['body'];
@@ -341,7 +341,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 					// into 100% CPU loop sometimes), so we will not check overly-large pages.
 					$bcs = breadcrumbsString($howToGetThere, $das);
 					echoIfVerbose ("Page ($url) is too large (".strlen($body).") to check programmatically. How we got there: $bcs\n");
-					$message .= "Page ($url) is really to large (".strlen($body).") to check programmatically. You might want to check manually. How we got there: $bcs\n";
+					$message .= "Page ($url) is really too large (".strlen($body).") to check programmatically. You might want to check manually. How we got there: $bcs\n";
 			}
 		}
 	}

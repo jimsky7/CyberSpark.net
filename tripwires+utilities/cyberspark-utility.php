@@ -1,6 +1,8 @@
 <?php
 
-/** Version 4.02 on 20110402 **/
+/** Version 4.02 on 20110402   **/
+/** Version 4.03 on 2011-09-15 **/
+/** Version 4.05 on 2012-08-15 **/
 
 /**
 	Spider the site starting in a base directory.
@@ -20,6 +22,7 @@
 	  It's best to start with 1 or 2 so as not to overburden your server.
 	/report=n&base=xxxxxxx
 	  Prepares a report using "xxxxxxx" as the base subdirectory and a depth of "n"
+	  the base is relative to the directory containing this file and must start and end with '/'
 	/exclude=aaa,bbb,ccc
 	/except=aaa,bbb,ccc
 	/ignore=aaa,bbb,ccc
@@ -36,6 +39,10 @@
 	/remove=n&base=xxxxxxx
 	/repair=n&base=xxxxxxx
 	  Performs a repair using "xxxxxxx" as the base subdirectory and a depth of "n"
+	/disk=dev
+	  Reports space on specific device/volume   "/dev"  whatever you specify
+	/disk=none
+	  Turns off the disk capacity and space checking.  (actually, just makes it fail)
 
 	Create a directory /cyberspark within the docroot of the web server
 	Make this directory world-writeable (chmod 777    or chmod a+rwx    )
@@ -56,8 +63,6 @@ DEFINE('SPIDERFILE',"spiderlength.ds");		// name of file to which data will be m
 DEFINE('STOREFILE', "datastore.ds");		// name of file to which data will be marshalled
 DEFINE('LOGFILE', "cyberspark.log");		// verbose log file
 DEFINE('REMOVEME',"removeme.txt");			
-DEFINE('DISKWARNING', 85);					// issue a warning when this percent of filesystem is full
-DEFINE('DISKCRITICAL', 95);					// issue a CRITICAL warning when this percent of filesystem is full
 
 $depth      = 0;			// current spidering depth (recursive calls)
 $maxDepth   = 50;			// number of levels 'deep' to spider
@@ -72,6 +77,7 @@ $totalFiles = 0;			// number of files seen
 $phpFiles   = 0;			// number of PHP files examined
 $path       = '';
 $base       = '';
+$fsPath     = '/';			// default filesystem base for figuring disk size
 $removeMe   = '';			// the string we're searching for - usually is injected PHP code
 $repair     = false;
 $report     = false;
@@ -82,12 +88,23 @@ $logEntry	= '';			// this will be written to a log file
 $exclude    = array();		// strings that cause file/directory to be ignored
 							// PHP executables will still be examined
 $wordpress  = array('w3tc','cache');	// directories or files PRESENCE to ignore for WordPress
+$myName     = '';
 $checkSignatures = array (
 	'eval('=>'[PHP/javascript]',
 	'gzinflate('=>'[PHP]',
 	'base64_decode'=>'[PHP]',
 	'document.write'=>'[javascript]',
-	'unescape'=>'[javascript]'
+	'unescape'=>'[javascript]',
+// Some specific injections that we've seen recently
+	'geb7'            =>'[ALERT:javascript (geb7) <span style="color:red;">Probably compromised</span>]',
+	'qbaa6fb797447'   =>'[ALERT:javascript (qbaa6fb797447) <span style="color:red;">Probably compromised</span>]',
+	'alisoe'          =>'[ALERT:javascript injection (alisoe) <span style="color:red;">Probably compromised</span>]',
+	'lisisa'          =>'[ALERT:javascript injection (lisisa) <span style="color:red;">Probably compromised</span>]',
+	'12thplayer'      =>'[ALERT:javascript injection (12thplayer) <span style="color:red;">Probably compromised</span>]',
+	'pentestmonkey'   =>'[ALERT:PHP-reverse-shell? (pentestmonkey) <span style="color:red;">Probably compromised</span>]',
+	'_0xdc8d'         =>'[ALERT:javascript injection (_0xdc8d) <span style="color:red;">Probably compromised</span>]',
+	'exploit-db.com'  =>'[ALERT:PHP-reverse-shell? (exploit-db.com) <span style="color:red;">Probably compromised</span>]',
+	'$__name'         =>'[ALERT:javascript ($__name) <span style="color:red;">Probably compromised</span>]',
 );
 
 // Always exclude self from checking for malstrings
@@ -172,6 +189,16 @@ function echoAndLog($string) {
 		echo $string."<br>\n";
 		$logEntry .= $string."\r\n";
 	}	
+}
+
+function ifGetOrPost($name) {
+	if (isset($_GET[$name])) {
+		return $_GET[$name];
+	}
+	if (isset($_POST[$name])) {
+		return $_POST[$name];
+	}
+	return null;
 }
 
 function paramValue($paramName) {
@@ -348,6 +375,7 @@ function spiderThis($baseDirectory, $maxDepth)
     global $logEntry;
     global $exclude;
     global $checkSignatures;
+    global $myName;		// "just the filename" of this script
     
 	// Be sure we're working with a directory
 	if (is_dir($baseDirectory) && ($maxDepth>$depth)) {
@@ -415,7 +443,7 @@ function spiderThis($baseDirectory, $maxDepth)
 						|| (strripos($thisEntry, ".htm") == ($len-4))
 						|| (strripos($thisEntry, ".html") == ($len-5))
 						|| (strripos($thisEntry, ".js") == ($len-3))
-						)) {
+						) and (stripos($thisEntry, '/'.$myName)===false)) {
 							$thisFile = fopen($thisEntry,"r");
 							$thisContents = fread($thisFile, $maxFileSize);
 							fclose($thisFile);
@@ -449,9 +477,6 @@ function spiderThis($baseDirectory, $maxDepth)
 }  
 
 
-
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -459,19 +484,32 @@ function spiderThis($baseDirectory, $maxDepth)
 
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 $path = substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
+$myName = $_SERVER['SCRIPT_FILENAME'];
+$myName = substr($myName, strrpos($myName, '/')+1);
 
+// 'disk=none' or 'disk=filesystembase
+if (($disk = ifGetOrPost('disk')) != null) {
+	if (strcasecmp($disk, 'none') == 0) {
+		$fsPath = null;				// causes silent fail
+	}
+	else {
+		$fsPath = '/' . $disk;		// note ADD LEADING '/' to help find mount point because '/' can't be in the URL !
+	}
+}
 // Disk/filesystem space used
 $diskTotalSpace = 0;
 $diskUsedSpace = 0;
-if ( function_exists('disk_total_space')) {
-	$diskTotalSpace = disk_total_space("/");
-}
-if ( function_exists('disk_free_space')) {
-	$diskUsedSpace = disk_free_space("/");
-}
-if ($diskTotalSpace > 0) {
-	// Note: $diskPercentUsed is only defined if total space > 0
-	$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+if (($fsPath != null) && is_dir($fsPath)) {
+	if (function_exists('disk_total_space')) {
+		$diskTotalSpace = disk_total_space($fsPath);
+	}
+	if (function_exists('disk_free_space')) {
+		$diskUsedSpace = $diskTotalSpace - disk_free_space($fsPath);
+	}
+	if ($diskTotalSpace > 0) {
+		// Note: $diskPercentUsed is only defined if total space > 0
+		$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+	}
 }
 
 header('Content-Type: text/html; charset=UTF-8');
@@ -512,6 +550,11 @@ if (isset($_GET['help']) || isset($_POST['help'])) {
 	  <p style='margin-left:30px;width:600px;'>If base=xxxxxxx is specified then the report starts at
 	  directory /xxxxxxx with respect to where the CyberSpark PHP is located
 	  </p>
+	/disk=dev       <br>
+	/disk=none      <br>
+	  <p style='margin-left:30px;width:570px;'>Reports disk (filesystem) usage and capacity if a 'dev' is specified
+	  or Skips disk (filesystem) capacity reporting if =none is specified.  
+	  Common usages are disk=dev/sda or disk=home/username</p>
 	</body>\n</html>\n";
 	return;
 }
@@ -574,6 +617,7 @@ if ($report or $repair) {
 	<p style='margin-left:30px;width:570px;'>
 	CyberSpark local agent report<br>
 	Base directory is $fullPath <br>
+	My name is $myName <br>
 	Spidering depth will be $maxDepth <br>
 	Any changes reported below are 'since the last time this script was run.'<br>
 	Do not stop this script or leave this page until it finishes.
@@ -659,16 +703,7 @@ if ($report) {
 	
 	// Report on how full the disk/filesystem is
 	if (isset($diskPercentUsed)) {
-		if ($diskPercentUsed > DISKCRITICAL) {
-		;
-			echoAndLog (sprintf('Disk critical: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
-		else if ($diskPercentUsed > DISKWARNING) {
-			echoAndLog (sprintf('Disk warning: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
-		else {
-			echoAndLog (sprintf('Disk: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
+		echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "%s"', $diskPercentUsed, $diskTotalSpace/1000000000, $fsPath));
 	}
 }
 

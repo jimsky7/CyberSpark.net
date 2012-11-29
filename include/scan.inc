@@ -1,7 +1,7 @@
 <?php
 	/**
 		CyberSpark.net monitoring-alerting system
-		perform one round of scanning (all URLs once)
+		perform one round of scannisetFilterArgsng (all URLs once)
 	*/
 
 include_once "include/classdefs.inc";
@@ -19,6 +19,10 @@ function scan($properties, $filters, &$store) {
 		$conditions			= $urls[$urlNumber]->conditions;
 		$emails 			= $urls[$urlNumber]->emails;
 		
+		// Note that a very few servers cannot handle CAPS in FQDNs, so purify them now.
+		// (This only lowercases the FQDN and not the rest of the URL.)
+		$url = lowercaseFQDN($url);
+
 		echoIfVerbose("Scanning   " . $url . "\n");
 		echoIfVerbose("Conditions " . $conditions . "\n");
 		echoIfVerbose("Emails     " . $emails . "\n");
@@ -188,6 +192,7 @@ function setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime
 	$filterArgs['time']			= $properties['time'];
 	$filterArgs['load']			= $properties['load'];
 	$filterArgs['disk']			= $properties['disk'];
+	$filterArgs['useragent']    = $properties['useragent'];	// because some filter do further GET or POST
 	return $filterArgs;
 }
 

@@ -51,7 +51,8 @@ function cyberscanScan($content, $args, $privateStore) {
 		"Changed size"=>'changedsize',
 		"Files gone"=>'filesgone',
 		"Disk:"=>'disk',
-		"Load:"=>'load'
+		"Load:"=>'load',
+		"Alert:"=>'alert'
 	);
 	$first = true;
 	foreach ($phrases as $phrase=>$key) {
@@ -111,6 +112,12 @@ function cyberscanScan($content, $args, $privateStore) {
 								$first = false;
 							}
 //						}
+					}
+					else if ($key == 'alert') {
+						$s = condenseBlanks($s);
+						$result = "Critical";
+						$message .= ($first?"\n":"").INDENT."Alert: ($s)\n";
+						$first = false;
 					}
 					else {
 						// Most results are just watched for changes

@@ -1,6 +1,7 @@
 <?php
 
-/** Version 4.02 on 20110402 **/
+/** Version 4.02 on 20110402   **/
+/** Version 4.03 on 2011-09-15 **/
 
 /**
 	Spider the site starting in a base directory.
@@ -56,8 +57,6 @@ DEFINE('SPIDERFILE',"spiderlength.ds");		// name of file to which data will be m
 DEFINE('STOREFILE', "datastore.ds");		// name of file to which data will be marshalled
 DEFINE('LOGFILE', "cyberspark.log");		// verbose log file
 DEFINE('REMOVEME',"removeme.txt");			
-DEFINE('DISKWARNING', 85);					// issue a warning when this percent of filesystem is full
-DEFINE('DISKCRITICAL', 95);					// issue a CRITICAL warning when this percent of filesystem is full
 
 $depth      = 0;			// current spidering depth (recursive calls)
 $maxDepth   = 50;			// number of levels 'deep' to spider
@@ -72,6 +71,7 @@ $totalFiles = 0;			// number of files seen
 $phpFiles   = 0;			// number of PHP files examined
 $path       = '';
 $base       = '';
+$fsPath     = '/';			// default filesystem base for figuring disk size
 $removeMe   = '';			// the string we're searching for - usually is injected PHP code
 $repair     = false;
 $report     = false;
@@ -193,6 +193,16 @@ function echoAndLog($string) {
 		echo $string."<br>\n";
 		$logEntry .= $string."\r\n";
 	}	
+}
+
+function ifGetOrPost($name) {
+	if (isset($_GET[$name])) {
+		return $_GET[$name];
+	}
+	if (isset($_POST[$name])) {
+		return $_POST[$name];
+	}
+	return null;
 }
 
 function paramValue($paramName) {
@@ -461,18 +471,29 @@ function spiderThis($baseDirectory, $maxDepth)
 	$targ = strrpos(__FILE__, chr(ord('/')));
 	$path = substr(__FILE__, 0, $targ+1);	// including the last 
 
+// 'disk=none' or 'disk=filesystembase
+if (($disk = ifGetOrPost('disk')) != null) {
+	if (strcasecmp($disk, 'none') == 0) {
+		$fsPath = null;				// causes silent fail
+	}
+	else {
+		$fsPath = '/' . $disk;		// note ADD LEADING '/' to help find mount point because '/' can't be in the URL !
+	}
+}
 // Disk/filesystem space used
 $diskTotalSpace = 0;
 $diskUsedSpace = 0;
-if ( function_exists('disk_total_space')) {
-	$diskTotalSpace = disk_total_space("/");
-}
-if ( function_exists('disk_free_space')) {
-	$diskUsedSpace = disk_free_space("/");
-}
-if ($diskTotalSpace > 0) {
-	// Note: $diskPercentUsed is only defined if total space > 0
-	$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+if (($fsPath != null) && is_dir($fsPath)) {
+	if (function_exists('disk_total_space')) {
+		$diskTotalSpace = disk_total_space($fsPath);
+	}
+	if (function_exists('disk_free_space')) {
+		$diskUsedSpace = $diskTotalSpace - disk_free_space($fsPath);
+	}
+	if ($diskTotalSpace > 0) {
+		// Note: $diskPercentUsed is only defined if total space > 0
+		$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+	}
 }
 
 header('Content-Type: text/html; charset=UTF-8');
@@ -647,16 +668,7 @@ if ($report) {
 	
 	// Report on how full the disk/filesystem is
 	if (isset($diskPercentUsed)) {
-		if ($diskPercentUsed > DISKCRITICAL) {
-		;
-			echoAndLog (sprintf('Disk critical: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
-		else if ($diskPercentUsed > DISKWARNING) {
-			echoAndLog (sprintf('Disk warning: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
-		else {
-			echoAndLog (sprintf('Disk: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
+		echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "%s"', $diskPercentUsed, $diskTotalSpace/1000000000, $fsPath));
 	}
 }
 

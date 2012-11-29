@@ -1,6 +1,6 @@
 <?php
 
-/** Version 4.02 on 20110402 **/
+/** Version 4.06 on 2012-09-30 **/
 
 /**
 	Spider the site starting in a base directory.
@@ -20,13 +20,19 @@
 	  It's best to start with 1 or 2 so as not to overburden your server.
 	/report=n&base=xxxxxxx
 	  Prepares a report using "xxxxxxx" as the base subdirectory and a depth of "n"
+	  the base is relative to the directory containing this file and must start and end with '/'
 	/exclude=aaa,bbb,ccc
 	/except=aaa,bbb,ccc
 	/ignore=aaa,bbb,ccc
 	  Causes file(s) or directory(ies) containing strings 'aaa' or 'bbb' or 'ccc' to be ignored
 	/wordpress
 	  Causes certain subdirectories/files to be ignored - good for wordpress installations
-	  
+	/disk=dev
+	  Reports space on specific device/volume   "/dev"  whatever you specify
+	/disk=none
+	  Turns off the disk capacity and space checking.  (actually, just makes it fail)
+	/cpu=n
+	  Artificially waits 'n' seconds of wait time to measure overall CPU load 
 	REPAIR CAPABILITIES ARE NOT PRESENT IN THIS SCRIPT.
 	
 	Create a directory /cyberspark within the docroot of the web server
@@ -61,6 +67,7 @@ $totalFiles = 0;			// number of files seen
 $phpFiles   = 0;			// number of PHP files examined
 $path       = '';
 $base       = '';
+$fsPath     = '/';			// default filesystem base for figuring disk size
 $report     = false;
 $views      = 0;
 $maxFileSize= 2000000;		// maximum file size that we will open and inspect
@@ -69,6 +76,8 @@ $logEntry	= '';			// this will be written to a log file
 $exclude    = array();		// strings that cause file/directory to be ignored
 							// PHP executables will still be examined
 $wordpress  = array('w3tc','cache');	// directories or files PRESENCE to ignore for WordPress
+$myName     = '';
+
 $checkSignatures = array (
 	'eval('=>'[PHP/javascript]',
 	'gzinflate('=>'[PHP]',
@@ -76,10 +85,20 @@ $checkSignatures = array (
 	'document.write'=>'[javascript]',
 	'unescape'=>'[javascript]',
 // Some specific injections that we've seen recently
-	'geb7'    =>'[javascript]',
-	'qbaa6fb797447'=>'[javascript]'
+	'geb7'            =>'[ALERT:javascript (geb7) <span style="color:red;">Probably compromised</span>]',
+	'qbaa6fb797447'   =>'[ALERT:javascript (qbaa6fb797447) <span style="color:red;">Probably compromised</span>]',
+	'alisoe'          =>'[ALERT:javascript injection (alisoe) <span style="color:red;">Probably compromised</span>]',
+	'lisisa'          =>'[ALERT:javascript injection (lisisa) <span style="color:red;">Probably compromised</span>]',
+	'12thplayer'      =>'[ALERT:javascript injection (12thplayer) <span style="color:red;">Probably compromised</span>]',
+	'pentestmonkey'   =>'[ALERT:PHP-reverse-shell? (pentestmonkey) <span style="color:red;">Probably compromised</span>]',
+	'_0xdc8d'         =>'[ALERT:javascript injection (_0xdc8d) <span style="color:red;">Probably compromised</span>]',
+	'exploit-db.com'  =>'[ALERT:PHP-reverse-shell? (exploit-db.com) <span style="color:red;">Probably compromised</span>]',
+	'$__name'         =>'[ALERT:javascript ($__name) <span style="color:red;">Probably compromised</span>]',
 );
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// readData()
+//// Read in the data from the last run. Contains file lengths, script lengths and other info.
 function readData($path, $base) {
 	global $fileHandle;
 	global $status;
@@ -107,6 +126,9 @@ function readData($path, $base) {
 	}
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// writeData()
+//// Save the data so it can be compared on the next run. File lengths, script lengths, etc.
 function writeData($path, $base) {
 	global $results;
 	global $fileHandle;
@@ -124,21 +146,33 @@ function writeData($path, $base) {
 		fwrite($fileHandle, serialize($results));
 		fclose($fileHandle);
 	}
-	if($fileHandle = fopen("$path".CYBERDIR.$cleanBase.STOREFILE,"w+")) {
+	if($fileHandle = fopen($path.CYBERDIR.$cleanBase.STOREFILE,'w+')) {
 		rewind($fileHandle);
 		fwrite($fileHandle, serialize($store));
 		fclose($fileHandle);
 	}
 }
 
-function writeLog($message) {
-	if($fileHandle = fopen("$path".CYBERDIR.$cleanBase.LOGFILE,"a")) {
-		rewind($fileHandle);
-		fwrite($fileHandle, $message);
-		fclose($fileHandle);
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// writeLog()
+//// Write an entry to the log file. This is called once at the end of run.
+function writeLog($path, $base, $message) {
+	if (isset($base) && (strlen($base)>0)) {
+		$cleanBase = str_replace('/','-',$base);
+	}
+	else {
+		$cleanBase = '';
+	}
+	if($logHandle = fopen($path.CYBERDIR.$cleanBase.LOGFILE,'a')) {
+		rewind($logHandle);
+		fwrite($logHandle, $message);
+		fclose($logHandle);
 	}
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// echoAndLog()
+//// Put a string on stdout as well as adding it to the (possible) log entry.
 function echoAndLog($string) {
 	global $logEntry;
 	if (isset($string)) {
@@ -147,6 +181,23 @@ function echoAndLog($string) {
 	}	
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// ifGetOrPost()
+//// Looks for a parameter (in $_GET) or input (in $_POST) by name.
+//// Returns 'null' if none found.
+function ifGetOrPost($name) {
+	if (isset($_GET[$name])) {
+		return $_GET[$name];
+	}
+	if (isset($_POST[$name])) {
+		return $_POST[$name];
+	}
+	return null;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// paramValue()
+//// Gets the integer value of a GET or POST parameter or input.
 function paramValue($paramName) {
 	if (isset($_GET[$paramName]))  {
 		try {
@@ -168,6 +219,9 @@ function paramValue($paramName) {
 	return 0;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// paramString()
+//// Gets the string value of a GET or POST parameter or input.
 function paramString($paramName) {
 	if (isset($_GET[$paramName]))  {
 		return $_GET[$paramName];
@@ -179,6 +233,9 @@ function paramString($paramName) {
 	return "";
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// nValue()
+//// Gets the value of the 'report=n' parameter. (Spidering depth)
 function nValue() {
 	// Several options allow "=n" to specify the spidering depth.  Such as:
 	//    cyberspark-utility.php?report=3
@@ -193,6 +250,10 @@ function nValue() {
 	}
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// stripos_array()
+//// Searches an array of strings to see if a particular string is present.
+//// Returns only 'true' or 'false'
 function stripos_array($haystack, $needleArray) {
 	foreach ($needleArray as $needle) {
 		if (stripos($haystack, $needle) !== false) {
@@ -202,6 +263,9 @@ function stripos_array($haystack, $needleArray) {
 	return false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//// spiderThis()
+//// Performs the main spidering function.
 function spiderThis($baseDirectory, $maxDepth)
 {
     global $depth;		// current depth of spidering
@@ -216,6 +280,7 @@ function spiderThis($baseDirectory, $maxDepth)
     global $logEntry;
     global $exclude;
     global $checkSignatures;
+    global $myName;		// "just the filename" of this script
     
 	// Be sure we're working with a directory
 	if (is_dir($baseDirectory) && ($maxDepth>$depth)) {
@@ -223,6 +288,11 @@ function spiderThis($baseDirectory, $maxDepth)
 			$depth++;
 			$dirContents = dir($baseDirectory);
 			// Run through this directory
+			// WARNING: Under circumstances I have been unable to understand, sometimes the
+			//   'read()' below just fails and the PHP script stops executing. No exception
+			//   is caught here. The script just dies. It may be related to directories 
+			//   containing a zero-length file, or perhaps some filesystem corruption. I have
+			//   not really found the cause, nor a way to avoid it.  [SKY 2012-03-02]
 			while (($entry = $dirContents->read()) !== false) {
 				// Get an entry from the directory
 				$thisEntry = $baseDirectory.$entry;
@@ -266,7 +336,7 @@ function spiderThis($baseDirectory, $maxDepth)
 						}
 						else {
 							$len = strlen($thisEntry);
-							if(($len > 3) and !(strripos($thisEntry, "log") == ($len-3)) and !(strripos($thisEntry, SPIDERFILE) == ($len-strlen(SPIDERFILE))) and !(strripos($thisEntry, DATAFILE) == ($len-strlen(DATAFILE)))) {
+							if(($len > 3) and !(strripos($thisEntry, "log") == ($len-3)) and !(strripos($thisEntry, SPIDERFILE) == ($len-strlen(SPIDERFILE))) and !(strripos($thisEntry, STOREFILE) == ($len-strlen(STOREFILE)))) {
 								// Note: Ignore files ending in "log"
 								// Note: Ignore files ending with the name of our data file
 								// Otherwise, note a changed size
@@ -277,13 +347,14 @@ function spiderThis($baseDirectory, $maxDepth)
 					}
 					
 					// And scan PHP/HTML/HTM/JS files for eval and gzinflate and base64
+					// Note: skips self ($myName)
 					try {
 						$len = strlen($thisEntry);
 						if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
 						|| (strripos($thisEntry, ".htm") == ($len-4))
 						|| (strripos($thisEntry, ".html") == ($len-5))
 						|| (strripos($thisEntry, ".js") == ($len-3))
-						)) {
+						) and (stripos($thisEntry, '/'.$myName)===false)) {
 							$thisFile = fopen($thisEntry,"r");
 							$thisContents = fread($thisFile, $maxFileSize);
 							fclose($thisFile);
@@ -327,19 +398,56 @@ function spiderThis($baseDirectory, $maxDepth)
 
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 $path = substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
+$myName = $_SERVER['SCRIPT_FILENAME'];
+$myName = substr($myName, strrpos($myName, '/')+1);
 
+// Set up to calculate CPU utilization
+$cpuStat = ifGetOrPost('cpu');
+if (!isset($cpuStat) || $cpuStat == null || $cpuStat == 0) {
+	unset($cpuStat);
+}
+if (isset($cpuStat)) {
+	$statFile = file_get_contents('/proc/stat');
+	try{
+		$statLines = explode("\n", $statFile);
+		foreach ($statLines as $statLine) {
+			$stat = explode(' ', $statLine);
+			if (strcasecmp('cpu', $stat[0]) == 0) {
+				while ($stat[1]=='') {
+					array_splice($stat, 1, 1);
+				}
+				$cpu = $stat[1];
+			}
+		}
+	}
+	catch (Exception $slx) {
+	}
+	$cpuStart = time();		// this is seconds
+}
+
+// 'disk=none' or 'disk=filesystembase
+if (($disk = ifGetOrPost('disk')) != null) {
+	if (strcasecmp($disk, 'none') == 0) {
+		$fsPath = null;				// causes silent fail
+	}
+	else {
+		$fsPath = '/' . $disk;		// note ADD LEADING '/' to help find mount point because '/' can't be in the URL !
+	}
+}
 // Disk/filesystem space used
 $diskTotalSpace = 0;
 $diskUsedSpace = 0;
-if ( function_exists('disk_total_space')) {
-	$diskTotalSpace = disk_total_space("/");
-}
-if ( function_exists('disk_free_space')) {
-	$diskUsedSpace = disk_free_space("/");
-}
-if ($diskTotalSpace > 0) {
-	// Note: $diskPercentUsed is only defined if total space > 0
-	$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+if (($fsPath != null) && is_dir($fsPath)) {
+	if (function_exists('disk_total_space')) {
+		$diskTotalSpace = disk_total_space($fsPath);
+	}
+	if (function_exists('disk_free_space')) {
+		$diskUsedSpace = $diskTotalSpace - disk_free_space($fsPath);
+	}
+	if ($diskTotalSpace > 0) {
+		// Note: $diskPercentUsed is only defined if total space > 0
+		$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+	}
 }
 
 header('Content-Type: text/html; charset=UTF-8');
@@ -368,6 +476,11 @@ if (isset($_GET['help']) || isset($_POST['help'])) {
 	/except=aaa,bbb,ccc      <br>
 	  <p style='margin-left:30px;width:570px;'>Excludes/ignores directories and files
 	  containing any of the specified strings ('aaa' 'bbb' 'ccc' separated by commas).  </p>
+	/disk=dev       <br>
+	/disk=none      <br>
+	  <p style='margin-left:30px;width:570px;'>Reports disk (filesystem) usage and capacity if a 'dev' is specified
+	  or Skips disk (filesystem) capacity reporting if =none is specified.  
+	  Common usages are disk=dev/sda or disk=home/username</p>
 	</body>\n</html>\n";
 	return;
 }
@@ -424,6 +537,7 @@ if ($report) {
 	<p style='margin-left:30px;width:570px;'>
 	CyberSpark local agent report<br>
 	Base directory is $fullPath <br>
+	My name is $myName <br>
 	Spidering depth will be $maxDepth <br>
 	Any changes reported below are 'since the last time this script was run.'<br>
 	Do not stop this script or leave this page until it finishes.
@@ -488,6 +602,27 @@ if ($report) {
 $store['phpfiles'] = $phpFiles;
 $store['suspectfiles'] = $newSuspect;
 
+// Calculate CPU utilization
+if (isset($cpuStat)) {
+	sleep($cpuStat);		// ensure sleep at least as long as requested
+	$statFile = file_get_contents('/proc/stat');
+	try{
+		$statLines = explode("\n", $statFile);
+		foreach ($statLines as $statLine) {
+			$stat = explode(' ', $statLine);
+			if (strcasecmp('cpu', $stat[0]) == 0) {
+				while ($stat[1]=='') {
+					array_splice($stat, 1, 1);
+				}
+				$cpuSeconds = (time() - $cpuStart);
+				$cpu = ($stat[1] - $cpu)/$cpuSeconds;
+			}
+		}
+	}
+	catch (Exception $slx) {
+	}
+}
+
 //  /report
 if ($report) {
 	echoAndLog ("New files:     $newFiles");
@@ -497,20 +632,24 @@ if ($report) {
 	// Report on system load
 	$loads = sys_getloadavg();
 	echoAndLog ("Load:          ".$loads[0]." ".$loads[1]." ".$loads[2]);
-
+	if (isset($cpuStat)) {
+		echoAndLog ("CPU:           ".(int)$cpu.'%');
+	}
 	// Report on how full the disk/filesystem is
 	if (isset($diskPercentUsed)) {
-		echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "/"', $diskPercentUsed, $diskTotalSpace/1000000000));
+		echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "%s"', $diskPercentUsed, $diskTotalSpace/1000000000, $fsPath));
 	}
 }
 
 // closing the HTML - - - - - - - - - - - -
-echo "</div>\r\n</body>\r\n</html>\r\n";
+if ($report) {
+	echo "</div>\r\n</body>\r\n</html>\r\n";
+}
 $logEntry .= "\r\n";
 
 if ($report) {
 	writeData($path, $base);
-	writeLog ($logEntry);
+	writeLog ($path, $base, $logEntry);
 }
 
 ?>

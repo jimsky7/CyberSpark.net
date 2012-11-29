@@ -1,7 +1,8 @@
 #!/usr/bin/php -q
 <?php
 
-/** Version 4.02 on 20110402 **/
+/** Version 4.02 on 20110402   **/
+/** Version 4.03 on 2011-09-15 **/
 
 /**
 	Spider the site starting in a base directory.
@@ -37,7 +38,7 @@
 	/remove=n&base=xxxxxxx
 	/repair=n&base=xxxxxxx
 	  Performs a repair using "xxxxxxx" as the base subdirectory and a depth of "n"
-
+	  
 	Create a directory /cyberspark within the docroot of the web server
 	Make this directory world-writeable (chmod 777    or chmod a+rwx    )
 	Within your Apache (or other) web server configuration, add:
@@ -57,8 +58,6 @@ DEFINE('SPIDERFILE',"spiderlength.ds");		// name of file to which data will be m
 DEFINE('STOREFILE', "datastore.ds");		// name of file to which data will be marshalled
 DEFINE('LOGFILE', "cyberspark.log");		// verbose log file
 DEFINE('REMOVEME',"removeme.txt");			
-DEFINE('DISKWARNING', 85);					// issue a warning when this percent of filesystem is full
-DEFINE('DISKCRITICAL', 95);					// issue a CRITICAL warning when this percent of filesystem is full
 
 $depth      = 0;			// current spidering depth (recursive calls)
 $maxDepth   = 50;			// number of levels 'deep' to spider
@@ -73,6 +72,7 @@ $totalFiles = 0;			// number of files seen
 $phpFiles   = 0;			// number of PHP files examined
 $path       = '';
 $base       = '';
+$fsPath     = '/';			// default filesystem base for figuring disk size
 $removeMe   = '';			// the string we're searching for - usually is injected PHP code
 $repair     = false;
 $report     = false;
@@ -83,12 +83,18 @@ $logEntry	= '';			// this will be written to a log file
 $exclude    = array();		// strings that cause file/directory to be ignored
 							// PHP executables will still be examined
 $wordpress  = array('w3tc','cache');	// directories or files PRESENCE to ignore for WordPress
+$myName     = '';
 $checkSignatures = array (
 	'eval('=>'[PHP/javascript]',
 	'gzinflate('=>'[PHP]',
 	'base64_decode'=>'[PHP]',
 	'document.write'=>'[javascript]',
-	'unescape'=>'[javascript]'
+	'unescape'=>'[javascript]',
+// Some specific injections that we've seen recently
+	'geb7'         =>'[ALERT:javascript]',
+	'qbaa6fb797447'=>'[ALERT:javascript]',
+	'alisoed.com'  =>'[ALERT:javascript injection]',
+	'pentestmonkey'=>'[ALERT:PHP-reverse-shell?]'
 );
 
 function readCode($path) {
@@ -291,6 +297,7 @@ function spiderThis($baseDirectory, $maxDepth)
     global $logEntry;
     global $exclude;
     global $checkSignatures;
+    global $myName;		// "just the filename" of this script
     
 	// Be sure we're working with a directory
 	if (is_dir($baseDirectory) && ($maxDepth>$depth)) {
@@ -358,7 +365,7 @@ function spiderThis($baseDirectory, $maxDepth)
 						|| (strripos($thisEntry, ".htm") == ($len-4))
 						|| (strripos($thisEntry, ".html") == ($len-5))
 						|| (strripos($thisEntry, ".js") == ($len-3))
-						)) {
+						) and (stripos($thisEntry, '/'.$myName)===false)) {
 							$thisFile = fopen($thisEntry,"r");
 							$thisContents = fread($thisFile, $maxFileSize);
 							fclose($thisFile);
@@ -400,15 +407,17 @@ function spiderThis($baseDirectory, $maxDepth)
 
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 $path = substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
+$myName = $_SERVER['SCRIPT_FILENAME'];
+$myName = substr($myName, strrpos($myName, '/')+1);
 
 // Disk/filesystem space used
 $diskTotalSpace = 0;
 $diskUsedSpace = 0;
 if ( function_exists('disk_total_space')) {
-	$diskTotalSpace = disk_total_space("/");
+	$diskTotalSpace = disk_total_space($fsPath);
 }
 if ( function_exists('disk_free_space')) {
-	$diskUsedSpace = disk_free_space("/");
+	$diskUsedSpace = $diskTotalSpace - disk_free_space($fsPath);
 }
 if ($diskTotalSpace > 0) {
 	// Note: $diskPercentUsed is only defined if total space > 0
@@ -577,16 +586,7 @@ if ($report) {
 	
 	// Report on how full the disk/filesystem is
 	if (isset($diskPercentUsed)) {
-		if ($diskPercentUsed > DISKCRITICAL) {
-		;
-			echoAndLog (sprintf('Disk critical: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
-		else if ($diskPercentUsed > DISKWARNING) {
-			echoAndLog (sprintf('Disk warning: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
-		else {
-			echoAndLog (sprintf('Disk: %000d%% used of %000d GB total', $diskPercentUsed, $diskTotalSpace/1000000000));
-		}
+		echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "%s"', $diskPercentUsed, $diskTotalSpace/1000000000, $fsPath));
 	}
 }
 

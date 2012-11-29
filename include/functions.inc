@@ -64,8 +64,9 @@ function condenseBlanks($s) {
 function fqdnOnly($url) {
 	$result = str_replace(" ", "", $url);
 	try {
-		if (strncmp(strtolower($result), "http://", 7) == 0) {
-			$result = substr($result, 7);
+		$i = strpos($result, '://');
+		if ($i > 0) {
+			$result = substr($result, $i+3);
 			// Truncate to remove everything after slash
 			$slashPos = stripos($result, "/");
 			if ($slashPos !== false) {
@@ -82,8 +83,9 @@ function fqdnOnly($url) {
 function domainOnly($url) {
 	$result = str_replace(" ", "", $url);
 	try {
-		if (strncmp(strtolower($result), "http://", 7) == 0) {
-			$result = substr($result, 7);
+		$i = strpos($result, '://');
+		if ($i > 0) {
+			$result = substr($result, $i+3);
 			// Truncate to remove everything after slash
 			$slashPos = stripos($result, "/");
 			if ($slashPos !== false) {
@@ -102,5 +104,32 @@ function domainOnly($url) {
 	return $result;
 }
 
+///////////////////////////////// 
+function lowercaseFQDN($url) {
+	// Convert the FQDN (only) to lower case, leaving the rest of the protocol and URL alone.
+	$result = $url;
+	$candidate = str_replace(" ", "", $url);
+	try {
+		// HTTP://WWW.DOMAIN.COM/abc.php
+		// 01234567890123456789012345678
+		$i = strpos($candidate, '://');							// 4
+		if ($i >= 0) {
+			$j = strpos($candidate, '/', $i+3);					// 21
+			if ($j > 0) {
+				// Terminating '/' found - convert to lowercase, then add the rest of the URL
+				$result =  substr($candidate, 0, $j+1);			// HTTP://WWW.DOMAIN.COM/
+				$result =  strtolower($result);					// http://www.domain.com/
+				$result .= substr($candidate, $j+1);			// http://www.domain.com/abc.php
+			}
+			else {
+				// No terminating '/' so must lowercase everything - it's just a domain
+				$result = strtolower($candidate);
+			}
+		}
+	}
+	catch (Exception $x) {
+	}
+	return $result;	
+}
 
 ?>

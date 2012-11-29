@@ -1,7 +1,7 @@
 <?php
 	/**
 		CyberSpark.net monitoring-alerting system
-		FILTER: gsb2daily
+		FILTER: gsbdaily
 		Checks this page against Google Safe Broswing.
 		This is the advanced "recursive" code.
 	*/
