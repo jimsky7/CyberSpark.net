@@ -99,9 +99,17 @@ function sslScan($content, $args, $privateStore) {
 		//// If got the cert information, look for certain telltales
 		if (stripos($stderrString,'failed')>0 || stripos($stderrString,'problem')>0) {
 			// cURL is reporting a problem directly - return everything it said.
-			// This does NOT include any cert, so we don't update our store.
+			// This does NOT include any cert, so we don't update the store.
 			$result = "Critical";
 			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
+			$message .= INDENT.$stderrString."\n";
+		}
+		else if (stripos($stderrString,'SSL peer certificate or SSH remote key was not OK')>0) {
+			// cURL is reporting a problem directly - return everything it said.
+			// This does NOT include any cert, so we don't update the store.
+			$result = "Critical";
+			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
+			$message .= INDENT."Specifically: The 'SSL peer certificate or SSH remote key was not OK'\n";
 			$message .= INDENT.$stderrString."\n";
 		}
 		else if (stripos($stderrString,'SSL certificate verify ok')>0) {
@@ -114,7 +122,7 @@ function sslScan($content, $args, $privateStore) {
 				if (strcmp($certs, $privateStore[$filterName][$domain][SSL_BASELINE_CERT]) != 0) {
 					// This cert does not match the BASELINE cert!
 					$result = "Critical";
-					$message .= INDENT."The SSL certificate presented by the server doesn't match the previous cert! This is either a serious error or they've update the cert. Check it carefully!\n\n";
+					$message .= INDENT."The SSL certificate presented by the server is valid, but it doesn't match the previous cert! This is either a serious error or they've updated the cert. Check it carefully!\n\n";
 					$message .= INDENT."INTERACTION:\n" .$stderrString."\n\n";
 					$message .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain][SSL_BASELINE_CERT]."\n\n";
 				}
