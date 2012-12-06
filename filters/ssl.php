@@ -69,32 +69,46 @@ function sslScan($content, $args, $privateStore) {
 	try {
 		$stderrString='';
 		//// Get the cert information using cURL (requires PHP 5.3.2 or later)
-		try {
-			// Requires PHP 5.3.x
-			//$g = stream_context_create (array("ssl" => array("capture_peer_cert" => true)));
-			//$r = stream_socket_client("ssl://www.google.com:443", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $g);
-			//$cont = stream_context_get_params($r);
-			//print_r($cont);
-			if ($tf = tmpfile()) { 
-				$ch = curl_init();
-				curl_setopt($ch, CURLOPT_URL, 'https://'.$fqdn);
-				curl_setopt($ch, CURLOPT_STDERR,     $tf);
-				curl_setopt($ch, CURLOPT_CERTINFO,   1);
-				curl_setopt($ch, CURLOPT_VERBOSE,    true);
-				curl_setopt($ch, CURLOPT_HEADER,     false);
-				curl_setopt($ch, CURLOPT_NOBODY,     1);
-				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-				curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-				curl_setopt($ch, CURLOPT_SSLVERSION,     3);
-				$curlResult = curl_exec($ch);
-				curl_errno($ch);
-				fseek($tf, 0); // rewind
-				while(strlen($stderrString.=fread($tf,8192))==8192);
-				fclose($tf);
-				curl_close($ch);
-			}
+		//   Check for version
+		$cv = phpversion();
+		if (version_compare($cv, '5.3.2') < 0) {
+			$result = "Critical";
+			$message .= INDENT."The 'ssl' filter requires PHP version 5.3.2 or later on the CyberSpark server.\n";
+			$message .= INDENT."The version being used is $cv\n";
+			$message .= INDENT."This is a CyberSpark configuration error, NOT an error on the monitored site or URL.\n";
+			$message .= INDENT.$stderrString."\n";
 		}
-		catch (Exception $certx) {
+		else {
+			try {
+				// Requires PHP 5.3.2 or later
+				//$g = stream_context_create (array("ssl" => array("capture_peer_cert" => true)));
+				//$r = stream_socket_client("ssl://www.google.com:443", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $g);
+				//$cont = stream_context_get_params($r);
+				//print_r($cont);
+				if ($tf = tmpfile()) { 
+					$ch = curl_init();
+					curl_setopt($ch, CURLOPT_URL, 'https://'.$fqdn);
+					curl_setopt($ch, CURLOPT_STDERR,     $tf);
+					curl_setopt($ch, CURLOPT_CERTINFO,   1);
+					curl_setopt($ch, CURLOPT_VERBOSE,    true);
+					curl_setopt($ch, CURLOPT_HEADER,     false);
+					curl_setopt($ch, CURLOPT_NOBODY,     1);
+					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+					curl_setopt($ch, CURLOPT_SSLVERSION,     3);
+					$curlResult = curl_exec($ch);
+					curl_errno($ch);
+					fseek($tf, 0); // rewind
+					while(strlen($stderrString.=fread($tf,8192))==8192);
+					fclose($tf);
+					curl_close($ch);
+				}
+			}
+			catch (Exception $certx) {
+				$result = "Critical";
+				$message .= INDENT."The 'ssh' filter got snarled trying to use cURL. Exception:'".$certx->getMessage()."\n";
+				$message .= INDENT.$stderrString."\n";
+			}
 		}
 		//// If got the cert information, look for certain telltales
 		if (stripos($stderrString,'failed')>0 || stripos($stderrString,'problem')>0) {
@@ -109,7 +123,7 @@ function sslScan($content, $args, $privateStore) {
 			// This does NOT include any cert, so we don't update the store.
 			$result = "Critical";
 			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
-			$message .= INDENT."The difficulty may be with the root CA signature.\n";
+			$message .= INDENT."The difficulty might be with the root CA signature.\n";
 			$message .= INDENT.$stderrString."\n";
 		}
 		else if (stripos($stderrString,'SSL certificate verify ok')>0) {
