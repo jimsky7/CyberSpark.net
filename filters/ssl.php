@@ -11,6 +11,14 @@
 			CURLOPT_SSL_VERIFYHOST
 	*/
 
+	/**
+		SPECIAL NOTE for this 'ssl' filter:
+		Must have CA certificates installed in order to check SSL cert validity.
+		Use command line:
+		  aptitude install ca-certificates
+		when setting up CyberSpark monitoring.
+	**/
+	
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
