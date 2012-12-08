@@ -88,11 +88,6 @@ function sslScan($content, $args, $privateStore) {
 		}
 		else {
 			try {
-				// Requires PHP 5.3.2 or later
-				//$g = stream_context_create (array("ssl" => array("capture_peer_cert" => true)));
-				//$r = stream_socket_client("ssl://www.google.com:443", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $g);
-				//$cont = stream_context_get_params($r);
-				//print_r($cont);
 				if ($tf = tmpfile()) { 
 					$ch = curl_init();
 					curl_setopt($ch, CURLOPT_URL, 'https://'.$fqdn);
@@ -104,6 +99,9 @@ function sslScan($content, $args, $privateStore) {
 					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 					curl_setopt($ch, CURLOPT_SSLVERSION,     3);
+					// Reminder you can do this if you need specific additional CA certs
+					// curl_setopt ($ch, CURLOPT_CAINFO, "pathto/cacert.pem");
+					//
 					$curlResult = curl_exec($ch);
 					curl_errno($ch);
 					fseek($tf, 0); // rewind
