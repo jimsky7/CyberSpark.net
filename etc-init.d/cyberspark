@@ -1,6 +1,6 @@
 #! /bin/sh
 
-### CyberSpark.net monitoring services
+### CyberSpark.net monitoring
 # Provides:		cybersparkd
 # Required-Start:    $all
 # Required-Stop:     $all
@@ -15,10 +15,10 @@
 
 set -e
 
-ID="CS9"
+ID="CS8"
 CSPATH="/usr/local/cyberspark"
 INITDPATH="/etc/init.d"
-DESCRIPTION="CyberSpark service"
+DESCRIPTION="CyberSpark daemon"
 
 
 case "$1" in
@@ -26,86 +26,48 @@ case "$1" in
     ## After forced power-off, PID and NEXT files still exist. Try to clean up.
     if test -f "$CSPATH/$ID.pid"
     then
-      PID=`cat $CSPATH/$ID.pid`
+      PID=`cat /usr/local/cyberspark/CS9.pid`
       # see if any process is running with the indicated PID
       RUNNING=`ps -ef | grep $PID`
       case "$RUNNING" in
         *cyberspark*) 
-          echo "$DESCRIPTION is running as process $PID"
+          echo "Cyberspark daemon is running as process $PID"
         ;;
         *) 
-          echo "$DESCRIPTION (process $PID) listed in PID file is not running"
+          echo "Cyberspark daemon (process $PID) listed in PID file is not running"
           echo "The server is probably recovering from a forced power-off"
           echo "Script is removing all PID and NEXT files and will attempt to start Cyberspark"
-          rm $CSPATH/*.pid
-          rm $CSPATH/*.next
+          rm *.pid
+          rm *.next
         ;;
       esac
     fi
-    # If PID file still exists, then warn user to run 'stop' or to delete the files and processes
-    if test -f "$CSPATH/$ID.pid"; then
-      log_daemon_msg "$DESCRIPTION - maybe running already? $CSPATH/$ID.pid exists."
-      log_daemon_msg "$DESCRIPTION - to restart, run 'stop' then 'start' separately."
-      log_end_msg 1
-    fi
-    log_daemon_msg "Starting $DESCRIPTION $ID" "cybersparkd"
-    CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
-    if start-stop-daemon --start --quiet --oknodo --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH" --startas /usr/bin/php -- $CSOPTIONS; then
-      log_end_msg 0
-    else
-      log_end_msg 1
-    fi
-    ;;
+	# If PID file still exists, then warn user to run 'stop' or to delete the files and processes
+	if test -f "$CSPATH/$ID.pid"; then
+	    log_daemon_msg "CyberSpark - maybe running already? $CSPATH/$ID.pid exists."
+	    log_daemon_msg "CyberSpark - to restart, run 'stop' then 'start' separately."
+		log_end_msg 1
+	fi
+	log_daemon_msg "Starting CyberSpark monitoring daemon $ID" "cybersparkd"
+	CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
+	if start-stop-daemon --start --quiet --oknodo --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH" --startas /usr/bin/php -- $CSOPTIONS; then
+	    log_end_msg 0
+	else
+	    log_end_msg 1
+	fi
+	;;
   stop)
-    log_daemon_msg "Stopping $DESCRIPTION $ID" "cybersparkd"
-    CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
-    if start-stop-daemon --stop --quiet --oknodo --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH"; then
-      log_end_msg 0
-    else
-      log_end_msg 1
-    fi
-    ;;
-  status)
-    ## Report status of service.
-    if test -f "$CSPATH/$ID.pid"
-    then
-      PID=`cat $CSPATH/$ID.pid`
-      # see if any process is running with the indicated PID
-      RUNNING=`ps -ef | grep $PID`
-      COUNT=0
-      case "$RUNNING" in
-        *cyberspark*) 
-          echo "$DESCRIPTION is running as process $PID"
-        ;;
-        *) 
-          echo "$DESCRIPTION (process $PID) listed in PID file should be running but is not."
-       ;;
-      esac
-      # look at daemons
-      for F in $CSPATH/$ID-*.pid
-      do
-        PID=`cat $F`
-        RUNNING=`ps -ef | grep $PID`
-        CSNAME=$( echo $F | sed "s|$CSPATH/||" )
-        CSNAME=$( echo $CSNAME | sed "s|.pid||" )
-       case "$RUNNING" in
-          *cyberspark*) 
-            echo "  Daemon $CSNAME is running as process $PID"
-          ;;
-          *) 
-            echo "  Daemon $CSNAME (process $PID) listed in PID file should be running but is not."
-          ;;
-        esac
-      done
-    else
-      echo "$DESCRIPTION is not running. (No PID file found for this service.)"
-      exit 1
-    fi
-    ;;
+	log_daemon_msg "Stopping CyberSpark monitoring daemon $ID" "cybersparkd"
+	CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
+	if start-stop-daemon --stop --quiet --oknodo --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH"; then
+	    log_end_msg 0
+	else
+	    log_end_msg 1
+	fi
+	;;
   *)
-    log_action_msg "Usage: $INITDPATH/cyberspark {start|stop}"
-    exit 1
-    ;;
+	log_action_msg "Usage: $INITDPATH/cyberspark {start|stop}"
+	exit 1
 esac
 
 exit 0
