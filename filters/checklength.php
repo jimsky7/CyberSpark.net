@@ -10,40 +10,13 @@
 		do not get repeatedly flagged.
 	*/
 
-// To make a plugin:
-// Create a function with the same name as the file (but not the extension).
-//   This function will be called once when the main script has read parameters
-//   but has not yet performed a scan.  This function should register a callback
-//   which will become its "filter."
-//   This function may install callbacks for any of these events
-//     addFilter($name, 'init', 'callback', $rank)  	// called once when main script initialized
-//     addFilter($name, 'scan', 'callback', $rank)  	// called for each URL scanned
-//     addFilter($name, 'destroy', 'callback', $rank)	// called before main script shuts down
-// The callback function gets 3 args when it is called:
-//  $content
-//    The content of the URL being spidered.  Could be null if the callback
-//      is for an 'init' or 'destroy' event
-//  $args
-//    which is an asociative array containing various arguments/parameters from
-//    the main script.
-//    ['oncedaily'] if isset() then perform tasks that should only be performed
-//      infrequently (only once or twice a day)
-//    ['code'] the result code of the HTTP request - might indicate failure of an
-//      GET (such as a 404 result) in which case $content will not be set.
-//    ['url'] the URL that is being checked
-//    ['conditions'] any conditions for this URL from the properties file
-//	  ['verbose'] if caller wants lots of info rather than less info
-//  $privateStore
-//    Private persistent storage maintained on behalf of the plugin and also preserved between
-//      executions of the main script.  This is persistent storage for the plugin.
-//    The callback returns three results - the first is a message to be displayed or 
-//      included in an email, the second indicates the 'type' of alert generated,
-//      and the third is an associative array which will be preserved and
-//      passed in again as the argument "$store"
+	/**
+		See the file 'how_to_make_a_plugin_filter.php' for more instructions
+		on how to make one of these and integrate it into the CyberSpark daemons.
+	**/
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-
 include_once "include/echolog.inc";
 
 function checkLengthScan($content, $args, $privateStore) {
@@ -120,15 +93,15 @@ function checkLengthDestroy($content, $args, $privateStore) {
 
 function checklength($args) {
 	$filterName = "checklength";
- 	if (!registerFilterHook($filterName, 'scan', 'checkLengthScan', 10)) {
+ 	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'init', 'checkLengthInit', 10)) {
+	if (!registerFilterHook($filterName, 'init', $filterName.'Init', 10)) {
 		echo "The filter '$filterName' was unable to add an 'Init' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'destroy', 'checkLengthDestroy', 10)) {
+	if (!registerFilterHook($filterName, 'destroy', $filterName.'Destroy', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Destroy' hook. \n";	
 		return false;
 	}

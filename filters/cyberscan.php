@@ -5,6 +5,11 @@
 		Scans the results of a csscan.php at the target URL.
 	*/
 
+	/**
+		See the file 'how_to_make_a_plugin_filter.php' for more instructions
+		on how to make one of these and integrate it into the CyberSpark daemons.
+	**/
+
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
@@ -178,15 +183,15 @@ function cyberscanDestroy($content, $args, $privateStore) {
 ///////////////////////////////// 
 function cyberscan($args) {
 	$filterName = "cyberscan";
- 	if (!registerFilterHook($filterName, 'scan', 'cyberscanScan', 40)) {
+ 	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'init', 'cyberscanInit', 40)) {
+	if (!registerFilterHook($filterName, 'init', $filterName.'Init', 10)) {
 		echo "The filter '$filterName' was unable to add an 'Init' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'destroy', 'cyberscanDestroy', 40)) {
+	if (!registerFilterHook($filterName, 'destroy', $filterName.'Destroy', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Destroy' hook. \n";	
 		return false;
 	}

@@ -5,6 +5,11 @@
 		Checks certain DNS entries and reports when they change.
 	*/
 
+	/**
+		See the file 'how_to_make_a_plugin_filter.php' for more instructions
+		on how to make one of these and integrate it into the CyberSpark daemons.
+	**/
+
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
@@ -116,15 +121,15 @@ function dnsDestroy($content, $args, $privateStore) {
 ///////////////////////////////// 
 function dns($args) {
 	$filterName = "dns";
- 	if (!registerFilterHook($filterName, 'scan', 'dnsScan', 40)) {
+ 	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'init', 'dnsInit', 40)) {
+	if (!registerFilterHook($filterName, 'init', $filterName.'Init', 10)) {
 		echo "The filter '$filterName' was unable to add an 'Init' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'destroy', 'dnsDestroy', 40)) {
+	if (!registerFilterHook($filterName, 'destroy', $filterName.'Destroy', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Destroy' hook. \n";	
 		return false;
 	}

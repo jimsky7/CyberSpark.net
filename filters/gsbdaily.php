@@ -6,6 +6,11 @@
 		This is the advanced "recursive" code.
 	*/
 
+	/**
+		See the file 'how_to_make_a_plugin_filter.php' for more instructions
+		on how to make one of these and integrate it into the CyberSpark daemons.
+	**/
+
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
@@ -16,7 +21,7 @@ include_once "include/echolog.inc";
 //   so that filter must be present for this one to work.
 
 ///////////////////////////////// 
-function gsbDailyScan($content, $args, $privateStore) {
+function gsbdailyScan($content, $args, $privateStore) {
 	$filterName = "gsbdaily";
 	$result   = "OK";						// default result
 	$url = $args['url'];
@@ -89,7 +94,7 @@ function gsbDailyScan($content, $args, $privateStore) {
 }
 
 ///////////////////////////////// 
-function gsbDailyInit($content, $args, $privateStore) {
+function gsbdailyInit($content, $args, $privateStore) {
 	$filterName = "v";
 	$result   = "OK";						// default result
 	$url = $args['url'];
@@ -105,7 +110,7 @@ function gsbDailyInit($content, $args, $privateStore) {
 }
 
 ///////////////////////////////// 
-function gsbDailyDestroy($content, $args, $privateStore) {
+function gsbdailyDestroy($content, $args, $privateStore) {
 	$filterName = "gsbdaily";
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -120,15 +125,15 @@ function gsbDailyDestroy($content, $args, $privateStore) {
 ///////////////////////////////// 
 function gsbDaily($args) {
 	$filterName = "gsbdaily";
- 	if (!registerFilterHook($filterName, 'scan', 'gsbDailyScan', 21)) {
+ 	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'init', 'gsbDailyInit', 21)) {
+	if (!registerFilterHook($filterName, 'init', $filterName.'Init', 10)) {
 		echo "The filter '$filterName' was unable to add an 'Init' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'destroy', 'gsbDailyDestroy', 21)) {
+	if (!registerFilterHook($filterName, 'destroy', $filterName.'Destroy', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Destroy' hook. \n";	
 		return false;
 	}

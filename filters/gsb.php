@@ -6,6 +6,14 @@
 		In a more advanced mode, checks all links from this page as well.
 	*/
 
+	/**
+		See the file 'how_to_make_a_plugin_filter.php' for more instructions
+		on how to make one of these and integrate it into the CyberSpark daemons.
+	**/
+
+// NOTE: This filter is required if 'gsbdaily' is to work properly. It includes some
+//       of the functions that are defined in this file.
+
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
@@ -118,15 +126,15 @@ function gsbDestroy($content, $args, $privateStore) {
 ///////////////////////////////// 
 function gsb($args) {
 	$filterName = "gsb";
- 	if (!registerFilterHook($filterName, 'scan', 'gsbScan', 20)) {
+ 	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'init', 'gsbInit', 20)) {
+	if (!registerFilterHook($filterName, 'init', $filterName.'Init', 10)) {
 		echo "The filter '$filterName' was unable to add an 'Init' hook. \n";	
 		return false;
 	}
-	if (!registerFilterHook($filterName, 'destroy', 'gsbDestroy', 20)) {
+	if (!registerFilterHook($filterName, 'destroy', $filterName.'Destroy', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Destroy' hook. \n";	
 		return false;
 	}

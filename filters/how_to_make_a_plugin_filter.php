@@ -9,14 +9,14 @@ CyberSpark.net monitoring-alerting system
 ***************************************************************************************
 CyberSpark 'big picture' notes:
 
-The CyberSpark service is started (by 'rc' or by 'service') and runs as a daemon from cyberspark.php until it quits or is terminated. It starts up child processes (AKA
-'daemons' or 'threads' in some of our other documentation) by launching cybersparkd.php, which each read their own 'properties' files to determine how to configure themselves and which URLs to look at or spider. This process cyberspark.php itself keeps running in order to monitor the child processes and to restart them if they fail (or are terminated by a sysadmin). The system is designed to send notifications by email, write entries to stdout, and can write log files.
+The CyberSpark service is started (by 'rc' or by 'service') and runs as a daemon from cybersparkd.php until it quits or is terminated. It starts up child processes (AKA
+'threads' or 'monitor' or 'sniffers' in some of our other documentation) by launching cyberspark.php -- each reads its own 'properties' file to determine how to configure itself and which URLs to look at or spider. The process cybersparkd.php itself keeps running in order to monitor the child processes and to restart them if they crash (etc. see below). The system is designed to send notifications by email, write entries to stdout, and can write log files.
 
-The CyberSpark 'daemons' (cybersparkd.php) are fired up by the parent daemon, and they keep running until terminated by an appropriate SIGnal, by the server being turned off, or by a KILL. In the case of graceful terminations, they save their data and write log entries as they shut down.
+The CyberSpark monitoring processes (cyberspark.php) are fired up by the parent daemon, and they keep running until terminated by an appropriate SIGnal, by the server being turned off, by crashing, or by a KILL. In the case of graceful terminations, they save their data and write log entries as they shut down. In the case of a forced termination, nothing is saved and cybersparkd will try to restart them if it is still running. In the event of a hard power-down of the server, the /etc/init.d/cyberspark script will clean up PID files and will clear the way for the daemon, which will start these child processes again.
 
-Each daemon or thread runs periodically (timing comes from its properties file), then sleeps for a short time. When active, it reads its properties file, setting options and then finding URLs to sniff. For each "url=..." line it is given a URL, various 'filter' names, and email addresses to notify. The 'filter' names tell the daemon what kind of analysis to perform for each particular URL. The filter names correspond to PHP files in the /filters directory. Upon startup, each daemon examines the 'filters' directory filenames, and attempts to initialize each filter.
+Each monitor runs periodically (timing comes from its properties file), then sleeps for a short time. When activated, it reads its properties file, setting options and then finding URLs to sniff. For each "url=..." line it is given a URL, various 'filter' names, and email addresses to notify. The 'filter' names tell the daemon what kind of analysis to perform for each particular URL. The filter names correspond to PHP files in the /filters directory. Upon startup, each daemon examines the 'filters' directory filenames, and attempts to initialize each filter.
 
-The file you are reading describes how a 'filter' file is structured.
+The file you are reading is itself structured as a (trivial) filter, and describes how a 'filter' file is structured.
 
 ***************************************************************************************
 To make a new plugin "filter":
