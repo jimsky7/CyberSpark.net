@@ -10,44 +10,24 @@
 		do not get repeatedly flagged.
 
 		NOTE: THIS IS EXACTLY THE SAME CODE AS 'checklength' - DUPLICATE FILE with different filter name
-	*/
-
-// To make a plugin:
-// Create a function with the same name as the file (but not the extension).
-//   This function will be called once when the main script has read parameters
-//   but has not yet performed a scan.  This function should register a callback
-//   which will become its "filter."
-//   This function may install callbacks for any of these events
-//     addFilter($name, 'init', 'callback', $rank)  	// called once when main script initialized
-//     addFilter($name, 'scan', 'callback', $rank)  	// called for each URL scanned
-//     addFilter($name, 'destroy', 'callback', $rank)	// called before main script shuts down
-// The callback function gets 3 args when it is called:
-//  $content
-//    The content of the URL being spidered.  Could be null if the callback
-//      is for an 'init' or 'destroy' event
-//  $args
-//    which is an asociative array containing various arguments/parameters from
-//    the main script.
-//    ['oncedaily'] if isset() then perform tasks that should only be performed
-//      infrequently (only once or twice a day)
-//    ['code'] the result code of the HTTP request - might indicate failure of an
-//      GET (such as a 404 result) in which case $content will not be set.
-//    ['url'] the URL that is being checked
-//    ['conditions'] any conditions for this URL from the properties file
-//	  ['verbose'] if caller wants lots of info rather than less info
-//  $privateStore
-//    Private persistent storage maintained on behalf of the plugin and also preserved between
-//      executions of the main script.  This is persistent storage for the plugin.
-//    The callback returns three results - the first is a message to be displayed or 
-//      included in an email, the second indicates the 'type' of alert generated,
-//      and the third is an associative array which will be preserved and
-//      passed in again as the argument "$store"
+	**/
+	
+	/**
+	    See the file 'how_to_make_a_plugin_filter.php' for instructions
+	    on how to make one of these and integrate it into the CyberSpark daemons.
+	**/
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-
 include_once "include/echolog.inc";
 
+//// lengthScan()
+//// This function is called when a URL is being scanned and when 'length' has been
+//// specified as a filter for the URL (on the line in the properties file).
+//// $content contains the result of the HTTP GET on the URL.
+//// $args holds arguments/parameters/properties from the daemon
+//// $privateStore is an associative array of data which contains, if indexed properly,
+////   persistent data related to the URL being scanned.
 function lengthScan($content, $args, $privateStore) {
 	$filterName = "length";
 	$result   = "OK";						// default result
@@ -61,7 +41,6 @@ function lengthScan($content, $args, $privateStore) {
 	// See whether length has changed since last time
 	if (isset($privateStore[$filterName][$url])) {
 		// This URL has been seen before
-		
 		$lengthsString = $privateStore[$filterName][$url]['lengths'];
 		$lengths = explode(",", $lengthsString);
 		$lengthMatched = false;
@@ -72,13 +51,14 @@ function lengthScan($content, $args, $privateStore) {
 				break;
 			}
 		}
-		
-		
 		if (!$lengthMatched) {
 			// Changed
 			$message .= "Length changed to " . $contentLength . "\n";
 			$message .= INDENT . "Previous lengths include [" . $lengthsString . "]";
 			$result = "Changed";
+			// $lengthsString contains (comma separated) all of the lengths of this URL
+			// that have ever been seen by this filter. Note that it persists even if
+			// our parent daemon is shut down and restarted.
 			$lengthsString .= "," . (string)$contentLength;
 		}
 		else {
@@ -95,6 +75,9 @@ function lengthScan($content, $args, $privateStore) {
 	
 }
 
+//// lengthInit()
+//// This function is called by the daemon once when it is first loaded.
+//// It returns a message, but doesn't touch the private date (in $privateStore).
 function lengthInit($content, $args, $privateStore) {
 	$filterName = "length";
 	// $content is the URL being checked right now
@@ -108,6 +91,10 @@ function lengthInit($content, $args, $privateStore) {
 	
 }
 
+//// lengthDestroy()
+//// This function is called as the daemon is shutting down. We get an instance of
+//// the daemon's "private" database in $privateStore, which we simply pass back. We also
+//// pass back a message saying that this filter has properly shut down.
 function lengthDestroy($content, $args, $privateStore) {
 	$filterName = "length";
 	// $content is the URL being checked right now
@@ -120,6 +107,11 @@ function lengthDestroy($content, $args, $privateStore) {
 	
 }
 
+//// length()
+//// This plugin filter checks the length of a URL (file) and notifies if it has changed.
+//// This is a strict length check with no additional analysis.
+//// Data is kept in the database that is presented during execution as $privateStore.
+//// (Note that the name "length" matches the filename "length.php" -- this is required.)
 function length($args) {
 	$filterName = "length";
  	if (!registerFilterHook($filterName, 'scan', 'lengthScan', 10)) {
