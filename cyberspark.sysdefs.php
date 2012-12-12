@@ -12,8 +12,11 @@
 //
 // This file contains universal CyberSpark constants that do not vary from one locale
 //   to another. Email addresses and login information are now in cyberspark.config.php
-//   as of 2012-12-11 (sky@cyberspark.net)
+//   as of 2012-12-12 (sky@cyberspark.net)
 //
+
+define('DEFAULT_IDENTITY', "CyberSpark Version 4.20121212=PHP+SSL http://cyberspark.net/agent;");
+define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version 4.20121212=PHP+SSL http://cyberspark.net/agent;) Ubuntu/12.04");
 
 // e-Mail formatting
 define('INDENT', "          ");

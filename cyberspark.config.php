@@ -16,10 +16,9 @@
 //
 
 // Process-related variables and constants
-define('INSTANCE_ID', "CS8");							// "serial number" for this Cyberspark instance
-
-define('DEFAULT_IDENTITY', "CyberSpark Version 4.01=PHP+SSL 20110207 http://cyberspark.net/agent;");
-define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version 4.01=PHP+SSL 20110207 http://cyberspark.net/agent;) Ubuntu/10.04");
+define('INSTANCE_ID', "CS9");							// ID for this Cyberspark instance ... YOU pick
+														// must match in '/etc/init.d/cyberspark'
+														// properties file names too 'CS9-0.properties' etc.
 
 // SMTP-related variables
 // Yes, you have to put your user name and password somewhere so that
