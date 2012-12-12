@@ -6,8 +6,10 @@
 		  /usr/local/cyberspark/cyberspark.php --arg --arg
 	*/
 
-// CyberSpark system variables, definitions, declarations
+// Local (your installation) variables, definitions, declarations
 include_once "cyberspark.config.php";
+// CyberSpark system variables, definitions, declarations
+include_once "cyberspark.sysdefs.php";
 
 declare(ticks = 1);					// allows shutdown functions to work
 include_once "include/shutdown.inc";
@@ -104,6 +106,7 @@ $storeFileName		= $dataDir  . $ID . DATA_EXT;
 $logFileName		= $logDir   . $ID . LOG_EXT;
 $pidFileName		= $path . $ID . PID_EXT;
 $heartbeatFileName	= $path . $ID . HEARTBEAT_EXT;
+$urlFileName        = $path . $ID . URL_EXT;
 $running = true;
 
 // Register shutdown functions
@@ -233,6 +236,9 @@ if ($isDaemon) {
 			if (isset($properties['message'])) {
 				$message = $properties['message'];
 			}
+			
+			// Place to write URL for debugging purposes
+			$properties['urlfilename'] = $urlFileName;
 			
 			echoIfVerbose("Verbose\n");
 	

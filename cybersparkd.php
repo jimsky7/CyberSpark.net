@@ -18,8 +18,11 @@
 ///////////////////////////////// 
 // include supporting code
 ///////////////////////////////// 
-// CyberSpark system variables, definitions, declarations
+// Local (your installation) variables, definitions, declarations
 include_once "cyberspark.config.php";
+// CyberSpark system variables, definitions, declarations
+include_once "cyberspark.sysdefs.php";
+
 // Other supporting code
 include_once "include/args.inc";
 include_once "include/mail.inc";
@@ -104,7 +107,7 @@ catch (Exception $x) {
 $subID = 0;
 while (file_exists($propsDir . "/$ID-$subID" . PROPS_EXT)) {
 	$timeStamp = date("r");
-	echo "$ID is launching $ID-$subID : $timeStamp\n";	
+	echo "$ID is launching $ID-$subID - $timeStamp\n";	
 	$descriptorspec = array(
   		0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
   		1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
@@ -201,6 +204,14 @@ while ($running) {
 						echo "$ID-$i unresponsive. Predicted=$heartbeatTime Current=$loopStartTime $timeStamp \n";
 						$subject = "$ID-$i Unresponsive $timeStamp";
 						$message = "$ID reports $ID-$i is unresponsive. Predicted=$heartbeatTime Current time=$loopStartTime\n";
+						// Report which URL is being sniffed by the process
+						try {
+							$urlFileName	= $path . "$ID-$i" . URL_EXT;
+							$currentURL = @file_get_contents($urlFileName, MAX_URL_LENGTH);
+							$message .= "$ID-$i was last processing this URL: $currentURL\n";
+						}
+						catch (Exception $curlf) {
+						}
 						$remainingTime = 0;
 						if (RESTART_ON_FAILURE) {
 							$blue = HEARTBEAT_BLUE;
@@ -236,7 +247,7 @@ while ($running) {
 								}
 								// Kill the monitor process;
 								if (strlen($pidNumber) > 0) {
-									echo "$ID-$i is being terminated with 'kill -KILL $pidNumber' at $timeStamp\n";
+									echo "$ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
 									$message .= "$ID-$i is being terminated.\n";
 									shell_exec ("kill -KILL $pidNumber");	// terminate as if CTRL-C ... this is "graceful"
 								}
@@ -279,7 +290,7 @@ while ($running) {
 				
 				// Send some email alerts to the administrator.
 				try {
-					$subject = "$ID-$i Failure/Restart $timeStamp";
+					$subject = "$ID-$i Failure/Restart - $timeStamp";
 					echo "$subject\n";
 					$message = "$ID reports that $ID-$i has failed.\n";
 
@@ -296,9 +307,17 @@ while ($running) {
 					if ($alertCount[$i] == FAILURE_ALERT_MAX) {
 						$message .= "\nThis is the last (or only) alert you will receive about this condition, unless you restart the process and it fails again.\n";
 					}					
+					// Report which URL was being sniffed by the process
+					try {
+						$urlFileName	= $path . "$ID-$i" . URL_EXT;
+						$currentURL = @file_get_contents($urlFileName, MAX_URL_LENGTH);
+						$message .= "$ID-$i was last processing this URL: $currentURL\n";
+					}
+					catch (Exception $curlf) {
+					}
 					// Attempt to restart?  This can be set (defined) in the config file
 					if (RESTART_ON_FAILURE && $propsExist) {
-						echo "$ID Restarting $ID-$i at $timeStamp\n";
+						echo "$ID Restarting $ID-$i - $timeStamp\n";
 						try {
 							$descriptorspec = array(
   								0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
@@ -310,7 +329,7 @@ while ($running) {
 							$message .= "$ID-$i has been restarted.\n";
 						}
 						catch (Exception $x) {
-							echo "$ID Failed to restart $ID-$i at $timeStamp Exception: " . $x->getMessage() . "\n";
+							echo "$ID Failed to restart $ID-$i - $timeStamp Exception: " . $x->getMessage() . "\n";
 							$message .= "The attempt failed. Exception: " . $x->getMessage() . "\n";
 						}
 					}

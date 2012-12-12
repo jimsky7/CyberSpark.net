@@ -5,6 +5,7 @@
 	*/
 
 include_once "include/classdefs.inc";
+include_once "cyberspark.sysdefs.php";
 
 ///////////////////////////////////////////////////////////////////////////////////
 function scan($properties, $filters, &$store) {
@@ -27,6 +28,14 @@ function scan($properties, $filters, &$store) {
 		echoIfVerbose("Conditions " . $conditions . "\n");
 		echoIfVerbose("Emails     " . $emails . "\n");
 
+		// Sometimes this process becomes unresponsive, or just plain fails and we'd like
+		//   to know what URL it was working on when it failed. This value is included in
+		//   the message that cyberspark.php sends by email.
+		if (isset($properties['urlfilename'])) {
+			$urlFileName = $properties['urlfilename'];
+			@file_put_contents($urlFileName, $url);
+		}
+		
 		$before = time();
 		
 		// Do an HTTP GET on this URL

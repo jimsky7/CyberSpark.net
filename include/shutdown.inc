@@ -12,6 +12,7 @@ function doBeforeExit() {
 	global $store;
 	global $pidFileName;
 	global $heartbeatFileName;
+	global $urlFileName;
 	global $filters;
 	global $properties;
 	
@@ -51,6 +52,14 @@ function doBeforeExit() {
 	}
 	catch (Exception $x) {
 		echo "Warning: Unable to delete heartbeat file.\n";
+	}
+
+	// Delete any URL file
+	try {
+		@unlink($urlFileName);
+	}
+	catch (Exception $x) {
+		echo "Warning: Unable to delete 'url' tracking file.\n";
 	}
 
 	// Close the log file

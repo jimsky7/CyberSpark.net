@@ -31,14 +31,15 @@ case "$1" in
       RUNNING=`ps -ef | grep $PID`
       case "$RUNNING" in
         *cyberspark*) 
-          echo "$DESCRIPTION is running as process $PID"
+          echo "$DESCRIPTION is running as process $PID."
         ;;
         *) 
-          echo "$DESCRIPTION (process $PID) listed in PID file is not running"
-          echo "The server is probably recovering from a forced power-off"
-          echo "Script is removing all PID and NEXT files and will attempt to start Cyberspark"
+          echo "$DESCRIPTION (process $PID) mentioned in $CSPATH/$ID.pid is not running."
+          echo "The server is probably recovering from a forced power-off."
+          echo "This script will now remove all PID, NEXT and URL files and attempt to start Cyberspark."
           rm $CSPATH/*.pid
           rm $CSPATH/*.next
+          rm $CSPATH/*.url
         ;;
       esac
     fi
@@ -78,10 +79,10 @@ case "$1" in
           echo "$DESCRIPTION is running as process $PID"
         ;;
         *) 
-          echo "$DESCRIPTION (process $PID) listed in PID file should be running but is not."
+          echo "$DESCRIPTION (process $PID) mentioned in $CSPATH/$ID.pid should be running but is not."
        ;;
       esac
-      # look at daemons
+      # look at sniffers (child processes of the cybersparkd daemon)
       for F in $CSPATH/$ID-*.pid
       do
         PID=`cat $F`
@@ -90,20 +91,22 @@ case "$1" in
         CSNAME=$( echo $CSNAME | sed "s|.pid||" )
        case "$RUNNING" in
           *cyberspark*) 
-            echo "  Daemon $CSNAME is running as process $PID"
+            echo "  Sniffer $CSNAME is running as process $PID."
           ;;
           *) 
-            echo "  Daemon $CSNAME (process $PID) listed in PID file should be running but is not."
+            echo "  Daemon $CSNAME (process $PID) mentioned in $CSPATH/$ID.pid should be running but is not."
           ;;
         esac
       done
     else
-      echo "$DESCRIPTION is not running. (No PID file found for this service.)"
+      echo "$DESCRIPTION is not running. (No PID file was found for this service.)"
       exit 1
     fi
     ;;
   *)
-    log_action_msg "Usage: $INITDPATH/cyberspark {start|stop}"
+    log_action_msg "Usage: service cyberspark {start|stop|status}"
+    log_action_msg " or"
+    log_action_msg "Usage: $INITDPATH/cyberspark {start|stop|status}"
     exit 1
     ;;
 esac
