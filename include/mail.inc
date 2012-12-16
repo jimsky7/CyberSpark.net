@@ -90,7 +90,7 @@ function sendMail($scanResults, &$properties) {
 	$timeStamp = date("r");
 	$subject = $properties['shortid'] . " Report $timeStamp";
 	
-	$message .= $timeStamp . "\n";
+	$message .= "$timeStamp \n";
 	$message .= "$identity \n\n"; 
 	$message .= "CyberSpark.net monitoring and alerting software-- This open source software is provided free of charge under a Creative Commons by-nc-sa license. See http://cyberspark.net/license for more information.\n";
 	if (isset($properties['ID'])) {
