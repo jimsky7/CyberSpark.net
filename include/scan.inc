@@ -191,17 +191,27 @@ function setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime
 	$filterArgs['conditions']	= $conditions;
 	$filterArgs['httpresult']	= $httpResult;
 	$filterArgs['elapsedtime']	= $elapsedTime;
-	// Transfer certain properties from the 'properties' file
-	// (In the future, consider copying all of them - why eliminate any?)
-	$filterArgs['timeout'] 		= $properties['timeout'];
-	$filterArgs['slow']    		= $properties['slow'];
-	$filterArgs['verbose']    	= $properties['verbose'];
-	$filterArgs['gsbserver']	= $properties['gsbserver'];
-	$filterArgs['notify']		= $properties['notify'];
-	$filterArgs['time']			= $properties['time'];
-	$filterArgs['load']			= $properties['load'];
-	$filterArgs['disk']			= $properties['disk'];
-	$filterArgs['useragent']    = $properties['useragent'];	// because some filter do further GET or POST
+	// Transfer all properties from the 'properties' file
+	//   This way if you want to build your own 'filter' you can also add parameters
+	//   as values in the properties files, with names you dream up, as long as they
+	//   don't duplicate a name used elsewhere. You could pre-pend the filter name, if you
+	//   wish, to keep them unique. The param name was forced lowercase when parsed.
+	//   Such as:
+	//     FILTERNAME_PROPERTY=abcdefg
+	foreach ($properties as $key => $value) {
+		$filterArgs[$key] = $properties[$key];
+	}
+// It used to be done this way...
+//	// (In the future, consider copying all of them - why eliminate any?)
+//	$filterArgs['timeout'] 		= $properties['timeout'];
+//	$filterArgs['slow']    		= $properties['slow'];
+//	$filterArgs['verbose']    	= $properties['verbose'];
+//	$filterArgs['gsbserver']	= $properties['gsbserver'];
+//	$filterArgs['notify']		= $properties['notify'];
+//	$filterArgs['time']			= $properties['time'];
+//	$filterArgs['load']			= $properties['load'];
+//	$filterArgs['disk']			= $properties['disk'];
+//	$filterArgs['useragent']    = $properties['useragent'];	// because some filter do further GET or POST
 	return $filterArgs;
 }
 

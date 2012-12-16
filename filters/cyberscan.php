@@ -96,6 +96,11 @@ function cyberscanScan($content, $args, $privateStore) {
 					}
 					else if ($key == 'load') {
 						// Detect high LOADAVG
+						//   The value to consider high comes in to the filter as $args['load']
+						//   (if not, then a default is used). This can be specified for an 
+						//   individual sniffer in the properties file as
+						//     LOAD=n
+						//   where 'n' is the LOADAVG number above which you want to notify.
 						$s = condenseBlanks($s);
 						list($beginning, $currentLoad, $previous, $longago) = explode(' ', $s, 4);
 						list($currentLoad, $frax) = explode('.', $currentLoad, 2);
