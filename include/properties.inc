@@ -215,7 +215,7 @@ function getProperties($propsFileName) {
 /////////// *=
 /////////// All other values are thrown into the $properties array anyway, so they can be picked up as $args[] and
 /////////// sent thru to some filter we have not yet dreamed up.
-/////////// Note that the index "[]" will be lowercased, but the value will be left alone.
+/////////// Note that the index "[$key]" will be lowercased, but the value will be left alone.
 								else {
 									$properties[strtolower($key)] = $value;
 								}
