@@ -29,7 +29,7 @@ function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServe
 		$PEARmailer =& Mail::factory ('smtp', $params);
 	
 		$headers = array();
-		$headers['To'] = $to;
+		$headers['To'] = $to;				// this is everyone (altered later)
 		$headers['From'] = $from;
 		if (isset($replyTo)) {
 			$headers['Reply-To'] = $replyTo;
@@ -66,8 +66,9 @@ function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServe
 			// Each message is sent individually. This way a recipient doesn't know who
 			// (else) is being notified.
 			foreach ($toList as $toMail) {
-				$toMail = trim($toMail);		// trim leading and trailing blanks
-            	// Send alert unless destination is "none"
+				$toMail = trim($toMail);			// trim leading and trailing blanks
+ 				$headers['To'] = $toMail;			// sanitize: show only the current addressee
+           		// Send alert unless destination is "none"
                 // (Although nonsensical, "none" can be intermixed with other destinations)
                 if (strcasecmp($toMail, 'none') != 0) {
                     // Regular destinatioms...
