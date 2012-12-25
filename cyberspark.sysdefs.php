@@ -25,9 +25,15 @@ if (!defined('DEFAULT_USERAGENT')) {
 // e-Mail formatting
 define('INDENT', "          ");
 
-define('DEFAULT_NOTIFY_HOUR', "23");				// yes, a string
-define('DEFAULT_SOCKET_TIMEOUT', 60);				// seconds
-define('DEFAULT_LOOP_TIME', 30);					// minutes
+if (!defined('DEFAULT_NOTIFY_HOUR')) {
+	define('DEFAULT_NOTIFY_HOUR', "23");				// yes, a string
+}
+if (!defined('DEFAULT_SOCKET_TIMEOUT')) {
+	define('DEFAULT_SOCKET_TIMEOUT', 60);				// seconds
+}
+if (!defined('DEFAULT_LOOP_TIME')) {
+	define('DEFAULT_LOOP_TIME', 30);					// minutes
+}
 
 // Google Safe Browsing service - note this is an IP address and a strange port
 //   because we don't advertise this server in DNS and we don't use a common port.
