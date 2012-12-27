@@ -1,7 +1,7 @@
 <?php
 	/**
 		CyberSpark.net monitoring-alerting system
-		perform one round of scannisetFilterArgsng (all URLs once)
+		perform one round of scanning (all URLs once)
 	*/
 
 include_once "include/classdefs.inc";
@@ -24,9 +24,9 @@ function scan($properties, $filters, &$store) {
 		// (This only lowercases the FQDN and not the rest of the URL.)
 		$url = lowercaseFQDN($url);
 
-		echoIfVerbose("Scanning   " . $url . "\n");
-		echoIfVerbose("Conditions " . $conditions . "\n");
-		echoIfVerbose("Emails     " . $emails . "\n");
+		echoIfVerbose("Scanning   $url \n");
+		echoIfVerbose("Conditions $conditions \n");
+		echoIfVerbose("Emails     $emails \n");
 
 		// Sometimes this process becomes unresponsive, or just plain fails and we'd like
 		//   to know what URL it was working on when it failed. This value is included in
@@ -38,7 +38,7 @@ function scan($properties, $filters, &$store) {
 		
 		$before = time();
 		
-		// Do an HTTP GET on this URL
+		// Do an HTTP GET on this URL. It begins "http://" or "https://"
 		$httpResult = httpGet($url, $properties['useragent'], $properties['timeout']);
 		$elapsedTime = time() - $before;
 
@@ -54,7 +54,7 @@ function scan($properties, $filters, &$store) {
 		$scanResults[$urlNumber] = "";
 		/////////////////////////////////////////////////////////
 		
-		// First check to see if this is a reverse scan - in other words, we are to send
+		// First check to see if this is a "reverse" scan - in other words, we are to send
 		//   a report only if a URL becomes present, and not if it's absent
 		$ifExists	= (stripos($conditions, "exist") !== false) || (stripos($conditions, "200") !== false);
 		if ($ifExists) {
@@ -172,9 +172,12 @@ function scan($properties, $filters, &$store) {
 				}
 				$rankIndex++;
 			}
-			$scanResults[$urlNumber] = ($isOK?"OK        ":"Errors    ") . $url . "\n" . $message . "\n";
+			$scanResults[$urlNumber] = ($isOK?'OK        ':'Errors    ') . "$url\n$message\n";
 			writeLog($scanResults[$urlNumber], $elapsedTime, strlen($httpResult['body']), "", $conditions, $url, $httpResult['code'], 0);
 		}
+		usleep(100);	// Yield a minimal time. Just polite in case OS needs to do anything else.
+						// Sometimes HTTP is very slow on a URL and although it's supposed to be
+						// non-blocking, I'm not 100% convinced it is.  [SKY: 2012-12-26]
 		$urlNumber++;
 	}
 
