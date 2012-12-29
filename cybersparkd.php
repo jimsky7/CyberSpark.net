@@ -100,7 +100,7 @@ $startupMessage = @file_get_contents($startupFileName);
 if ($startupMessage !== false) {
 	$timeStamp = date("r");
 	$subject = "$ID recovered from powerfail $timeStamp";
-	$message = "$ID recovered from powerfail $timeStamp";
+	$message = $startupMessage;
 	textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 	@unlink($startupFileName);
 }

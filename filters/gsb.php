@@ -50,7 +50,7 @@ function gsbScan($content, $args, $privateStore) {
 	$numberOfChecks = 0;
 	$prefix = "";
 	foreach ($links as $link) {
-		$checkLink = domainAndSubdirs($link);
+		$checkLink = str_replace(' ', '+', domainAndSubdirs($link));
 		echoIfVerbose("GSB checking $checkLink\n");	
 		try {
 			$httpResult = httpGet($args['gsbserver'] . "/gsb-check?url=$checkLink", $args['useragent'], 15);
@@ -70,12 +70,12 @@ function gsbScan($content, $args, $privateStore) {
 				}
 			}
 			else {
-				echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " $checkLink Base was: $content \n");
-// Probably remove these
-//				$result = "Failure";
-//				$message = $prefix . "GSB lookup failed. HTTP result code: " . $httpResult['code'] . " $checkLink  \n"; 
-// And leave this in place
-				writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " $checkLink Base was: $content");
+//// Long report
+//				echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink Base was: $content \n");
+//				writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink Base was: $content");
+//// Short report
+				echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink \n");
+				writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink");
 			}
 		}
 		catch (Exception $x) {
@@ -234,7 +234,7 @@ function gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedU
 	$message = "";
 	
 	try {
-		$das = domainAndSubdirs($url);
+		$das = str_replace(' ', '+', domainAndSubdirs($url));
 		echoIfVerbose("gsbCheckURL($url) in domain " . $das . " \n");
 		if ( in_array($das, $checkedDomains) ) {
 			echoIfVerbose("Already checked the domain for $url \n");
