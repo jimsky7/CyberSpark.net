@@ -19,6 +19,7 @@ ID="CS9"
 CSPATH="/usr/local/cyberspark"
 INITDPATH="/etc/init.d"
 DESCRIPTION="CyberSpark service"
+STARTUPMSGFILE="important_startup_message.txt"
 
 
 case "$1" in
@@ -34,12 +35,15 @@ case "$1" in
           echo "$DESCRIPTION is running as process $PID."
         ;;
         *) 
-          echo "$DESCRIPTION (process $PID) mentioned in $CSPATH/$ID.pid is not running."
-          echo "The server is probably recovering from a forced power-off."
-          echo "This script will now remove all PID, NEXT and URL files and attempt to start Cyberspark."
-          rm $CSPATH/*.pid
-          rm $CSPATH/*.next
-          rm $CSPATH/*.url
+          log_daemon_msg "$DESCRIPTION (process $PID) mentioned in $CSPATH/$ID.pid is not running."
+          log_daemon_msg "The server may be recovering from a power failure or forced shutdown."
+          log_daemon_msg "This script will now remove all .pid, .next and .url files and attempt to start Cyberspark."
+          rm -f $CSPATH/*.pid
+          rm -f $CSPATH/*.next
+          rm -f $CSPATH/*.url
+          date -R  >> $CSPATH/$STARTUPMSGFILE
+          echo "The server $ID may be recovering from a power failure or forced shutdown." >> $CSPATH/$STARTUPMSGFILE
+          echo "Cleanup has been performed and '$DESCRIPTION' is being started." >> $CSPATH/$STARTUPMSGFILE
         ;;
       esac
     fi
