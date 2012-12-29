@@ -15,6 +15,8 @@
 //   as of 2012-12-12 (sky@cyberspark.net)
 //
 
+/////////////////////////////////////////////////////////////////////////////////
+// User-Agent and other identity to be presented by CyberSpark when sniffing using HTTP.
 if (!defined('DEFAULT_IDENTITY')) {
 	define('DEFAULT_IDENTITY', "CyberSpark Version 4.20121212=PHP+SSL http://cyberspark.net/agent;");
 }
@@ -22,40 +24,59 @@ if (!defined('DEFAULT_USERAGENT')) {
 	define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version 4.20121212=PHP+SSL http://cyberspark.net/agent;) Ubuntu/12.04");
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 // e-Mail formatting
 define('INDENT', "          ");
 
-define('DEFAULT_NOTIFY_HOUR', "23");				// yes, a string
-define('DEFAULT_SOCKET_TIMEOUT', 60);				// seconds
-define('DEFAULT_LOOP_TIME', 30);					// minutes
+/////////////////////////////////////////////////////////////////////////////////
+if (!defined('DEFAULT_NOTIFY_HOUR')) {
+	define('DEFAULT_NOTIFY_HOUR', "23");				// yes, a string
+}
+if (!defined('DEFAULT_SOCKET_TIMEOUT')) {
+	define('DEFAULT_SOCKET_TIMEOUT', 60);				// seconds
+}
+if (!defined('DEFAULT_LOOP_TIME')) {
+	define('DEFAULT_LOOP_TIME', 30);					// minutes
+}
+// If this file is present, it is a message left over from starting up the CyberSpark
+// service, and it needs to be sent to a system administrator.
+define('STARTUP_MESSAGE_FILE', 'important_startup_message.txt');
 
-// Google Safe Browsing service - note this is an IP address and a strange port
+/////////////////////////////////////////////////////////////////////////////////
+// Google Safe Browsing service - note this is an IP address and an unusual port
 //   because we don't advertise this server in DNS and we don't use a common port.
 //   It is, however, a web (HTTP) service.
-// define('GSB_SERVER', "http://0.0.0.0:4040");		// NOTE this is in sysdefs now
-define('MAX_GSB_DEPTH', 2);							// "legacy" variable
-define('GSB_DEPTH_MAX', 2);							// overall maximum GSB spidering depth
-define('GSB_DEPTH_1', 1);							// GSB spider only the links off the main page
-define('GSB_DEPTH_2', 2);							// GSB the main page, links from it, and links from those pages
-define('GSB_PAGE_SIZE_LIMIT', 500000);					// largest page size we will check - due to DOM bugs
+// define('GSB_SERVER', "http://0.0.0.0:4040");	// NOTE this is in cyberspark.config.php now
+define('MAX_GSB_DEPTH', 2);					// "legacy" variable
+define('GSB_DEPTH_MAX', 2);					// overall maximum GSB spidering depth
+define('GSB_DEPTH_1', 1);					// GSB spider only the links off the main page
+define('GSB_DEPTH_2', 2);					// GSB the main page, links from it, and links from those pages
+define('GSB_PAGE_SIZE_LIMIT', 500000);		// largest page size we will check - due to DOM bugs
 
+/////////////////////////////////////////////////////////////////////////////////
 // Paths to subdirectories of APP_PATH (which is defined in cyberspark.config.php)
-define('PROPS_DIR', "properties/");				// where properties files live
-define('PROPS_EXT', ".properties");				// extension for properties files
-define('DATA_DIR', "data/");						// where data will live
-define('DATA_EXT', ".db");						// extension for database files
-define('MAX_DATA_SIZE', 10000000);				// maximum 'store' file size
-define('FILTERS_DIR', "filters/");					// where the scanning filters live
-define('FILTERS_EXT', ".php");						// extension for filter files
-define('LOG_DIR', "log/");						// where the csv logs will be written
-define('LOG_EXT', ".log");						// extension for log files
-define('PID_EXT', ".pid");						// extension for process-id files
-define('HEARTBEAT_EXT', ".next");				// extension for heartbeat files
-define('HEARTBEAT_LATE',60);					// number of seconds before heartbeat is "late"
-define('HEARTBEAT_BLUE',1800);					// number of seconds before late heartbeat causes code blue (30 minutes)
-define('URL_EXT', ".url");						// extension for 'URL' files
-define('MAX_URL_LENGTH', 2083);						// same as MSIE, though there is no IETF limit
+// PROPERTIES
+define('PROPS_DIR', "properties/");			// where properties files live
+define('PROPS_EXT', ".properties");			// extension for properties files
+// DATABASE
+define('DATA_DIR', "data/");				// where data will live
+define('DATA_EXT', ".db");					// extension for database files
+define('MAX_DATA_SIZE', 10000000);			// maximum 'store' file size
+// FILTERS
+define('FILTERS_DIR', "filters/");			// where the scanning filters live
+define('FILTERS_EXT', ".php");				// extension for filter files
+// LOG FILES
+define('LOG_DIR', "log/");					// where the csv logs will be written
+define('LOG_EXT', ".log");					// extension for log files
+// PID and heartbeat and 'last url' files
+define('PID_EXT', ".pid");					// extension for process-id files
+define('HEARTBEAT_EXT', ".next");			// extension for heartbeat files
+define('HEARTBEAT_LATE',60);				// seconds before heartbeat is "late"
+define('HEARTBEAT_BLUE',1800);				// secs before late heartbeat causes code blue (30 minutes)
+define('URL_EXT', ".url");					// extension for 'URL' files
+define('MAX_URL_LENGTH', 2083);				// same as MSIE, though there is no IETF limit
 
+/////////////////////////////////////////////////////////////////////////////////
 // cybersparkd.php items
 define('PID_FILESIZE_LIMIT', 100);			// max length of a PID file
 define('SHUTDOWN_WAIT_TIME', 500000);		// time to wait during shutdown (microseconds)

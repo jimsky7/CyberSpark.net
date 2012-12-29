@@ -8,11 +8,14 @@
 	/**
 		Put a script at /etc/init.d/cyberspark
 		to start this file you are reading, 
-		and this one will start individual monitors.
+		and this one will start individual "sniffers" (monitors).
 		TO START UPON REBOOT
 		  update-rc.d cyberspark defaults
 		TO REMOVE SO IT DOESN'T START ANY MORE
 		  update-rc.d -f cyberspark remove
+		OR, if you have it installed, you can use 
+		  rcconf
+		to mark this service for restart, or not.
 	**/
 	
 ///////////////////////////////// 
@@ -43,18 +46,18 @@ $pipes		= null;				// array containing pipes for all child processes we launch
 $path		= APP_PATH;			// get from config - this will be a local copy
 $propsDir	= PROPS_DIR;		// get from config - this will be a local copy
 	
-$from 			= EMAIL_FROM;					// (from config)
-$to				= EMAIL_TO;						// (from config)
-$replyTo		= EMAIL_REPLYTO;				// (from config)
-$abuseTo		= EMAIL_ABUSETO;				// (from config)
-$administrator	= EMAIL_ADMINISTRATOR;			// (from config)
-$sleepTime 		= KEEPALIVE_LOOP_SLEEP_TIME;	// (from config)
+$from 			= EMAIL_FROM;						// (from config)
+$to				= EMAIL_TO;							// (from config)
+$replyTo		= EMAIL_REPLYTO;					// (from config)
+$abuseTo		= EMAIL_ABUSETO;					// (from config)
+$administrator	= EMAIL_ADMINISTRATOR;				// (from config)
+$sleepTime 		= KEEPALIVE_LOOP_SLEEP_TIME;		// (from config)
 
-$isDeamon		= false;				// required by args.inc but not used herein
+$isDaemon		= false;				// required by args.inc but not used herein
 $configTest		= false;				// required by args.inc but not used herein
 
 ///////////////////////////////// 
-// initialization
+// Initialization
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 // NOTE: This overrides the APP_PATH from the config file, which will be unused.
 $path 		= substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
@@ -69,13 +72,18 @@ getArgs($argv);
 //$propsFileName	= $propsDir . $ID . PROPS_EXT;
 $pidFileName		= $path . $ID . PID_EXT;
 $heartbeatParent	= $path . $ID . HEARTBEAT_EXT;
+$startupFileName    = $path . '/' . STARTUP_MESSAGE_FILE; 
 $running 			= true;
 $notified			= false;		// daily notification sent?
 
 $timeStamp = date("r");
 
 ///////////////////////////////// 
-// Register shutdown functions
+// Register shutdown functions.
+// These will be called when certain SIGnals are received by this process.
+// Other SIGnals are not caught and processed and no action is taken when they are
+// received (other than perhaps our being shut down very un-gracefully).
+// Some operating systems may not allow us to catch these ... Ubuntu definitely DOES.
 try {
 	pcntl_signal(SIGTERM, 'shutdownProcesses');		// kill
 	pcntl_signal(SIGINT,  'shutdownProcesses');		// Ctrl-C
@@ -85,10 +93,24 @@ catch (Exception $x) {
 }
 	
 ///////////////////////////////// 
-// Write process ID to a file.  This is for this monitoring 'overlord' only
+// Look for a "power failure" startup message left by /etc/init.d/cyberspark
+// Send an email to administrator.
+// Delete the file.
+$startupMessage = @file_get_contents($startupFileName);
+if ($startupMessage !== false) {
+	$timeStamp = date("r");
+	$subject = "$ID recovered from powerfail $timeStamp";
+	$message = "$ID recovered from powerfail $timeStamp";
+	textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+	@unlink($startupFileName);
+}
+
+///////////////////////////////// 
+// Write process ID to a file.  This is for this monitoring this daemon only.
+// For example, /etc/init.d/cyberspark looks for this file at various times.
 try {
-	@unlink($heartbeatParent);
-	@unlink($pidFileName);
+	@unlink($heartbeatParent);		// this file contains "current time" as a heartbeat
+	@unlink($pidFileName);			// this file contains "our" process ID number
 }
 catch (Exception $x) {
 	echo "Warning: Unable to delete cybersparkd's process ID (or heartbeat) file(s). $timeStamp Exception: ".$x->getMessage()."\n";
@@ -142,15 +164,20 @@ $subject = "$ID cybersparkd launched $timeStamp";
 $message = "$ID cybersparkd launched $timeStamp";
 textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 
-
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 // Loop until someone shuts this script down with SIGINT or SIGTERM
+// If this script fails, there is no safety net. If you modify, please be sure to use
+// 'try' to enclose any new risky operations that might fail. If you leak memory or do
+// anything else that might shut own PHP, then you're on your own. This script has been
+// known to run for many months without failing in an Ubuntu environment.
 //
 while ($running) {		
 	///////////////////////////////////////////////////////////////////////////
 	// Save a heartbeat file for this, the parent, process
 	// You may well ask "who is monitoring this file?" and the answer is "nobody, for now."
+	// If you wanted to get sophisticated, you could create another script and 'cron' it
+	// so it would check the heartbeat periodically.
 	$timeStamp = date("r");
 	try {
 		$heartbeatTime  = time();	// current time in seconds (Unix time)
@@ -194,7 +221,11 @@ while ($running) {
 		
 			if	($status['running']) {
 				
-				// Check 'heartbeat' to see if child process is possibly stalled
+				// Check 'heartbeat' to see if child process is possibly stalled.
+				// Here we are talking about 'heartbeat' files written by the child processes.
+				// Each one writes and then updates its heartbeat file each time it goes around
+				// its main loop. This timing differs for each child process, and is set within
+				// its own properties file.
 				try {
 					$heartbeatFileName	= $path . "$ID-$i" . HEARTBEAT_EXT;
 					$heartbeatContents = @file_get_contents($heartbeatFileName);	// get predicted run time
@@ -355,7 +386,8 @@ while ($running) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
-// clean up
+// Clean up when this script is just exiting normally. This could happen, for instance,
+// if it is executed from the command line and was not told to run as a daemon.
 shutdownProcesses();
 	
 // and end
@@ -365,6 +397,15 @@ exit;
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 function shutdownProcesses() {
+
+	//// The shutdown process is fully of snakes and traps. See notes. This is based on,
+	//   and operates on Ubuntu versions 8.04, 10.04 and 12.04 LTS. We can't vouch for 
+	//   other systems.
+	//   The array $process[] contains the information on the child processes, but there's
+	//   also $pipes[] that contains the stdout piped information from each child. We have
+	//   to deal properly with those or the child won't shut down properly. So pay attention.
+	//// Because shutdownProcesses() is a 'callback' executed when certain SIGnals are
+	//   received, we have to use PHP globals to access pertinent information.
 	global $ID;
 	global $subID;
 	global $process;
@@ -374,6 +415,9 @@ function shutdownProcesses() {
 	global $path;
 	global $running;
 	
+	// Note that any 'echo' in this code goes into stdout and if you use
+	//   service cyberspark stop
+	// you will see it on console or in your shell.
 	$timeStamp = date('r');
 	echo "\nPlease wait while the monitors (the child processes) shut down. $timeStamp \n";	
 	$running = false;
@@ -381,6 +425,10 @@ function shutdownProcesses() {
 		while ($subID >= 0) {
 			@fclose($pipes[$subID][0]);			// note MUST do this or proc_terminate() may fail
 			$pfn = "$path/$ID-$subID.pid";
+			//// First, send SIGINT to the actual PHP sniffer.
+			//   Note that each PHP sniffer is run using the PHP command line interpreter,
+			//   so it is "enclosed" by an 'sh' shell. What we're doing first is sending
+			//   the SIGINT to the PHP child, not to the 'sh' that surrounds it.
 			if (file_exists($pfn)) {
 				$pidNumber = file_get_contents($pfn, PID_FILESIZE_LIMIT);
 				shell_exec ("kill -INT $pidNumber");	// terminate as if CTRL-C

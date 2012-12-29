@@ -282,10 +282,10 @@ if ($isDaemon) {
 				}
 				$store = readStore($storeFileName, $maxDataSize);
 				if (isset($store['cyberspark']['id'])) {
-					echoIfVerbose("Using an existing store " . $store['cyberspark']['id'] . "\n");
+					echoIfVerbose("Using an existing datastore " . $store['cyberspark']['id'] . "\n");
 				}
 				else{
-					echoIfVerbose("No store exists yet\n");
+					echoIfVerbose("No datastore exists yet\n");
 				}
 				if ($store['cyberspark']['tripwire']==true) {
 					writeLogAlert("Ouch that hurt! Apparently this process wasn't shut down correctly - may have crashed.");

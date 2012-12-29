@@ -192,7 +192,7 @@ function getProperties($propsFileName) {
 								}
 /////////// load=
 /////////// (an integer - if the LOADAVG is this or higher then consider sending a warning) 
-/////////// This is use within the 'cyberscan' filter .
+/////////// This is used within the 'cyberscan' filter .
 								elseif (strcasecmp($key, 'load') == 0) {
 									// slow=
 									try {
@@ -203,7 +203,7 @@ function getProperties($propsFileName) {
 								}
 /////////// disk=
 /////////// (an integer - if the percent space used on "/" is this or higher then consider sending a warning) 
-/////////// This is use within the 'cyberscan' filter. 
+/////////// This is used within the 'cyberscan' filter. 
 								elseif (strcasecmp($key, 'disk') == 0) {
 									// slow=
 									try {
@@ -211,6 +211,13 @@ function getProperties($propsFileName) {
 									}
 									catch (Exception $x) {
 									}
+								}
+/////////// *=
+/////////// All other values are thrown into the $properties array anyway, so they can be picked up as $args[] and
+/////////// sent thru to some filter we have not yet dreamed up.
+/////////// Note that the index "[$key]" will be lowercased, but the value will be left alone.
+								else {
+									$properties[strtolower($key)] = $value;
 								}
 							}
 						}

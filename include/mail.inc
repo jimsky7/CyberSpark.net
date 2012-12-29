@@ -29,7 +29,7 @@ function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServe
 		$PEARmailer =& Mail::factory ('smtp', $params);
 	
 		$headers = array();
-		$headers['To'] = $to;
+		$headers['To'] = $to;				// this is everyone (altered later)
 		$headers['From'] = $from;
 		if (isset($replyTo)) {
 			$headers['Reply-To'] = $replyTo;
@@ -42,20 +42,43 @@ function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServe
 		$headers['X-Mailer'] = $identity;
 		$headers['X-Report-abuse'] = "Please report abuse to " . $abuseTo;
 
-		// Send the message
-		$toList = explode(",", $to);
-		foreach ($toList as $toMail) {
-                        // Send alert unless destination is "none"
-                        // Although nonsensical, "none" can be intermixed with other destinations
-                        if (strcasecmp($toMail, 'none') != 0) {
-                            // Regular destinatioms...
-			    $send = $PEARmailer->send($toMail, $headers, $message);  
-			    if(PEAR::isError($send)) { 
-				$message .= "\nException sending an alert: " . $send->getMessage() . "\n";
-				writeLogAlert("textMail() failed. Exception: " . $send->getMessage());
-				// echo($send->getMessage()); 
-			    }
-                        }
+		// Send the message.
+		// Note that email addresses are in a comma-separated list, which is specified in RFCs.
+		// See RFC 822, RFC 2822, RFC 5322 at least.
+		// In general, you can have raw email addresses, if you wish...
+		//    a@bbb.com, b@ccc.com, c@ddd.com
+		// The spaces should be OK, but I haven't verified.
+		// You can put actual email addresses in brackets to differentiate from real names
+		//    Sally_Smith <a@bbb.com>,Bill <b@ccc.com>,Bart <c@ddd.com>
+		// And if you have nonalpha characters or spaces in the real name, you can isolate with quotes:
+		//    "Dr. Sally Smith" <a@bbb.com>,"Mr. Bill Jr." <b@ccc.com>,"Black Bart!" <c@ddd.com>
+		// HOWEVER, because of the way we parse, you cannot have commas within real names, even when quoted.
+		// If you want to skip sending altogether, put in s single word "none" like this:
+		//    none
+		// Remember that CyberSpark sniffers log everything, so even if you never send an email, 
+		//   all issues are logged.
+		// Note that it is the PEAR package that is doing all of this fancy stuff, not our code here.
+		// The PEAR package actually does not need us to pre-parse into individual addresses, because it is
+		//   capable of handling the comma-separated format. We do it here solely to preserve privacy
+		//   by sending messages to one addressee at a time.
+		if (isset($to) and ($to != null) and (strlen($to) > 0)) {
+			$toList = explode(",", $to);
+			// Each message is sent individually. This way a recipient doesn't know who
+			// (else) is being notified.
+			foreach ($toList as $toMail) {
+				$toMail = trim($toMail);			// trim leading and trailing blanks
+ 				$headers['To'] = $toMail;			// sanitize: show only the current addressee
+           		// Send alert unless destination is "none"
+                // (Although nonsensical, "none" can be intermixed with other destinations)
+                if (strcasecmp($toMail, 'none') != 0) {
+                    // Regular destinatioms...
+			    	$send = $PEARmailer->send($toMail, $headers, $message);  
+			    	if(PEAR::isError($send)) { 
+						$message .= "\nCould not send this alert (to '$toMail'): " . $send->getMessage() . "\n";
+						writeLogAlert("textMail() failed. Exception: " . $send->getMessage());
+			    	}
+                }
+			}
 		}
 	}
 	catch (Exception $mx) {
@@ -90,7 +113,7 @@ function sendMail($scanResults, &$properties) {
 	$timeStamp = date("r");
 	$subject = $properties['shortid'] . " Report $timeStamp";
 	
-	$message .= $timeStamp . "\n";
+	$message .= "$timeStamp \n";
 	$message .= "$identity \n\n"; 
 	$message .= "CyberSpark.net monitoring and alerting software-- This open source software is provided free of charge under a Creative Commons by-nc-sa license. See http://cyberspark.net/license for more information.\n";
 	if (isset($properties['ID'])) {
