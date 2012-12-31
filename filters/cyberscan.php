@@ -102,8 +102,8 @@ function cyberscanScan($content, $args, $privateStore) {
 						//     LOAD=n
 						//   where 'n' is the LOADAVG number above which you want to notify.
 						$s = condenseBlanks($s);
-						list($beginning, $currentLoad, $previous, $longago) = explode(' ', $s, 4);
-						list($currentLoad, $frax) = explode('.', $currentLoad, 2);
+						list($beginning, $currentLoad, $previous, $longago) = #explode(' ', $s, 4);
+						list($currentLoad, $frax) = #explode('.', $currentLoad, 2);
 //						// Only notify on change
 //						if (isset($privateStore[$filterName][$url][$key]) && strcmp($s, $privateStore[$filterName][$url][$key]) != 0) {
 							$loadWarningLevel = LOADWARNING;
