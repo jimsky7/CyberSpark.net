@@ -342,6 +342,13 @@ if ($isDaemon) {
 			///////////////////////////////////////////////////////////////////////////////////
 			// Send properties and/or logs out to administrator
 			$dateTimeNumbers = date('YmdHis');
+			// debugging below
+				$sa = $prenotified?'true':'false';
+				$sb = $postnotified?'true':'false';
+				$sc = $isDaemon?'true':'false';
+				$sd = $properties['sendlogs'];
+			echoIfVerbose("Prenotified: $sa Postnotified: $sb Daemon: $sc Sendlogs: $sd \n");
+			// debugging above
 			if ((!$prenotified && $postnotified) || !$isDaemon)  {
 				if (isset($properties['sendlogs']) && ($properties['sendlogs'] != null) && (strlen($properties['sendlogs']) > 0)) {
 					///////////////////////////////////////////////////////////////////////////////////
