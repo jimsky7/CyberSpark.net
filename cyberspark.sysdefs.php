@@ -68,6 +68,8 @@ define('FILTERS_EXT', ".php");				// extension for filter files
 // LOG FILES
 define('LOG_DIR', "log/");					// where the csv logs will be written
 define('LOG_EXT', ".log");					// extension for log files
+// ZIP FILES
+define('ZIP_EXT', ".gz");					// extension for gzipped files
 // PID and heartbeat and 'last url' files
 define('PID_EXT', ".pid");					// extension for process-id files
 define('HEARTBEAT_EXT', ".next");			// extension for heartbeat files

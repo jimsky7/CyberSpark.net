@@ -18,7 +18,7 @@ include_once "include/functions.inc";
 
 ///////////////////////////////// 
 // 
-$ID			= INSTANCE_ID;			// "short" ID (like "CS1")
+$ID			= INSTANCE_ID;			// this "sniffer" ID (like "CS9-0")
 $identity	= DEFAULT_IDENTITY;		// from config
 $userAgent  = DEFAULT_USERAGENT;	// from config
 $maxDataSize= MAX_DATA_SIZE;		// maximum serialized data file size = 10MB
@@ -294,14 +294,17 @@ if ($isDaemon) {
 				$store['cyberspark']['tripwire'] = true;
 				if (isset($store['cyberspark']['notifiedtoday'])) {
 					$properties['notifiedtoday'] = $store['cyberspark']['notifiedtoday'];
+					$prenotified                 = $store['cyberspark']['notifiedtoday'];
 				}
 				else {
 					$properties['notifiedtoday'] = false;
+					$prenotified                 = false;
 				}
 			}
 			else {
 				// Reset values of things that are in the store but not the properties file
 				$properties['notifiedtoday'] = $store['cyberspark']['notifiedtoday'];
+				$prenotified                 = $store['cyberspark']['notifiedtoday'];
 			}
 	 		// Add filters (only if there are none yet - first time around)
 			if ($loop == 0) {
@@ -323,6 +326,7 @@ if ($isDaemon) {
 			
 			sendMail($scanResults, $properties);
 			$store['cyberspark']['notifiedtoday'] = $properties['notifiedtoday'];
+			$postnotified                         = $properties['notifiedtoday'];
 
 			///////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////
@@ -334,6 +338,70 @@ if ($isDaemon) {
 			writeStore($storeFileName, $store);
 			echoIfVerbose("Wrote contents of 'store' to $storeFileName \n");
 			
+			///////////////////////////////////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////////////////////////////////
+			// Send properties and/or logs out to administrator
+			$dateTimeNumbers = date('YmdHis');
+			// debugging below
+				$sa = $prenotified?'true':'false';
+				$sb = $postnotified?'true':'false';
+				$sc = $isDaemon?'true':'false';
+				$sd = $properties['sendlogs'];
+			echoIfVerbose("Prenotified: $sa Postnotified: $sb Daemon: $sc Sendlogs: $sd \n");
+			// debugging above
+			if ((!$prenotified && $postnotified) || !$isDaemon)  {
+				if (isset($properties['sendlogs']) && ($properties['sendlogs'] != null) && (strlen($properties['sendlogs']) > 0)) {
+					///////////////////////////////////////////////////////////////////////////////////
+					///////////////////////////////////////////////////////////////////////////////////
+					// Send (a possibly updated) properties file to our admin once a day
+					// It's time to send
+					try {
+						$saveTo = $properties['to'];
+						echoIfVerbose("Props and logs will be sent to $properties[sendlogs] \n");
+						$properties['to'] = $properties['sendlogs'];
+						echoIfVerbose("Send a copy of the properties file \n");
+						$copyFileName = str_replace(PROPS_EXT, '-'.$dateTimeNumbers.PROPS_EXT, $propsFileName);
+						if (copy($propsFileName,$copyFileName)) {
+							sendMailAttachment('Props', 'A copy of the properties file for '.$ID.' is attached.', $properties, $copyFileName);
+							unlink($copyFileName);
+						}
+
+						///////////////////////////////////////////////////////////////////////////////////
+						///////////////////////////////////////////////////////////////////////////////////
+						// Send (and rotate) the log file to our admin once a day
+						// It's time to send
+						$copyFileName = str_replace(LOG_EXT, '-'.$dateTimeNumbers.LOG_EXT, $logFileName);
+						$copyFileName .= ZIP_EXT;
+						echoIfVerbose("Rotate and send a copy of the log file \n");
+						// Close my log file
+						writeLogAlert('Closing the log in order to rotate.');
+						endLog();
+						// gzip the log file
+						$z = gzopen($copyFileName, 'w9');
+						$log = fopen($logFileName,'rb');
+						while (!feof($log)) {
+							gzwrite($z, fread($log, 100000));	
+						}
+						fclose($log);
+						gzclose($z);
+						// unlink the file that was just zipped
+						// zipped logs are not removed
+						unlink($logFileName);
+						// Open a new log file
+						beginLog();
+						// Email the zipped log to administrator
+						// See if it should be sent to a special email address
+						//   logs=email@example.com
+						// ...in the properties file
+						sendMailAttachment('Log', 'A copy of the log file for '.$ID.' is attached.', $properties, $copyFileName);
+					}
+					catch (Exception $zx) {
+						echoIfVerbose('Exception when sending files: '.$zx->getMessage()." \n");
+					}
+					$properties['to'] = $saveTo;
+				}
+			}
+
 			///////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////
 			// If not running 'daemon' then drop out now
