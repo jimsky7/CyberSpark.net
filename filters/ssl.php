@@ -142,14 +142,14 @@ function sslScan($content, $args, $privateStore) {
 			$result = "OK";
 			// Check the cert(s) that were presented to us against the BASELINE cert in our store
 			$certs = extractCertificates($stderrString);
-			if (isset($privateStore[$filterName][$domain][SSL_BASELINE_CERT])) {
+			if (isset($privateStore[$filterName][$domain]['SSL_BASELINE_CERT'])) {
 				// Compare the cert(s) against what we have in our store
-				if (strcmp($certs, $privateStore[$filterName][$domain][SSL_BASELINE_CERT]) != 0) {
+				if (strcmp($certs, $privateStore[$filterName][$domain]['SSL_BASELINE_CERT']) != 0) {
 					// This cert does not match the BASELINE cert!
 					$result = "Critical";
 					$message .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! This is either a serious error or they've updated the cert. Check it carefully!\n\n";
 					$message .= INDENT."INTERACTION:\n" .$stderrString."\n\n";
-					$message .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain][SSL_BASELINE_CERT]."\n\n";
+					$message .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain]['SSL_BASELINE_CERT']."\n\n";
 				}
 			}
 			else {
@@ -160,17 +160,17 @@ function sslScan($content, $args, $privateStore) {
 				$message .= INDENT."SAVED NEW BASELINE CERT(S) AS FOLLOWS:\n$certs\n\n";
 			}
 			// Save just the cert(s) - note that if the BASELINE differed above, the new cert replaces the former baseline
-			$privateStore[$filterName][$domain][SSL_BASELINE_CERT] = $certs;
+			$privateStore[$filterName][$domain]['SSL_BASELINE_CERT'] = $certs;
 		}
-		else if (strcasecmp($privateStore[$filterName][$domain][SSL_VERBOSE_RESULT], $stderrString) != 0) {
+		else if (strcasecmp($privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT'], $stderrString) != 0) {
 			// The "verbose" result returned by the CURLOPT_SSL_VERIFY option is neither OK nor failed
 			//   so report out what it contains.
 			$result = "Critical";
 			$message .= INDENT."Something is odd here. The certificate is neither 'valid' nor 'failed' - - Examine the details carefully under 'CURRENT' below. These are transcripts of the interactions with the HTTPS server.\n\n";
-			$message .= INDENT."PREVIOUS:\n".$privateStore[$filterName][$domain][SSL_VERBOSE_RESULT]."\n\n";
+			$message .= INDENT."PREVIOUS:\n".$privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT']."\n\n";
 			$message .= INDENT."CURRENT:\n" .$stderrString."\n\n";
 		}
-		$privateStore[$filterName][$domain][SSL_VERBOSE_RESULT] = $stderrString;
+		$privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT'] = $stderrString;
 	}
 	catch (Exception $dax) {
 		$result = "ssl";
@@ -191,7 +191,7 @@ function sslInit($content, $args, $privateStore) {
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
 	$result   = "OK";						// default result
-	$message = "[filterName] Scanning " . $args['url'];
+	$message = "[$filterName] Initialized. URL is " . $args['url'];
 
 	return array($message, $result, $privateStore);
 	
