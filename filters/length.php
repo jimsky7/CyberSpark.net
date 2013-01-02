@@ -84,7 +84,7 @@ function lengthInit($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Checking length of " . $args['url'];
+	$message = "[$filterName] Initialized. URL is " . $args['url'];
 	$result   = "OK";
 //echo "filter 'init' 'length'\n";	
 	return array($message, $result, $privateStore);

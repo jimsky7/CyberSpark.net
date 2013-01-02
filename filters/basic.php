@@ -66,7 +66,7 @@ function basicInit($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Basic filtering";
+	$message = "[$filterName] Initialized. URL is " . $args['url'];
 	$result   = "OK";
 
 	return array($message, $result, $privateStore);

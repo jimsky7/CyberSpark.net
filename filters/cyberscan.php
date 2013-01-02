@@ -166,7 +166,7 @@ function cyberscanInit($content, $args, $privateStore) {
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
 	$result   = "OK";						// default result
-	$message = "[filterName] Scanning " . $args['url'];
+	$message = "[$filterName] Initialized. URL is " . $args['url'];
 
 	return array($message, $result, $privateStore);
 	
