@@ -78,6 +78,9 @@ function dnsScan($content, $args, $privateStore) {
 		
 			////// AAAA  (use fqdn)
 			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA, "AAAA", $privateStore, $filterName, $message, array('host', 'ip'));
+
+			////// Note that the dns_get_record() function has constants defined for certain types of records.
+			//     There may be constants that were not available at the time of this writing.
 		}
 	}
 	catch (Exception $dax) {
