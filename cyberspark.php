@@ -393,7 +393,7 @@ if ($isDaemon) {
 						// See if it should be sent to a special email address
 						//   logs=email@example.com
 						// ...in the properties file
-						sendMailAttachment('Log', 'A copy of the log file for '.$ID.' is attached.', $properties, $copyFileName);
+						sendMimeMail('Log', 'A copy of the log file for '.$ID.' is attached.', $properties, $copyFileName);
 					}
 					catch (Exception $zx) {
 						echoIfVerbose('Exception when sending files: '.$zx->getMessage()." \n");
@@ -413,6 +413,11 @@ if ($isDaemon) {
 				$sleepTime = $desiredLoopTime - $loopElapsedTime;
 				if ($sleepTime < 0) {
 					$sleepTime = 1;
+					$took = floor($loopElapsedTime/60);
+					$want = floor($desiredLoopTime/60);
+					writeLogAlert("The loop ran longer than the desired time. You may wish to divide the URLs among two or more properties files. (The loop took $took minutes. The desired time was $want minutes.)");
+					echoIfVerbose("The loop ran longer than the desired time. You may wish to divide the URLs among two or more properties files. (The loop took $took minutes. The desired time was $want minutes.)\n");
+					sendMimeMail('Overrun', "The loop ran longer than the desired time. You may wish to divide the URLs among two or more properties files. (The loop took $took minutes. The desired time was $want minutes.)", $properties, null);
 				}
 				echoIfVerbose("Going to sleep for $sleepTime seconds. (The loop took $loopElapsedTime seconds.)\n");
 				sleep($sleepTime);		// sleep (seconds)
