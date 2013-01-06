@@ -138,6 +138,7 @@ function dns($args) {
 
 ///////////////////////////////// 
 function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filterName, $message, $keyField, $keyExtra=null) {
+	// Get all records of a particular type that exist in the domain's DNS
 	$da = dns_get_record($domain, $type);
 	echoIfVerbose("$typeString count: " . count($da) . "\n");
 	$result = "OK";
@@ -150,15 +151,32 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 			}
 			// Build array of current entries (which data depends on parameter $keyField)
 			$mx = array();
+			// $da contains (array) the records of one particular type
 			foreach ($da as $dmx) {
+				// $dmx is one single DNS entry
+				// It is indexed somewhat like this; may vary.
+				// Our caller has requested certain ones (in $keyField) and we can
+				//   only retrive them if they exist.
+				//      [host] => php.net
+            	//		[type] => MX
+            	//		[pri] => 5
+            	//		[target] => pair2.php.net
+            	//		[class] => IN
+            	//		[ttl] => 6765
+            	//		[ip] => 64.246.30.37
+				//  Just examples.
 				$keyFieldString = "";
 				if (is_array($keyField)) {
 					foreach($keyField as $kf) {
-						$keyFieldString .= $dmx[$kf] . ' ';
+						if (isset($dmx[$kf])) {
+							$keyFieldString .= $dmx[$kf] . ' ';
+						}
 					}
 				}
 				else {
-					$keyFieldString = $dmx[$keyField];
+					if (isset($dmx[$keyField])) {
+						$keyFieldString = $dmx[$keyField];
+					}
 				}
 				// Force lowercase because DNS records don't care about case
 				$keyFieldString = strtolower($keyFieldString);
