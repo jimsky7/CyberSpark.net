@@ -89,6 +89,8 @@ function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServe
 }
 
 /////////////////////////////////////////////////////////
+//  attachmentMail()
+//  Send a MIME message. If $fileName is non-null, attach a file.
 function attachmentMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServer, $smtpPort, $user, $password, $fileName) {
 	global $identity;
 	
@@ -112,7 +114,9 @@ function attachmentMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smt
 			// If a file is being attached, go to mime
 			$mime = new Mail_mime();
 			$mime->setTXTBody($message);
-			$mime->addAttachment($fileName);
+			if ($fileName != null) {
+				$mime->addAttachment($fileName);
+			}
 			$mimeMessage = $mime->get();
 			// Get the MIME separator (created inside the Mail_mime object) because it has to go into a header
 			$i = strpos($mimeMessage, "\r\n");
@@ -196,6 +200,8 @@ function sendAlert($to, $scanResult, $properties, $timeStamp) {
 
 
 /////////////////////////////////////////////////////////
+//  sendMail()
+//  Send an alert under certain circumstances (dictated by $scanResults)
 function sendMail($scanResults, &$properties) {
 	global $identity;
 	
@@ -263,6 +269,8 @@ function sendMail($scanResults, &$properties) {
 }
 
 /////////////////////////////////////////////////////////
+//  sendMailAttachment()
+//  Sends a MIME message with an optional attached file. 
 function sendMailAttachment($shortSubject, $message, &$properties, $fileName) {
 	// Get defaults
 	$to = $properties['to'];
@@ -273,5 +281,12 @@ function sendMailAttachment($shortSubject, $message, &$properties, $fileName) {
 	$message = $properties['shortid'] . "\n" . $message . "\n\n";
 
 	attachmentMail($to, $from, $properties['replyto'], $properties['abuseto'], $subject, $message, $properties['smtpserver'], $properties['smtpport'], $properties['user'], $properties['password'], $fileName);
+}
+
+/////////////////////////////////////////////////////////
+//  sendMimeMail()
+//  Sends a MIME message with an optional attached file. 
+function sendMimeMail($shortSubject, $message, &$properties, $fileName) {
+	return sendMailAttachment($shortSubject, $message, $properties, $fileName);
 }
 ?>
