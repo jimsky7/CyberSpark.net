@@ -33,7 +33,6 @@ $logHandle	= null;					// handle for log file (used as a global elsewhere)
 $path		= APP_PATH;				// path to the executing script (WITHOUT script file name)
 $scriptName	= "";					// this script's name, picked up from $argv[0]
 $isDaemon   = false;				// true if running in 'daemon' mode
-$configTest = false;            	// run in TEST mode- just read properties
 $running	= false;
 $time		= DEFAULT_LOOP_TIME;	// default minutes between loops
 $notify		= DEFAULT_NOTIFY_HOUR;	// default "midnight hour" is "23	"
@@ -175,7 +174,7 @@ if ($isDaemon) {
 			
 			// Read the 'properties' file (the configuration) EVERY TIME AROUND
 			$properties = getProperties($propsFileName);
-			if (isset($properties['error']) || $configTest) {
+			if (isset($properties['error'])) {
 				// Properties file failed in some way
 				writeLogAlert("Failed to parse $propsFileName Error was: " . $properties['error']);
 				echoIfVerbose("Failed to parse $propsFileName Error was: " . $properties['error']);
@@ -296,9 +295,9 @@ if ($isDaemon) {
 					if (!isNotifyHour($properties['notify'])) {
 						// If it's not the 'notify' hour, force the flag false.
 						// This fix can be needed if the daemon was running,
-						//   sent notification, then was shut during DURING the notify hour, 
+						//   sent notification, then was shut down during DURING the notify hour, 
 						//   but then was restarted during a LATER hour. Obscure, but it 
-						//   will latch the daemon into perpetually rotating the logs every
+						//   will latch the daemon into perpetually rotating the log every
 						//   time around the loop.
 						$store['cyberspark']['notifiedtoday'] = false;
 					}
@@ -430,7 +429,10 @@ if ($isDaemon) {
 							// See if it should be sent to a special email address
 							//   logs=email@example.com
 							// ...in the properties file
-							sendMimeMail('Log', 'A copy of the log file for '.$ID.' is attached.', $properties, $copyFileName);
+							sendMimeMail('Log', "A gzipped copy of the log file for $ID is attached.", $properties, $copyFileName);
+						}
+						else {
+							sendMimeMail('Log rotation', "The log file for $ID has been rotated. A gzipped copy remains on the server.", $properties, null);
 						}
 					}
 					catch (Exception $zx) {
