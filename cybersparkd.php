@@ -3,19 +3,30 @@
 	/**
 		CyberSpark.net monitoring-alerting system
 		called from the command line as
-		  /usr/local/cyberspark/cybersparkd.php --arg --arg
-	*/
-	/**
-		Put a script at /etc/init.d/cyberspark
-		to start this file you are reading, 
-		and this one will start individual "sniffers" (monitors).
-		TO START UPON REBOOT
+		  /usr/local/cyberspark/cybersparkd.php --id NAME --daemon
+
+		If "--id" is specified and "NAME" parameter present, this will be the daemon's
+		name. We use, for example "CS9" for the ninth CyberSpark daemon.
+		
+		Put this script at /etc/init.d/cyberspark
+
+		To set up 'rc' to start CyberSpark upon reboot, use command line:
 		  update-rc.d cyberspark defaults
-		TO REMOVE SO IT DOESN'T START ANY MORE
+		To remove so it doesn't start any more upon reboot:
 		  update-rc.d -f cyberspark remove
-		OR, if you have it installed, you can use 
+		
+		Or, if you have 'rcconf' installed, you can type command line: 
 		  rcconf
-		to mark this service for restart, or not.
+		which will interact and you can mark this service for restart, or not.
+		
+		Then in actual operation, use command line
+		  service cyberspark start
+		to start it up, or
+		  service cyberspark stop
+		to stop it. To obtain current status, use
+		  service cyberspark status
+		  
+		
 	**/
 	
 ///////////////////////////////// 
@@ -35,8 +46,7 @@ declare(ticks = 1);					// allows shutdown functions to work
 // 
 $ID 		= INSTANCE_ID;		// example "CS8"
 $propsFileName= "";				// exact name of the properties file
-$isDaemon   = true;				// true if running in 'daemon' mode
-$configTest = false;            // run in TEST mode- just read properties
+$isDaemon   = false;			// true if running in 'daemon' mode
 $running	= false;
 $time		= 1;				// default is to run every 1 minutes
 $loop		= 0;
@@ -52,9 +62,6 @@ $replyTo		= EMAIL_REPLYTO;					// (from config)
 $abuseTo		= EMAIL_ABUSETO;					// (from config)
 $administrator	= EMAIL_ADMINISTRATOR;				// (from config)
 $sleepTime 		= KEEPALIVE_LOOP_SLEEP_TIME;		// (from config)
-
-$isDaemon		= false;				// required by args.inc but not used herein
-$configTest		= false;				// required by args.inc but not used herein
 
 ///////////////////////////////// 
 // Initialization
