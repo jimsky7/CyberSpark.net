@@ -378,9 +378,10 @@ if ($isDaemon) {
 				// keyword and value tell where to send rotated logs
 				//   sendlogs=email@example.com
 				$sendLogs = isset($properties['sendlogs']) && ($properties['sendlogs'] != null) && (strlen($properties['sendlogs']) > 0);
+				$sendProps = isset($properties['sendproperties']) && ($properties['sendproperties'] != null) && (strlen($properties['sendproperties']) > 0);
 				// Do various things connected with log rotation and/or sending to administrator
 				// Note that we can rotate without sending, but we cannot send without rotating.
-				$rotate = $rotate || $sendLogs;		// rotate if specifically asked for OR if sending logs
+				$rotate = $rotate || $sendLogs || $sendProps;		// rotate if specifically asked for OR if sending files
 				// So if we are rotating, then there are things to do...
 				if ($rotate) {
 					///////////////////////////////////////////////////////////////////////////////////
@@ -389,14 +390,21 @@ if ($isDaemon) {
 					// It's time to send
 					try {
 						$saveTo = $properties['to'];
-						if ($sendLogs) {
-							echoIfVerbose("Props and logs will be sent to $properties[sendlogs] \n");
-							$properties['to'] = $properties['sendlogs'];
-							echoIfVerbose("Send a copy of the properties file \n");
-							$copyFileName = str_replace(PROPS_EXT, '-'.$dateTimeNumbers.PROPS_EXT, $propsFileName);
-							if (copy($propsFileName,$copyFileName)) {
-								sendMailAttachment('Props', 'A copy of the properties file for '.$ID.' is attached.', $properties, $copyFileName);
-								unlink($copyFileName);
+						if ($sendProps) {
+							$properties['to'] = $properties['sendproperties'];
+							echoIfVerbose("Sending a copy of the properties file to $properties[sendproperties]\n");
+							writeLogAlert("Sending a copy of the properties file to $properties[sendproperties]");
+							if (defined(PROPS_UNIQUE_COPY) && PROPS_UNIQUE_COPY) {
+								// Use this code to send a copy with a unique filaname based on the current time
+								$copyFileName = str_replace(PROPS_EXT, '-'.$dateTimeNumbers.PROPS_EXT, $propsFileName);
+								if (copy($propsFileName,$copyFileName)) {
+									sendMailAttachment('Props', 'A copy of the properties file for '.$ID.' is attached.', $properties, $copyFileName);
+									unlink($copyFileName);
+								}
+							}
+							else {
+								// Use this code to send using the original props filename -- will be the same every time
+								sendMailAttachment('Props', 'A copy of the properties file for '.$ID.' is attached.', $properties, $propsFileName);
 							}
 						}
 						///////////////////////////////////////////////////////////////////////////////////
@@ -405,9 +413,9 @@ if ($isDaemon) {
 						// It's time to send
 						$copyFileName = str_replace(LOG_EXT, '-'.$dateTimeNumbers.LOG_EXT, $logFileName);
 						$copyFileName .= ZIP_EXT;
-						echoIfVerbose("Rotating the log file. \n");
 						// Close the log file so it can be zipped.
-						writeLogAlert('Closing the log in order to rotate.');
+						echoIfVerbose("Rotating the log file. \n");
+						writeLogAlert('Rotating the log file.');
 						endLog();
 						// gzip the log file
 						$z = gzopen($copyFileName, 'w9');
@@ -423,8 +431,9 @@ if ($isDaemon) {
 						// Start a new log file
 						beginLog();
 						if ($sendLogs) {
-							echoIfVerbose("Sending the log. \n");
-							writeLogAlert('Sending the log.');
+							$properties['to'] = $properties['sendlogs'];
+							echoIfVerbose("Sending the log to $properties[sendlogs] \n");
+							writeLogAlert("Sending the log to $properties[sendlogs].");
 							// Email the zipped log to administrator
 							// See if it should be sent to a special email address
 							//   logs=email@example.com

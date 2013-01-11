@@ -56,26 +56,27 @@ define('GSB_PAGE_SIZE_LIMIT', 500000);		// largest page size we will check - due
 /////////////////////////////////////////////////////////////////////////////////
 // Paths to subdirectories of APP_PATH (which is defined in cyberspark.config.php)
 // PROPERTIES
-define('PROPS_DIR', "properties/");			// where properties files live
-define('PROPS_EXT', ".properties");			// extension for properties files
+define('PROPS_DIR', 'properties/');			// where properties files live
+define('PROPS_EXT', '.properties');			// extension for properties files
+define('PROPS_UNIQUE_COPY', false);			// make TRUE if you want props sent by email to have unique name
 // DATABASE
-define('DATA_DIR', "data/");				// where data will live
-define('DATA_EXT', ".db");					// extension for database files
+define('DATA_DIR', 'data/');				// where data will live
+define('DATA_EXT', '.db');					// extension for database files
 define('MAX_DATA_SIZE', 10000000);			// maximum 'store' file size
 // FILTERS
-define('FILTERS_DIR', "filters/");			// where the scanning filters live
-define('FILTERS_EXT', ".php");				// extension for filter files
+define('FILTERS_DIR', 'filters/');			// where the scanning filters live
+define('FILTERS_EXT', '.php');				// extension for filter files
 // LOG FILES
-define('LOG_DIR', "log/");					// where the csv logs will be written
-define('LOG_EXT', ".log");					// extension for log files
+define('LOG_DIR', 'log/');					// where the csv logs will be written
+define('LOG_EXT', '.log');					// extension for log files
 // ZIP FILES
-define('ZIP_EXT', ".gz");					// extension for gzipped files
+define('ZIP_EXT', '.gz');					// extension for gzipped files
 // PID and heartbeat and 'last url' files
-define('PID_EXT', ".pid");					// extension for process-id files
-define('HEARTBEAT_EXT', ".next");			// extension for heartbeat files
+define('PID_EXT', '.pid');					// extension for process-id files
+define('HEARTBEAT_EXT', '.next');			// extension for heartbeat files
 define('HEARTBEAT_LATE',60);				// seconds before heartbeat is "late"
 define('HEARTBEAT_BLUE',1800);				// secs before late heartbeat causes code blue (30 minutes)
-define('URL_EXT', ".url");					// extension for 'URL' files
+define('URL_EXT', '.url');					// extension for 'URL' files
 define('MAX_URL_LENGTH', 2083);				// same as MSIE, though there is no IETF limit
 
 /////////////////////////////////////////////////////////////////////////////////
