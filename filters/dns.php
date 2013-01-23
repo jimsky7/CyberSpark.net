@@ -82,6 +82,12 @@ function dnsScan($content, $args, $privateStore) {
 			////// Note that the dns_get_record() function has constants defined for certain types of records.
 			//     There may be constants that were not available at the time of this writing.
 		}
+		else {
+			///// When dns_get_record() comes back FALSE, it has failed to retrieve records.
+			$result = "DNS";
+			$message .= INDENT . "Could not retrieve DNS information for this domain.\n";
+			echoIfVerbose(       "Could not retrieve DNS information for this domain.\n");	
+		}
 	}
 	catch (Exception $dax) {
 		$result = "DNS";
