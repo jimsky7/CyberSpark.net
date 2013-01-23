@@ -12,7 +12,8 @@ require_once 'HTTP/Request.php';
 
 ////////////////////////////////////////////////////////////////////////////////////
 function httpGet($url, $userAgent, $timeout) {
-	
+	//// Use PEAR HTTP_Client to get a URL
+	//   http://pear.php.net/manual/en/package.http.http-client.http-client.get.php
 	try {
 
 		$params = array();
@@ -65,7 +66,8 @@ function httpGet($url, $userAgent, $timeout) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 function httpPost($url, $userAgent, $timeout) {
-	
+	//// Use PEAR HTTP_Client to post to a URL
+	//   http://pear.php.net/manual/en/package.http.http-client.http-client.post.php
 	try {
 
 		$params = array();
