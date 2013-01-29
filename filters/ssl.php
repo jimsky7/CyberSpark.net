@@ -162,6 +162,14 @@ function sslScan($content, $args, $privateStore) {
 			// Save just the cert(s) - note that if the BASELINE differed above, the new cert replaces the former baseline
 			$privateStore[$filterName][$domain]['SSL_BASELINE_CERT'] = $certs;
 		}
+		else if (stripos($stderrString,'SSL connection timeout')>0) {
+			// cURL timed out when attempting to connect.
+			// This does NOT include any cert, so we don't update the store.
+			$result = "Critical";
+			$message .= INDENT."The HTTPS connection timed out, so there is no new (current) certificate info.\n";
+			$message .= INDENT."The previous cert information will be retained for comparison during the next attempt.\n";
+			$message .= INDENT.$stderrString."\n";
+		}
 		else if (strcasecmp($privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT'], $stderrString) != 0) {
 			// The "verbose" result returned by the CURLOPT_SSL_VERIFY option is neither OK nor failed
 			//   so report out what it contains.
