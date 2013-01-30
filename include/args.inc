@@ -8,9 +8,11 @@
 
 ///////////////////////////////// 
 function getArgs($argv) {
-	global $isDaemon;
-	global $ID;
+	// Initialize
+	$isDaemon = false;
+	$ID       = '';
 	
+	// Examine parameters ($argv) from command line call
 	$i = 0;
 	while ($i < count($argv)) {
 		if($argv[$i] == '--help' || $argv[$i] == 'help' || count($argv) == 1) {
@@ -26,6 +28,8 @@ function getArgs($argv) {
 		}
 		$i++;
 	}
+	
+	return array($isDaemon, $ID);
 }
 
 ///////////////////////////////// 
@@ -36,7 +40,7 @@ cyberspark.php --id XXXXX --daemon
 --help
     Print this help message and quit.
 --id XXXXX
-    The identifier for this thread, like "CS8-0" // among other 
+    The identifier for this thread, like "CS9-0" // among other 
     things this determines the properties file used.
 --daemon 
     Run as a daemon (keep executing until terminated)

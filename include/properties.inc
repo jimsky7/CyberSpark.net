@@ -6,7 +6,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Read properties from a file and return associative array of those properties
-function getProperties($propsFileName) {
+function getProperties($propsFileName, $substitutions=null) {
 		$properties = array();
 		// These are the three subsections of a "URL=" line
 		// url=uuuuu;ccccc=eeeee
@@ -22,8 +22,18 @@ function getProperties($propsFileName) {
 					$line = fgets($readHandle);
 					if (strlen($line) > 0) {
 						$tline = trim($line);
+						
+						// Substitute certain "{----}" parameters
+						if ($substitutions != null and is_array($substitutions)) {
+							foreach ($substitutions as $key=>$value) {
+								$tline = str_replace('{'.$key.'}', "$value", $tline);
+							}
+						}
+						// "Parse" the properties line
 						if (strncmp($tline, '#', 1) != 0) {
-//echo "$tline \n";
+							// echo "$tline \n";
+							// Note that only the lines that do NOT BEGIN "#" are parsed.
+							// i.e. "Comments are skipped"
 							// split line at first "="
 							if (strpos($tline, '=') !== false) {
 								// First separate into key=value

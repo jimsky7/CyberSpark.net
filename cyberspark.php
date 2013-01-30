@@ -40,7 +40,7 @@ $messageSeed= "";					// initial portion of message
 $host		= "";					// human-readable host name
 $loop		= 0;
 $crashes	= 0;
-$properties = array();				// properties as returned by getProperties()
+$properties = array();					// properties as returned by getProperties()
 $timeout    = DEFAULT_SOCKET_TIMEOUT;	// socket timeout in seconds for HTTP GET (from config)
 	
 // Data store for "private" information that filters want to retain between runs.
@@ -90,22 +90,22 @@ include_once "include/echolog.inc";
 // initialization
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 // NOTE: This overrides the APP_PATH from the config file, which will be unused.
-$path 		= substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
-$dataDir 	= $path . $dataDir;
-$propsDir	= $path . $propsDir;
-$filtersDir = $path . $filtersDir;
-$logDir 	= $path . $logDir;
-$scriptName	= $argv[0];
+$path 		 = substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
+$dataDir 	 = $path . $dataDir;
+$propsDir	 = $path . $propsDir;
+$filtersDir  = $path . $filtersDir;
+$logDir 	 = $path . $logDir;
+$scriptName	 = $argv[0];
 
 ///////////////////////////////// 
 // Parse the command-line arguments
-getArgs($argv);
-$propsFileName		= $propsDir . $ID . PROPS_EXT;
-$storeFileName		= $dataDir  . $ID . DATA_EXT;
-$logFileName		= $logDir   . $ID . LOG_EXT;
-$pidFileName		= $path . $ID . PID_EXT;
-$heartbeatFileName	= $path . $ID . HEARTBEAT_EXT;
-$urlFileName        = $path . $ID . URL_EXT;
+list($isDaemon, $ID) = getArgs($argv);
+$propsFileName		 = $propsDir . $ID . PROPS_EXT;
+$storeFileName		 = $dataDir  . $ID . DATA_EXT;
+$logFileName		 = $logDir   . $ID . LOG_EXT;
+$pidFileName		 = $path . $ID . PID_EXT;
+$heartbeatFileName	 = $path . $ID . HEARTBEAT_EXT;
+$urlFileName         = $path . $ID . URL_EXT;
 $running = true;
 
 // Register shutdown functions
@@ -173,7 +173,13 @@ if ($isDaemon) {
 			}
 			
 			// Read the 'properties' file (the configuration) EVERY TIME AROUND
-			$properties = getProperties($propsFileName);
+			// (Specify {ID} as a substitutable string)
+			// (Specify {uname} to get Ubuntu info)
+			$uname = '';
+			if (is_file('/etc/issue.net')) {
+				$uname = file_get_contents('/etc/issue.net');
+			}
+			$properties = getProperties($propsFileName, array('ID' => $ID, 'uname' => $uname));
 			if (isset($properties['error'])) {
 				// Properties file failed in some way
 				writeLogAlert("Failed to parse $propsFileName Error was: " . $properties['error']);

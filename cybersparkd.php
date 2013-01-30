@@ -72,7 +72,7 @@ $path 		= substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/
 //$scriptName	= $argv[0];
 
 /** Parse the command-line arguments **/
-getArgs($argv);
+list($isDaemon, $ID) = getArgs($argv);
 // $ID and some other things may have been changed at this point
 //     because they're command-line args.
 	
