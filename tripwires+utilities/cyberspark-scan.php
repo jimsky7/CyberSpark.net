@@ -158,7 +158,7 @@ function writeData($path, $base) {
 //// Write an entry to the log file. This is called once at the end of run.
 function writeLog($path, $base, $message) {
 	if (isset($base) && (strlen($base)>0)) {
-		$cleanBase = str_replace('/','-',$base);
+		$cleanBase = str_replace('/', '-', $base);
 	}
 	else {
 		$cleanBase = '';
@@ -642,14 +642,12 @@ if ($report) {
 }
 
 // closing the HTML - - - - - - - - - - - -
-if ($report) {
-	echo "</div>\r\n</body>\r\n</html>\r\n";
-}
 $logEntry .= "\r\n";
 
 if ($report) {
 	writeData($path, $base);
 	writeLog ($path, $base, $logEntry);
+	echo "</div>\r\n</body>\r\n</html>\r\n";
 }
 
 ?>
