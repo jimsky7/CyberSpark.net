@@ -192,10 +192,16 @@ function attachmentMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smt
 }
 
 /////////////////////////////////////////////////////////
-function sendAlert($to, $scanResult, $properties, $timeStamp) {
+function sendAlert($to, $scanResult, &$properties, $timeStamp) {
 	// Send alert for this one URL
 	$alertSubject = $properties['shortid'] . " Alert $timeStamp";
-	textMail($to, $properties['from'], $properties['replyto'], $properties['abuseto'], $alertSubject, $scanResult, $properties['smtpserver'], $properties['smtpport'], $properties['user'], $properties['password']);
+	// 'seed' the message
+	$message = '';
+	if (isset($properties['messageseed'])) {
+		$message .= $properties['messageseed'] . "\n\n";	
+	}
+	// send the message
+	textMail($to, $properties['from'], $properties['replyto'], $properties['abuseto'], $alertSubject, $message.$scanResult, $properties['smtpserver'], $properties['smtpport'], $properties['user'], $properties['password']);
 }
 
 
@@ -211,9 +217,10 @@ function sendMail($scanResults, &$properties) {
 	}
 	// 'seed' the message
 	$message = '';
-	if (isset($properties['message'])) {
-		$message = $properties['message'] . "\n";	
+	if (isset($properties['messageseed'])) {
+		$message .= $properties['messageseed'] . "\n";	
 	}
+	echoIfVerbose("sendMail() message seed: $properties[messageseed] \n");
 	// Get defaults
 	$to = $properties['to'];
 	$from = $properties['from'];

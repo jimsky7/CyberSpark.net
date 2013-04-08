@@ -16,9 +16,10 @@
 //
 
 // Process-related variables and constants
-define('INSTANCE_ID', "CS9");		// ID for this Cyberspark instance ... YOU pick
-									// must match in '/etc/init.d/cyberspark'
-									// properties file names too 'CS9-0.properties' etc.
+define('INSTANCE_ID', "CS9");			// ID for this Cyberspark instance ... YOU pick
+										// must match in '/etc/init.d/cyberspark'
+										// properties file names too 'CS9-0.properties' etc.
+define('INSTANCE_LOCATION', 'London');	// default location to be used in notifications {location}
 
 /////////////////////////////////////////////////////////////////////////////////
 // SMTP-related variables
