@@ -432,21 +432,35 @@ if (($disk = ifGetOrPost('disk')) != null) {
 	}
 	else {
 		$fsPath = '/' . $disk;		// note ADD LEADING '/' to help find mount point because '/' can't be in the URL !
+		$fsPath = str_replace('//', '/', $fsPath);
 	}
 }
 // Disk/filesystem space used
 $diskTotalSpace = 0;
 $diskUsedSpace = 0;
-if (($fsPath != null) && is_dir($fsPath)) {
-	if (function_exists('disk_total_space')) {
-		$diskTotalSpace = disk_total_space($fsPath);
-	}
-	if (function_exists('disk_free_space')) {
-		$diskUsedSpace = $diskTotalSpace - disk_free_space($fsPath);
-	}
-	if ($diskTotalSpace > 0) {
-		// Note: $diskPercentUsed is only defined if total space > 0
-		$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+$diskReport = '';
+if ($fsPath != null) {
+	$diskReport .= "Checking filesystem at $fsPath \r\n"; 
+	try {
+		if (function_exists('disk_total_space')) {
+			$diskTotalSpace = disk_total_space($fsPath);
+		}
+		else {
+			$diskReport .= " Function 'disk_total_space' does not exist. \r\n"; 
+		}
+		if (function_exists('disk_free_space')) {
+			$diskUsedSpace = $diskTotalSpace - disk_free_space($fsPath);
+		}
+		else {
+			$diskReport .= " Function 'disk_free_space' does not exist. \r\n"; 
+		}
+		if ($diskTotalSpace > 0) {
+			// Note: $diskPercentUsed is only defined if total space > 0
+			$diskPercentUsed = $diskUsedSpace/$diskTotalSpace * 100;
+		}
+		}
+	catch (Exception $sda) {
+		$diskReport .= " Exception: ".$sda->getMessage."\r\n"; 
 	}
 }
 
@@ -636,8 +650,13 @@ if ($report) {
 		echoAndLog ("CPU:           ".(int)$cpu.'%');
 	}
 	// Report on how full the disk/filesystem is
-	if (isset($diskPercentUsed)) {
-		echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "%s"', $diskPercentUsed, $diskTotalSpace/1000000000, $fsPath));
+	if (isset($fsPath) && (strlen($fsPath) > 0)) {
+		if (strlen($diskReport) > 0) {
+			echoAndLog ($diskReport);
+		}
+		if (isset($diskPercentUsed)) {
+			echoAndLog (sprintf('Disk: %000d%% used of %000d GB total on "%s"', $diskPercentUsed, $diskTotalSpace/1000000000, $fsPath));
+		}
 	}
 }
 
