@@ -173,6 +173,8 @@ $possibleLower = str_replace(array("\r","\n","\t","<br"), "", $possibleLower);
 				
 				// Only keep if "http://" - in other words, an "external" link
 				if (strncmp($possibleLower, "http://", 7) == 0) {
+					// Encode non-URL chars, particulary don't want blanks
+					$possibleLower = urlencode($possibleLower);
 					// Truncate (from right) to remove filename
 					$slashPos = strripos($possibleLink, "/");
 					if ($slashPos > 6) {
@@ -324,7 +326,11 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 						continue;
 					}
 
-					// Check this link against GSB
+					// Remove leading underscores. Shouldn't be any, but sometimes there are. Life's a mystery. 2013-05-28 sky
+					while (strpos($link, '_') == 0) {
+						$link = substr($link, 1);
+					}
+					// Check this link against GSB. The remote GSB server, in Python, keeps track of malware and phishing domains.
 					list($r, $mess) = gsbCheckURL(&$args, $link, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
 					if ($r != "OK") {
 						$result = $r;

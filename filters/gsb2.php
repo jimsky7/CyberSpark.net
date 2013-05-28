@@ -50,8 +50,13 @@ function gsb2Scan($content, $args, $privateStore) {
 	
 	///////////////////////////////// 
 	try {
+		// Remove leading underscores. Shouldn't be any, but sometimes there are. Life's a mystery. 2013-05-28 sky
+		while (strpos($url, '_') == 0) {
+			$link = substr($url, 1);
+		}
 		// Check the main URL first
 //		array_push($howToGetThere, $url);
+		// Check one URL
 		list($r, $mess) = gsbCheckURL(&$args, $url, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
 		if ($r != "OK") {
 			$result = $r;
