@@ -58,7 +58,7 @@ DEFINE('REPORTFILE', "cyberspark.html");	// most recent single report
 $depth      = 0;			// current spidering depth (recursive calls)
 $maxDepth   = 50;			// number of levels 'deep' to spider
 $results    = array();
-$status     = array();
+$status     = array();		// Array based on names of files last seen // key: file path+name  value: length
 $store      = array();
 $newFiles   = 0;			// number files found on this scan that weren't present previous time
 $newSizes   = 0;			// number of files that have changed size
@@ -327,11 +327,12 @@ function spiderThis($baseDirectory, $maxDepth)
 					// Record file lengths
 					$fileSize = $stat['size'];
 					$results[$thisEntry] = $fileSize;
-					if ($status[$thisEntry] <> $fileSize) {
-						if ($status[$thisEntry] == 0) {
+					// Process new or changed
+					if (!isset($status[$thisEntry]) || ($status[$thisEntry] <> $fileSize)) {
+						if (!isset($status[$thisEntry]) || ($status[$thisEntry] == 0)) {
 							// New file
 							// Report the presence of a new file
-							echoAndLog("New file: ".$status[$thisEntry]." -> [".$fileSize."] $thisEntry ");
+							echoAndLog("New file : [".$fileSize."] $thisEntry ");
 							$newFiles++;
 						}
 						else {
@@ -558,6 +559,9 @@ if ($report) {
 	</p>
 ";
 	// The html is closed off later on after the scan has been completed
+}
+else {
+	$fullPath = '';
 }
 
 // read previous file status info  - - - -
