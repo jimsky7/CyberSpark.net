@@ -53,7 +53,7 @@ function dnsScan($content, $args, $privateStore) {
 	
 		////// SOA
 		$da = dns_get_record($domain, DNS_SOA);
-		if ($da !== false) {
+		if (($da !== false) && isset($da[0])) {
 			$da0 = $da[0];
 			// Note: don't include ttl because it counts down dynamically - everything else can be used
 			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname'].". serial:".$da0['serial']." refresh:".$da0['refresh']." retry:".$da0['retry']." expire:".$da0['expire']." min-ttl:".$da0['minimum-ttl'];
