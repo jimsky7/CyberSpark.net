@@ -282,6 +282,9 @@ function fixProperties($properties) {
 		if (!isset($properties['timeout'])) {
 			$properties['timeout'] = 60;
 		}
+		if (!isset($properties['useragent'])) {
+			$properties['useragent'] = DEFAULT_USERAGENT;
+		}
 		return $properties;
 }
 

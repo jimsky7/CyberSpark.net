@@ -180,7 +180,7 @@ if ($isDaemon) {
 				$uname = file_get_contents('/etc/issue.net');
 			}
 			$instanceLocation = defined('INSTANCE_LOCATION')?INSTANCE_LOCATION:'';
-			$properties = getProperties($propsFileName, array('ID' => $ID, 'uname' => $uname, 'location' => $instanceLocation));
+			$properties = getProperties($propsFileName, array('ID' => $ID, 'version' => CYBERSPARK_VERSION, 'uname' => $uname, 'location' => $instanceLocation));
 			if (isset($properties['error'])) {
 				// Properties file failed in some way
 				writeLogAlert("Failed to parse $propsFileName Error was: " . $properties['error']);
