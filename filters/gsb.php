@@ -353,6 +353,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 					// Page is really too large. This might be just a technical problem, but
 					// we can't trust the "DOMDocument" routines to function on large pages (they go
 					// into 100% CPU loop sometimes), so we will not check overly-large pages.
+					$das = str_replace(' ', '+', domainAndSubdirs($url));
 					$bcs = breadcrumbsString($howToGetThere, $das);
 					echoIfVerbose ("Page ($url) is too large (".strlen($body).") to check programmatically. How we got there: $bcs\n");
 					$message .= "Page ($url) is really too large (".strlen($body).") to check programmatically. You might want to check manually. How we got there: $bcs\n";
