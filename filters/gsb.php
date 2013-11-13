@@ -308,7 +308,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 			$body = $httpResult['body'];
 			
 			if (strlen($body) < GSB_PAGE_SIZE_LIMIT) {
-
+				echoIfVerbose ("GSB checking $url \n");
 				$dom = new DOMDocument();
 				@$dom->loadHTML($body);
 
@@ -327,9 +327,8 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 					}
 
 					// Remove leading underscores. Shouldn't be any, but sometimes there are. Life's a mystery. 2013-05-28 sky
-					while (strpos($link, '_') == 0) {
-						$link = substr($link, 1);
-					}
+					// If you leave one, GSB will fail.
+					$link = ltrim($link, '_');
 					// Check this link against GSB. The remote GSB server, in Python, keeps track of malware and phishing domains.
 					list($r, $mess) = gsbCheckURL(&$args, $link, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
 					if ($r != "OK") {
