@@ -423,7 +423,9 @@ if ($isDaemon) {
 						echoIfVerbose("Renamed $logFileName $copyFileName \n");
 						// gzip the log file. gzip will replace the old file with
 						//   a zipped version ending in ".gz"
-						shell_exec ("gzip $copyFileName");
+						// Use shell_exec() to launch and forget. The zip should run independently.
+						// Any output error messages are ignored.
+						shell_exec ("gzip $copyFileName &> /dev/null &");
 						$copyFileName .= ZIP_EXT;					// new name after gz
 						echoIfVerbose("Zipped to $copyFileName\n");
 						// Start a new log file
