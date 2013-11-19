@@ -75,7 +75,7 @@ define('ZIP_EXT', '.gz');					// extension for gzipped files
 // PID and heartbeat and 'last url' files
 define('PID_EXT', '.pid');					// extension for process-id files
 define('HEARTBEAT_EXT', '.next');			// extension for heartbeat files
-define('HEARTBEAT_LATE',60);				// seconds before heartbeat is "late"
+define('HEARTBEAT_LATE',120);				// seconds before heartbeat is "late" (allowed more slack 2013-11)
 define('HEARTBEAT_BLUE',1800);				// secs before late heartbeat causes code blue (30 minutes)
 define('URL_EXT', '.url');					// extension for 'URL' files
 define('MAX_URL_LENGTH', 2083);				// same as MSIE, though there is no IETF limit
@@ -85,7 +85,7 @@ define('MAX_URL_LENGTH', 2083);				// same as MSIE, though there is no IETF limi
 define('PID_FILESIZE_LIMIT', 100);			// max length of a PID file
 define('SHUTDOWN_WAIT_TIME', 500000);		// time to wait during shutdown (microseconds)
 define('FAILURE_ALERT_MAX', 5);				// how many alerts cybersparkd should send on process failure
-define('KEEPALIVE_LOOP_SLEEP_TIME', 250);	// in seconds
+define('KEEPALIVE_LOOP_SLEEP_TIME', 90);	// in seconds (best if equal to HEARTBEAT_LATE or shorter)
 define('RESTART_ON_FAILURE', true);			// if true, then cybersparkd will restart failed processes
 
 // cyberspark.php items
