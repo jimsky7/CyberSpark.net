@@ -40,10 +40,13 @@ function smartscanScan($content, $args, $privateStore) {
 
 
 	// Set up a "consecutive alert" counter. It will reset itself only once a day.
-	$alertCount = $privateStore[$filterName][$url]['alertcount'];
+	$alertCount = 0;
 	if (!isset($privateStore[$filterName][$url]['alertcount']) || isNotifyHour($args['notify'])) {
 		echoIfVerbose("Reset alerts to zero in [$filterName]\n");
-		$alertCount = 0;
+	}
+	else {
+		// Exists
+		$alertCount = $privateStore[$filterName][$url]['alertcount'];
 	}
 
 	///////////////////////////////// 

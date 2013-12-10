@@ -73,10 +73,23 @@ function writeLog($message, $elapsedTime, $length, $md5, $condition, $url, $code
 		$milliseconds = "$sec" . sprintf("%03d", ($usec*1000));
 		$date = "\"" . date("r") . "\"";
 		
-		$host = safeQuote($properties['host']);
-		$thread = safeQuote($properties['shortid']);
-		$tick = $properties['loop'];
-		$crashes = $properties['crashes'];
+		$host = '';
+		if (isset($properties['host'])) {
+			$host = safeQuote($properties['host']);
+		}
+		$thread = '';
+		if (isset($properties['shortid'])) {
+			$thread = safeQuote($properties['shortid']);
+		}
+		$tick = '';
+		if (isset($properties['loop'])) {
+			$tick = $properties['loop'];
+		}
+		$crashes = '';
+		if (isset($properties['crashes'])) {
+			$crashes = $properties['crashes'];
+		}
+		
 		$http_ms = $elapsedTime;
 		$length_of_body = $length;
 		$md5 = $md5;

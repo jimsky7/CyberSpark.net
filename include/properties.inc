@@ -55,22 +55,47 @@ function getProperties($propsFileName, $substitutions=null) {
 									//   eeeee represents a comma separated list of email addresses
 									// NOTE: Upon completion, all conditions are LOWERCASE
 									try {
-										$urls[$iu] = new url();
-										list($discard, $u) = explode("=", trim($line), 2);  	// ("url=",everythingelse)
-										// Break apart at the ";"
-										list($urls[$iu]->url, $ce)  = explode(";", $u, 2);		// (url,conditions+emails)
-										// Break apart the last portion into conditions and email addresses
-										list($urls[$iu]->conditions, $urls[$iu]->emails) = explode("=", $ce, 2);
-										// Force the conditions to lowercase
-										$urls[$iu]->conditions = strtolower($urls[$iu]->conditions);
-										if (strlen($urls[$iu]->conditions) > 0) {
-											// Explode the conditions apart to make an array (of 'filter' names)
-											$urls[$iu]->conditionsArray = explode(",", $urls[$iu]->conditions);
+										$u = new url();
+										$a = explode("=", trim($line), 2);  	// ("url=",everythingelse)
+										if (count($a) > 1) {
+											$s = $a[1];
+											// Break apart at the ";"
+											$a  = explode(";", $s, 2);		// (url,conditions+emails)
+											if (count($a) == 1) {
+												// A url with no conditions or emails. Set up minimal monitoring.
+												$u->url = $a[0];
+												$u->conditions = '';
+												$u->emails = '';
+												$urls[$iu++] = $u;
+											}
+											else if (count($a) == 2) {
+												$u->url = $a[0];
+												$ce = $a[1];
+												// Break apart the last portion into conditions and email addresses
+												$a = explode("=", $ce, 2);
+												$u->conditions = '';
+												$u->emails     = '';
+												if (count($a) >= 1) {
+													// Force the conditions to lowercase
+													$u->conditions = strtolower($a[0]);
+													if (strlen($u->conditions) > 0) {
+														// Explode conditions apart to make array (of 'filter' names)
+														$u->conditionsArray = explode(",", $u->conditions);
+													}
+												}
+												if (count($a) == 2) {
+													$u->emails = $a[1];
+												}
+												// Notes: ->url always set
+												//        ->conditions always set, though may be zero length
+												//        ->conditionsArray may be missing
+												//        ->emails may be zero length
+												$urls[$iu++] = $u;
+											}
 										}
 									}
 									catch (Exception $iux) {
 									}
-									$iu++;
 								}
 /////////// message=
 /////////// (default message "starter")
@@ -256,6 +281,9 @@ function fixProperties($properties) {
 		}
 		if (!isset($properties['timeout'])) {
 			$properties['timeout'] = 60;
+		}
+		if (!isset($properties['useragent'])) {
+			$properties['useragent'] = DEFAULT_USERAGENT;
 		}
 		return $properties;
 }

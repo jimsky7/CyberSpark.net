@@ -63,6 +63,8 @@ $abuseTo		= EMAIL_ABUSETO;					// (from config)
 $administrator	= EMAIL_ADMINISTRATOR;				// (from config)
 $sleepTime 		= KEEPALIVE_LOOP_SLEEP_TIME;		// (from config)
 
+$previousURL    = array();		// URLs being sniffed most recently by child processes
+
 ///////////////////////////////// 
 // Initialization
 // Get the filesystem path to this file (only the PATH) including an ending "/"
@@ -239,18 +241,23 @@ while ($running) {
 					list($heartbeatTime) = sscanf($heartbeatContents, "%d");
 					if ($loopStartTime > ($heartbeatTime+HEARTBEAT_LATE)) {
 						// The process hasn't updated its heartbeat file recently - might be stalled
-						echo "$ID-$i unresponsive. Predicted=$heartbeatTime Current=$loopStartTime $timeStamp \n";
-						$subject = "$ID-$i Unresponsive $timeStamp";
-						$message = "$ID reports $ID-$i is unresponsive. Predicted=$heartbeatTime Current time=$loopStartTime\n";
-						// Report which URL is being sniffed by the process
+						// Determine which URL is being sniffed by the process
+						$currentURL = false;
 						try {
 							$urlFileName	= $path . "$ID-$i" . URL_EXT;
 							$currentURL = @file_get_contents($urlFileName, MAX_URL_LENGTH);
-							$message .= "$ID-$i was last processing this URL: $currentURL\n";
 						}
 						catch (Exception $curlf) {
 						}
+						// Assemble message for email
+						echo "$ID-$i unresponsive. Predicted=$heartbeatTime Current=$loopStartTime $timeStamp \n";
+						$subject = "$ID-$i Unresponsive $timeStamp";
+						$message = "$ID reports $ID-$i is unresponsive. Predicted=$heartbeatTime Current time=$loopStartTime\n";
+						if ($currentURL !== false) {
+							$message .= "$ID-$i was last processing this URL: $currentURL\n";
+						}
 						$remainingTime = 0;
+						// Determine time at which we would terminate and restart
 						if (RESTART_ON_FAILURE) {
 							$blue = HEARTBEAT_BLUE;
 							$blueLate = HEARTBEAT_LATE;
@@ -262,7 +269,24 @@ while ($running) {
 							}
 							echo "$ID-$i will be terminated in $remainingTime seconds. $timeStamp\n";
 						}
-						if ($remainingTime < 0 ) {
+						// Determine whether the process is just unbearably slow, as opposed to completely stuck on one URL.
+						if (($remainingTime > 0) && is_string($currentURL) && isset($previousURL[$i]) && (strcmp($currentURL, $previousURL[$i]) != 0)) {
+							// There is some progress being made, albeit very, very slowly.
+							// So we don't really need to send a message.
+							$previousURL[$i] = $currentURL;
+// ALTERNATIVE: Send a notification. Used this during testing only. 
+//							$subject  = "$ID-$i Incredibly slow $timeStamp";
+//							$message .= "$ID-$i is incredibly slow, but is still making some progress.\n";
+//							textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+							$i++;
+							continue;	// to next child process
+						}
+						if (is_string($currentURL)) {
+							$previousURL[$i] = $currentURL;
+						}
+						// Terminate if time is up. Restart takes place later when it is
+						// discovered the child process is no longer running. Lag is determined by $sleepTime
+						if ($remainingTime <= 0 ) {
 							$subject = "$ID-$i Terminated (was unresponsive) $timeStamp";
 							$message .= "$ID-$i is being terminated NOW.\n";
 							echo "$ID-$i is being terminated NOW. $timeStamp\n";
@@ -297,8 +321,8 @@ while ($running) {
 								echo "$ID-$i There's no PID file for the child process.\nYou'll have to deal with this manually. $timeStamp\n";
 							}
 							// You only want to do this after a SIGNIFICANT TIME has passed - say 30 to 60 minutes. Or number of notifications.
-							// Because processes can go unresponsive just because the sites they're monitoring all get very slow...so you should wait
-							//   enough minutes that the maximum number of GET timeouts could be completely processed.  For example, if you're monitoring
+							// Child processes can go unresponsive just because the sites they're monitoring all get very slow...so you should wait
+							//   enough minutes that the maximum number of GET timeouts could be completely processed.  For example, if child is monitoring
 							//   20 URLs and they all became slow, then it could take 20 minutes or more to go around a loop, and the child process
 							//   might be unresponsive that entire time and yet be functioning perfectly. It would just be updating its heartbeat
 							//   much more slowly than usual.
@@ -306,7 +330,7 @@ while ($running) {
 						// Send out mail describing the surgery
 						textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 						$i++;
-						continue;
+						continue;	// to next child process
 					}
 				}				
 				catch (Exception $x) {
@@ -315,7 +339,7 @@ while ($running) {
 					$message = "Critical: $ID unable to read 'heartbeat' file. $heartbeatFileName\n";
 					textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 					$i++;
-					continue;
+					continue;	// to next child process
 				}
 				
 				// OK, everything is fine

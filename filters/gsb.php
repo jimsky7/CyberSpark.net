@@ -308,7 +308,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 			$body = $httpResult['body'];
 			
 			if (strlen($body) < GSB_PAGE_SIZE_LIMIT) {
-
+				echoIfVerbose ("GSB checking $url \n");
 				$dom = new DOMDocument();
 				@$dom->loadHTML($body);
 
@@ -327,9 +327,8 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 					}
 
 					// Remove leading underscores. Shouldn't be any, but sometimes there are. Life's a mystery. 2013-05-28 sky
-					while (strpos($link, '_') == 0) {
-						$link = substr($link, 1);
-					}
+					// If you leave one, GSB will fail.
+					$link = ltrim($link, '_');
 					// Check this link against GSB. The remote GSB server, in Python, keeps track of malware and phishing domains.
 					list($r, $mess) = gsbCheckURL(&$args, $link, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
 					if ($r != "OK") {
@@ -353,6 +352,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 					// Page is really too large. This might be just a technical problem, but
 					// we can't trust the "DOMDocument" routines to function on large pages (they go
 					// into 100% CPU loop sometimes), so we will not check overly-large pages.
+					$das = str_replace(' ', '+', domainAndSubdirs($url));
 					$bcs = breadcrumbsString($howToGetThere, $das);
 					echoIfVerbose ("Page ($url) is too large (".strlen($body).") to check programmatically. How we got there: $bcs\n");
 					$message .= "Page ($url) is really too large (".strlen($body).") to check programmatically. You might want to check manually. How we got there: $bcs\n";

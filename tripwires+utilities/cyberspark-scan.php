@@ -82,6 +82,7 @@ $checkSignatures = array (
 	'eval('=>'[PHP/javascript]',
 	'gzinflate('=>'[PHP]',
 	'base64_decode'=>'[PHP]',
+	'\'base\'.(32*2).\'_'=>'[PHP]',
 	'document.write'=>'[javascript]',
 	'unescape'=>'[javascript]',
 // Some specific injections that we've seen recently

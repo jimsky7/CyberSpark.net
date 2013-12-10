@@ -29,7 +29,8 @@ function httpGet($url, $userAgent, $timeout) {
 		$headers = array();
 		$headers['User-Agent'] = $userAgent;
 		$headers['Connection'] = 'close';
-
+		$headers['Accept'] = 'text/html,text/plain';	// Need this for compatibility and FOR CLOUDFLARE
+														//   (otherwise get a 403 from cloudflare)
 		$startingBracket = strpos($url, "[");
 		$endingBracket = strpos($url, "]");
 		if (($startingBracket !== false) && ($endingBracket !== false)) {
@@ -80,7 +81,8 @@ function httpPost($url, $userAgent, $timeout) {
 		$headers = array();
 		$headers['User-Agent'] = $userAgent;
 		$headers['Connection'] = 'close';
-		
+		$headers['Accept'] = 'text/html,text/plain';	// Need this for compatibility and FOR CLOUDFLARE
+														//   (otherwise get a 403 from cloudflare)
 		// Check for POST parameters in the URL (indicated by "?" in the URL
 		if (($pos = strpos($url, "?", 0)) !== false) {
 			$postString = urlencode(substr($url, $pos+1));

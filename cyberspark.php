@@ -180,7 +180,7 @@ if ($isDaemon) {
 				$uname = file_get_contents('/etc/issue.net');
 			}
 			$instanceLocation = defined('INSTANCE_LOCATION')?INSTANCE_LOCATION:'';
-			$properties = getProperties($propsFileName, array('ID' => $ID, 'uname' => $uname, 'location' => $instanceLocation));
+			$properties = getProperties($propsFileName, array('ID' => $ID, 'version' => CYBERSPARK_VERSION, 'uname' => $uname, 'location' => $instanceLocation));
 			if (isset($properties['error'])) {
 				// Properties file failed in some way
 				writeLogAlert("Failed to parse $propsFileName Error was: " . $properties['error']);
@@ -414,22 +414,20 @@ if ($isDaemon) {
 						// Send (and rotate) the log file to our admin once a day
 						// It's time to send
 						$copyFileName = str_replace(LOG_EXT, '-'.$dateTimeNumbers.LOG_EXT, $logFileName);
-						$copyFileName .= ZIP_EXT;
 						// Close the log file so it can be zipped.
 						echoIfVerbose("Rotating the log file. \n");
 						writeLogAlert('Rotating the log file.');
 						endLog();
-						// gzip the log file
-						$z = gzopen($copyFileName, 'w9');
-						$log = fopen($logFileName,'rb');
-						while (!feof($log)) {
-							gzwrite($z, fread($log, 100000));	
-						}
-						fclose($log);
-						gzclose($z);
-						// unlink the file that was just zipped
-						// zipped logs are not removed
-						unlink($logFileName);
+						// Rename the log file (added timestamp)
+						rename($logFileName, $copyFileName);
+						echoIfVerbose("Renamed $logFileName $copyFileName \n");
+						// gzip the log file. gzip will replace the old file with
+						//   a zipped version ending in ".gz"
+						// Use shell_exec() to launch and forget. The zip should run independently.
+						// Any output error messages are ignored.
+						shell_exec ("gzip $copyFileName &> /dev/null &");
+						$copyFileName .= ZIP_EXT;					// new name after gz
+						echoIfVerbose("Zipped to $copyFileName\n");
 						// Start a new log file
 						beginLog();
 						if ($sendLogs) {
