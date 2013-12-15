@@ -106,5 +106,4 @@ function writeLog($message, $elapsedTime, $length, $md5, $condition, $url, $code
 		$count = fwrite($logHandle, ($mess . "\r\n"));
 	}
 }
-
 ?>

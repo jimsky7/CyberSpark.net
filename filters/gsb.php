@@ -289,6 +289,22 @@ function gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedU
 }
 
 ///////////////////////////////// 
+function keepAliveURL($numberOfChecks, $url) {
+	global $properties;
+	// Every 100th time, update our URL keepalive file (indicates we are still processing)
+	if (($numberOfChecks == 0) || ($numberOfChecks%100)) {
+		return;
+	}
+	if (isset($properties['urlfilename'])) {
+		$urlFileName = $properties['urlfilename'];
+		if ($urlFileName != null && strlen($urlFileName) > 0) {
+			echoIfVerbose(" GSB filter is updating URL file to say '$url $numberOfChecks'\n");
+			@file_put_contents($urlFileName, $url);
+		}
+	}
+}
+
+///////////////////////////////// 
 function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere) {
 	
 	$result = "OK";
@@ -321,6 +337,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 				echoIfVerbose (count($links)." links to explore \n");
 
 				foreach ($links as $link) {
+					keepAliveURL($numberOfChecks, $link);
 					if (in_array($link, $checkedURLs) ) {
 						echoIfVerbose("Already checked $link \n");
 						continue;

@@ -32,8 +32,7 @@ function scan($properties, $filters, &$store) {
 		//   to know what URL it was working on when it failed. This value is included in
 		//   the message that cyberspark.php sends by email.
 		if (isset($properties['urlfilename'])) {
-			$urlFileName = $properties['urlfilename'];
-			@file_put_contents($urlFileName, $url);
+			@file_put_contents($properties['urlfilename'], $url);
 		}
 		
 		$before = time();
