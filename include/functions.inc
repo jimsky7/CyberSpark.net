@@ -11,8 +11,9 @@
 //	a scan is being performed because they can take considerable time.
 function isNotifyHour($notify) {
 	// Returns 'true' if we are in the "notify" hour
-	//   Looks for " 00:" (where 00 is the hour) in the current time string
-	return (strpos(date("r"), (" $notify:")) !== false);
+	// date "H" gives us hour with leading zeros (00 thru 23)
+	// (Note quote in order to ensure string for comparison)
+	return (date("H")=="$notify");
 }
 
 ///////////////////////////////// 
