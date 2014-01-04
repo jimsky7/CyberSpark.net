@@ -55,7 +55,7 @@ case "$1" in
     fi
     log_daemon_msg "Starting $DESCRIPTION $ID" "cybersparkd"
     CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
-    if start-stop-daemon --start --quiet --oknodo --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH" --startas /usr/bin/php -- $CSOPTIONS; then
+    if start-stop-daemon --start --quiet --oknodo —background ——pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH" —exec /usr/bin/php -- $CSOPTIONS; then
       log_end_msg 0
     else
       log_end_msg 1
