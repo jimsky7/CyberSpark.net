@@ -55,6 +55,10 @@ function basicScan($content, $args, $privateStore) {
 			$message = "Timeout after " . $elapsedTime . " seconds.";
 //echo "  Timeout\n";
 		}
+		if ($httpResult['code'] == 521) {
+			$result = "HTTP";
+			$message = "If you are using Cloudflare, it thinks your underlying host is unresponsive. If not, then there is still something pretty nasty going on.";
+		}
 	}
 	return array($message, $result, $privateStore);
 	
