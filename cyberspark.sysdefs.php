@@ -17,7 +17,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 // User-Agent and other identity to be presented by CyberSpark when sniffing using HTTP.
-define('CYBERSPARK_VERSION', '4.20131110=PHP+SSL');
+define('CYBERSPARK_VERSION', '4.20140103=PHP+SSL');
 if (!defined('DEFAULT_IDENTITY')) {
 	define('DEFAULT_IDENTITY', "CyberSpark Version ".CYBERSPARK_VERSION." http://cyberspark.net/agent;");
 }
