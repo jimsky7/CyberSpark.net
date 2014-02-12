@@ -51,6 +51,8 @@ function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $mess
 		$headers['Date'] = date("r");
 		$headers['X-Mailer'] = $identity;
 		$headers['X-Report-abuse'] = "Please report abuse to " . $abuseTo;
+// If your SMTP doesn't create a Message-ID: header, then you may want to enable this
+//		$headers['Message-ID'] = '<'.sha1(microtime()).'@'.str_replace('ssl://','',$smtpServer).'>';
 
 		// Send the message.
 		// Note that email addresses are in a comma-separated list, which is specified in RFCs.
@@ -162,6 +164,8 @@ function attachmentMail($to='', $from='', $replyTo='', $abuseTo='', $subject='',
 		$headers['Date'] = date("r");
 		$headers['X-Mailer'] = $identity;
 		$headers['X-Report-abuse'] = "Please report abuse to " . $abuseTo;
+// If your SMTP doesn't create a Message-ID: header, then you may want to enable this
+//		$headers['Message-ID'] = '<'.sha1(microtime()).'@'.str_replace('ssl://','',$smtpServer).'>';
 		
 		// Send the message.
 		// Note that email addresses are in a comma-separated list, which is specified in RFCs.
