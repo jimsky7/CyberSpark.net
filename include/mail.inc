@@ -13,9 +13,17 @@ require_once 'include/echolog.inc';
 include_once "include/functions.inc";
 
 /////////////////////////////////////////////////////////
-function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServer, $smtpPort, $user, $password) {
+function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $message='', $smtpServer, $smtpPort, $user, $password) {
 	global $identity;
 	
+	// Preprocessing
+	// To: and From: require a space between any terminating quote and the opening "<"
+	//     This lowers a spam-assassin score if you have mistakenly done this.
+	$to      = str_replace('"<', '" <',$to);
+	$from    = str_replace('"<', '" <',$from);
+	$replyTo = str_replace('"<', '" <',$replyTo);
+	$abuseTo = str_replace('"<', '" <',$abuseTo);
+
 	try {
 		if (!isset($subject)) {
 			$subject = 'CyberSpark alert';
@@ -43,6 +51,8 @@ function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServe
 		$headers['Date'] = date("r");
 		$headers['X-Mailer'] = $identity;
 		$headers['X-Report-abuse'] = "Please report abuse to " . $abuseTo;
+// If your SMTP doesn't create a Message-ID: header, then you may want to enable this
+//		$headers['Message-ID'] = '<'.sha1(microtime()).'@'.str_replace('ssl://','',$smtpServer).'>';
 
 		// Send the message.
 		// Note that email addresses are in a comma-separated list, which is specified in RFCs.
@@ -91,9 +101,17 @@ function textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServe
 /////////////////////////////////////////////////////////
 //  attachmentMail()
 //  Send a MIME message. If $fileName is non-null, attach a file.
-function attachmentMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServer, $smtpPort, $user, $password, $fileName) {
+function attachmentMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $message='', $smtpServer, $smtpPort, $user, $password, $fileName) {
 	global $identity;
 	
+	// Preprocessing
+	// To: and From: require a space between any terminating quote and the opening "<"
+	//     This lowers a spam-assassin score if you have mistakenly done this.
+	$to      = str_replace('"<', '" <',$to);
+	$from    = str_replace('"<', '" <',$from);
+	$replyTo = str_replace('"<', '" <',$replyTo);
+	$abuseTo = str_replace('"<', '" <',$abuseTo);
+
 	try {
 		if (!isset($subject)) {
 			$subject = 'CyberSpark alert';
@@ -146,6 +164,8 @@ function attachmentMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smt
 		$headers['Date'] = date("r");
 		$headers['X-Mailer'] = $identity;
 		$headers['X-Report-abuse'] = "Please report abuse to " . $abuseTo;
+// If your SMTP doesn't create a Message-ID: header, then you may want to enable this
+//		$headers['Message-ID'] = '<'.sha1(microtime()).'@'.str_replace('ssl://','',$smtpServer).'>';
 		
 		// Send the message.
 		// Note that email addresses are in a comma-separated list, which is specified in RFCs.
