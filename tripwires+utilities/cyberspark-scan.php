@@ -1,6 +1,6 @@
 <?php
 
-/** Version 4.06 on 2012-09-30 **/
+/** Version 4.14 on 2014-03-06 **/
 
 /**
 	Spider the site starting in a base directory.
@@ -288,103 +288,107 @@ function spiderThis($baseDirectory, $maxDepth)
 		try {
 			$depth++;
 			$dirContents = dir($baseDirectory);
-			// Run through this directory
-			// WARNING: Under circumstances I have been unable to understand, sometimes the
-			//   'read()' below just fails and the PHP script stops executing. No exception
-			//   is caught here. The script just dies. It may be related to directories 
-			//   containing a zero-length file, or perhaps some filesystem corruption. I have
-			//   not really found the cause, nor a way to avoid it.  [SKY 2012-03-02]
-			while (($entry = $dirContents->read()) !== false) {
-				// Get an entry from the directory
-				$thisEntry = $baseDirectory.$entry;
-				
-				// Check whether this file or directory is to be excluded from scanning
-				if ((count($exclude) > 0) && stripos_array($thisEntry, $exclude)) {
-					echoAndLog ("Excluding: $thisEntry ");
-					continue;
-				}
-				
-				// Look for '.' or '..' and ignore these entries
-				if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
-					// Next entry is a directory, dive into it
-					spiderThis($thisEntry."/", $maxDepth);
-				}
-				else if (is_link($thisEntry)) {
-					// Skip a 'link' (not directory, not file) avoids recursion, but might
-					// miss something that you want to examine. You can always set up separate
-					// scan that uses 'base=' to target the actual directory you want to examine.
-					// (This also means you can't scan outside the web space. Guess you could
-					//  regard this as a "feature.")
-				}
-				else if (is_file($thisEntry)) {
-					// It's a file
-					$stat = stat($thisEntry);
-					$totalFiles++;
+			if ($dirContents == null || $dirContents === FALSE) {
+				// NOTE: 2014-03-06 sky@red7.com ... This may fix it...
+				//   There is a condition, at least on WPEngine, where a is_dir() says TRUE,
+				//   but dir() gives a null result, and we can avoid it by checking for valid
+				//   dir() results (which we should do anyway). Implemented today.
+				echoAndLog ("Cannot enumerate supposed directory in spiderThis($baseDirectory) -- Skipping.");
+  			}
+  			else {
+				// Run through this directory
+				while (($entry = $dirContents->read()) !== false) {
+					// Get an entry from the directory
+					$thisEntry = $baseDirectory.$entry;
+					
+					// Check whether this file or directory is to be excluded from scanning
+					if ((count($exclude) > 0) && stripos_array($thisEntry, $exclude)) {
+						echoAndLog ("Excluding: $thisEntry ");
+						continue;
+					}
+					
+					// Look for '.' or '..' and ignore these entries
+					if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
+						// Next entry is a directory, dive into it
+						spiderThis($thisEntry."/", $maxDepth);
+					}
+					else if (is_link($thisEntry)) {
+						// Skip a 'link' (not directory, not file) avoids recursion, but might
+						// miss something that you want to examine. You can always set up separate
+						// scan that uses 'base=' to target the actual directory you want to examine.
+						// (This also means you can't scan outside the web space. Guess you could
+						//  regard this as a "feature.")
+					}
+					else if (is_file($thisEntry)) {
+						// It's a file
+						$stat = stat($thisEntry);
+						$totalFiles++;
 
 // MD5: use this to record md5 hashes of files rather than lengths
 //   but this will be much more time-consuming than just looking at lengths.
 // $filemd5s[] = md5_file($thisentry);
 
-					// Record file lengths
-					$fileSize = $stat['size'];
-					$results[$thisEntry] = $fileSize;
-					// Process new or changed
-					if (!isset($status[$thisEntry]) || ($status[$thisEntry] <> $fileSize)) {
-						if (!isset($status[$thisEntry]) || ($status[$thisEntry] == 0)) {
-							// New file
-							// Report the presence of a new file
-							echoAndLog("New file : [".$fileSize."] $thisEntry ");
-							$newFiles++;
-						}
-						else {
-							$len = strlen($thisEntry);
-							if(($len > 3) and !(strripos($thisEntry, "log") == ($len-3)) and !(strripos($thisEntry, SPIDERFILE) == ($len-strlen(SPIDERFILE))) and !(strripos($thisEntry, STOREFILE) == ($len-strlen(STOREFILE)))) {
-								// Note: Ignore files ending in "log"
-								// Note: Ignore files ending with the name of our data file
-								// Otherwise, note a changed size
-								echoAndLog("New size: ".$status[$thisEntry]." -> [$fileSize] $thisEntry ");
-								$newSizes++;
+						// Record file lengths
+						$fileSize = $stat['size'];
+						$results[$thisEntry] = $fileSize;
+						// Process new or changed
+						if (!isset($status[$thisEntry]) || ($status[$thisEntry] <> $fileSize)) {
+							if (!isset($status[$thisEntry]) || ($status[$thisEntry] == 0)) {
+								// New file
+								// Report the presence of a new file
+								echoAndLog("New file : [".$fileSize."] $thisEntry ");
+								$newFiles++;
+							}
+							else {
+								$len = strlen($thisEntry);
+								if(($len > 3) and !(strripos($thisEntry, "log") == ($len-3)) and !(strripos($thisEntry, SPIDERFILE) == ($len-strlen(SPIDERFILE))) and !(strripos($thisEntry, STOREFILE) == ($len-strlen(STOREFILE)))) {
+									// Note: Ignore files ending in "log"
+									// Note: Ignore files ending with the name of our data file
+									// Otherwise, note a changed size
+									echoAndLog("New size: ".$status[$thisEntry]." -> [$fileSize] $thisEntry ");
+									$newSizes++;
+								}
 							}
 						}
-					}
-					
-					// And scan PHP/HTML/HTM/JS files for eval and gzinflate and base64
-					// Note: skips self ($myName)
-					try {
-						$len = strlen($thisEntry);
-						if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
-						|| (strripos($thisEntry, ".htm") == ($len-4))
-						|| (strripos($thisEntry, ".html") == ($len-5))
-						|| (strripos($thisEntry, ".js") == ($len-3))
-						) and (stripos($thisEntry, '/'.$myName)===false)) {
-							$thisFile = fopen($thisEntry,"r");
-							$thisContents = fread($thisFile, $maxFileSize);
-							fclose($thisFile);
-							$phpFiles++;
-							if (strlen($thisContents) > 0) {
-								// check for PHP and javascript active code
-								foreach ($checkSignatures as $signature=>$value) {
-									if (stripos($thisContents, $signature) !== false) {
-										echoAndLog("Found '$signature' $value: -> $thisEntry");
-										$newSuspect++;
+						
+						// And scan PHP/HTML/HTM/JS files for eval and gzinflate and base64
+						// Note: skips self ($myName)
+						try {
+							$len = strlen($thisEntry);
+							if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
+							|| (strripos($thisEntry, ".htm") == ($len-4))
+							|| (strripos($thisEntry, ".html") == ($len-5))
+							|| (strripos($thisEntry, ".js") == ($len-3))
+							) and (stripos($thisEntry, '/'.$myName)===false)) {
+								$thisFile = fopen($thisEntry,"r");
+								$thisContents = fread($thisFile, $maxFileSize);
+								fclose($thisFile);
+								$phpFiles++;
+								if (strlen($thisContents) > 0) {
+									// check for PHP and javascript active code
+									foreach ($checkSignatures as $signature=>$value) {
+										if (stripos($thisContents, $signature) !== false) {
+											echoAndLog("Found '$signature' $value: -> $thisEntry");
+											$newSuspect++;
+										}
 									}
 								}
 							}
 						}
+						catch (Exception $egbx) {
+						}
+	
+						// Remove from 'previous status' array.  When we finish, anything left in
+						// this array will be a file that has disappeared.
+						unset($status[$thisEntry]);
 					}
-					catch (Exception $egbx) {
-					}
-
-					// Remove from 'previous status' array.  When we finish, anything left in
-					// this array will be a file that has disappeared.
-					unset($status[$thisEntry]);
+					// Otherwise ignore   ("." and ".." for instance)
 				}
-				// Otherwise ignore   ("." and ".." for instance)
+				$depth--;
 			}
-			$depth--;
 		}
 		catch (Exception $x) {
-			echoAndLog( "Exception: ".$x->getMessage());
+			echoAndLog( "Exception in spiderThis($baseDirectory,$maxDepth): ".$x->getMessage());
 		}
 	}
 }  

@@ -3,6 +3,7 @@
 /** Version 4.02 on 20110402   **/
 /** Version 4.03 on 2011-09-15 **/
 /** Version 4.05 on 2012-08-15 **/
+/** Version 4.14 on 2014-03-06 **/
 
 /**
 	Spider the site starting in a base directory.
@@ -284,77 +285,83 @@ function removeCode($baseDirectory, $maxDepth)
 		try {
 			$depth++;
 			$dirContents = dir($baseDirectory);
-			// Run through this directory
-			while (($entry = $dirContents->read()) !== false) {
-				// Get an entry from the directory
-				$thisEntry = $baseDirectory.$entry;
-
-				// Check whether this file or directory is to be excluded from scanning or repairing
-				if ((count($exclude) > 0) && stripos_array($thisEntry, $exclude)) {
-					echoAndLog ("Excluding: $thisEntry ");
-					continue;
-				}
-
-				// Look for '.' or '..' and ignore these entries
-				if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
-					// Next entry is a directory, dive into it
-					removeCode($thisEntry."/", $maxDepth);
-				}
-				else if (is_link($thisEntry)) {
-					// Skip a 'link' (not directory, not file) avoids recursion, but might
-					// miss something that you want to examine. You can always set up separate
-					// scan that uses 'base=' to target the actual directory you want to examine.
-					// (This also means you can't scan outside the web space. Guess you could
-					//  regard this as a "feature.")
-				}
-				else if (is_file($thisEntry)) {
-					$totalFiles++;
-					// It's a file - check for proper type
-					$len = strlen($thisEntry);
-					if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
-						|| (strripos($thisEntry, ".htm") == ($len-4))
-						|| (strripos($thisEntry, ".html") == ($len-5))
-						|| (strripos($thisEntry, ".js") == ($len-3))
-						)) {
-						// Filename ends with ".php" or ".PHP" or "html" or "htm" or "js" so check it
-						$phpFiles++;
-						if($modHandle = fopen($thisEntry, "r")) {
-							$views = $views + 1;
-							$contents = fread($modHandle, $maxFileSize);
-							if (!feof($modHandle)) {
-								echoAndLog ("WARNING: This file was too big to process and you must fix it by hand: $thisEntry ");
-								fclose($modHandle);
-							}
-							else {
-								// Make a replacement
-								fclose($modHandle);
-								$newContents = str_replace($removeMe, "", $contents, $count);
-								if ($count > 0) {
-									// It was found and "deleted" so rewrite the original file
-									echoAndLog ("WARNING: This file was infected: $thisEntry ");
-									$removals = $removals + 1;								
-									// >>>
-									if($writeHandle = fopen($thisEntry, "w+")) {
-										rewind($writeHandle);
-										fwrite($writeHandle, $newContents);
-										fclose($writeHandle);
-										echoAndLog ("&nbsp;The infection was removed.");
+			if ($dirContents == null || $dirContents === FALSE) {
+				// Although is_dir() said this was a directory, dir() reported otherwise.
+				echoAndLog ("Cannot enumerate purported directory '$baseDirectory' -- Skipping.");
+  			}
+  			else {
+				// Run through this directory
+				while (($entry = $dirContents->read()) !== false) {
+					// Get an entry from the directory
+					$thisEntry = $baseDirectory.$entry;
+	
+					// Check whether this file or directory is to be excluded from scanning or repairing
+					if ((count($exclude) > 0) && stripos_array($thisEntry, $exclude)) {
+						echoAndLog ("Excluding: $thisEntry ");
+						continue;
+					}
+	
+					// Look for '.' or '..' and ignore these entries
+					if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
+						// Next entry is a directory, dive into it
+						removeCode($thisEntry."/", $maxDepth);
+					}
+					else if (is_link($thisEntry)) {
+						// Skip a 'link' (not directory, not file) avoids recursion, but might
+						// miss something that you want to examine. You can always set up separate
+						// scan that uses 'base=' to target the actual directory you want to examine.
+						// (This also means you can't scan outside the web space. Guess you could
+						//  regard this as a "feature.")
+					}
+					else if (is_file($thisEntry)) {
+						$totalFiles++;
+						// It's a file - check for proper type
+						$len = strlen($thisEntry);
+						if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
+							|| (strripos($thisEntry, ".htm") == ($len-4))
+							|| (strripos($thisEntry, ".html") == ($len-5))
+							|| (strripos($thisEntry, ".js") == ($len-3))
+							)) {
+							// Filename ends with ".php" or ".PHP" or "html" or "htm" or "js" so check it
+							$phpFiles++;
+							if($modHandle = fopen($thisEntry, "r")) {
+								$views = $views + 1;
+								$contents = fread($modHandle, $maxFileSize);
+								if (!feof($modHandle)) {
+									echoAndLog ("WARNING: This file was too big to process and you must fix it by hand: $thisEntry ");
+									fclose($modHandle);
+								}
+								else {
+									// Make a replacement
+									fclose($modHandle);
+									$newContents = str_replace($removeMe, "", $contents, $count);
+									if ($count > 0) {
+										// It was found and "deleted" so rewrite the original file
+										echoAndLog ("WARNING: This file was infected: $thisEntry ");
+										$removals = $removals + 1;								
+										// >>>
+										if($writeHandle = fopen($thisEntry, "w+")) {
+											rewind($writeHandle);
+											fwrite($writeHandle, $newContents);
+											fclose($writeHandle);
+											echoAndLog ("&nbsp;The infection was removed.");
+										}
 									}
 								}
 							}
+							else {
+								echoAndLog ("This file could not be opened: $thisEntry ");
+							}
+						
 						}
 						else {
-							echoAndLog ("This file could not be opened: $thisEntry ");
+							// Skip
 						}
-					
 					}
-					else {
-						// Skip
-					}
+					// Otherwise ignore   ("." and ".." for instance)
 				}
-				// Otherwise ignore   ("." and ".." for instance)
+				$depth--;
 			}
-			$depth--;
 		}
 		catch (Exception $x) {
 			echoAndLog ("Exception: $x->getMessage()");
@@ -383,96 +390,105 @@ function spiderThis($baseDirectory, $maxDepth)
 		try {
 			$depth++;
 			$dirContents = dir($baseDirectory);
-			// Run through this directory
-			while (($entry = $dirContents->read()) !== false) {
-				// Get an entry from the directory
-				$thisEntry = $baseDirectory.$entry;
-				
-				// Check whether this file or directory is to be excluded from scanning
-				if ((count($exclude) > 0) && stripos_array($thisEntry, $exclude)) {
-					echoAndLog ("Excluding: $thisEntry ");
-					continue;
-				}
-				
-				// Look for '.' or '..' and ignore these entries
-				if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
-					// Next entry is a directory, dive into it
-					spiderThis($thisEntry."/", $maxDepth);
-				}
-				else if (is_link($thisEntry)) {
-					// Skip a 'link' (not directory, not file) avoids recursion, but might
-					// miss something that you want to examine. You can always set up separate
-					// scan that uses 'base=' to target the actual directory you want to examine.
-					// (This also means you can't scan outside the web space. Guess you could
-					//  regard this as a "feature.")
-				}
-				else if (is_file($thisEntry)) {
-					// It's a file
-					$stat = stat($thisEntry);
-					$totalFiles++;
-
-// MD5: use this to record md5 hashes of files rather than lengths
-//   but this will be much more time-consuming than just looking at lengths.
-// $filemd5s[] = md5_file($thisentry);
-
-					// Record file lengths
-					$fileSize = $stat['size'];
-					$results[$thisEntry] = $fileSize;
-					if ($status[$thisEntry] <> $fileSize) {
-						if ($status[$thisEntry] == 0) {
-							// New file
-							// Report the presence of a new file
-							echoAndLog("New file: ".$status[$thisEntry]." -> [".$fileSize."] $thisEntry ");
-							$newFiles++;
-						}
-						else {
-							$len = strlen($thisEntry);
-							if(($len > 3) and !(strripos($thisEntry, "log") == ($len-3)) and !(strripos($thisEntry, SPIDERFILE) == ($len-strlen(SPIDERFILE))) and !(strripos($thisEntry, DATAFILE) == ($len-strlen(DATAFILE)))) {
-								// Note: Ignore files ending in "log"
-								// Note: Ignore files ending with the name of our data file
-								// Otherwise, note a changed size
-								echoAndLog("New size: ".$status[$thisEntry]." -> [$fileSize] $thisEntry ");
-								$newSizes++;
-							}
-						}
+			if ($dirContents == null || $dirContents === FALSE) {
+				// NOTE: 2014-03-06 sky@red7.com ... This may fix it...
+				//   There is a condition, at least on WPEngine, where a is_dir() says TRUE,
+				//   but dir() gives a null result, and we can avoid it by checking for valid
+				//   dir() results (which we should do anyway). Implemented today.
+				echoAndLog ("Cannot enumerate supposed directory in spiderThis($baseDirectory) -- Skipping.");
+  			}
+  			else {
+				// Run through this directory
+				while (($entry = $dirContents->read()) !== false) {
+					// Get an entry from the directory
+					$thisEntry = $baseDirectory.$entry;
+					
+					// Check whether this file or directory is to be excluded from scanning
+					if ((count($exclude) > 0) && stripos_array($thisEntry, $exclude)) {
+						echoAndLog ("Excluding: $thisEntry ");
+						continue;
 					}
 					
-					// And scan PHP/HTML/HTM/JS files for eval and gzinflate and base64
-					try {
-						$len = strlen($thisEntry);
-						if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
-						|| (strripos($thisEntry, ".htm") == ($len-4))
-						|| (strripos($thisEntry, ".html") == ($len-5))
-						|| (strripos($thisEntry, ".js") == ($len-3))
-						) and (stripos($thisEntry, '/'.$myName)===false)) {
-							$thisFile = fopen($thisEntry,"r");
-							$thisContents = fread($thisFile, $maxFileSize);
-							fclose($thisFile);
-							$phpFiles++;
-							if (strlen($thisContents) > 0) {
-								// check for PHP and javascript active code
-								foreach ($checkSignatures as $signature=>$value) {
-									if (stripos($thisContents, $signature) !== false) {
-										echoAndLog("Found '$signature' $value: -> $thisEntry");
-										$newSuspect++;
+					// Look for '.' or '..' and ignore these entries
+					if ((strcmp('.',$entry)<>0) && (strcmp('..',$entry)<>0) && is_dir($thisEntry)) {
+						// Next entry is a directory, dive into it
+						spiderThis($thisEntry."/", $maxDepth);
+					}
+					else if (is_link($thisEntry)) {
+						// Skip a 'link' (not directory, not file) avoids recursion, but might
+						// miss something that you want to examine. You can always set up separate
+						// scan that uses 'base=' to target the actual directory you want to examine.
+						// (This also means you can't scan outside the web space. Guess you could
+						//  regard this as a "feature.")
+					}
+					else if (is_file($thisEntry)) {
+						// It's a file
+						$stat = stat($thisEntry);
+						$totalFiles++;
+	
+	// MD5: use this to record md5 hashes of files rather than lengths
+	//   but this will be much more time-consuming than just looking at lengths.
+	// $filemd5s[] = md5_file($thisentry);
+	
+						// Record file lengths
+						$fileSize = $stat['size'];
+						$results[$thisEntry] = $fileSize;
+						if ($status[$thisEntry] <> $fileSize) {
+							if ($status[$thisEntry] == 0) {
+								// New file
+								// Report the presence of a new file
+								echoAndLog("New file: ".$status[$thisEntry]." -> [".$fileSize."] $thisEntry ");
+								$newFiles++;
+							}
+							else {
+								$len = strlen($thisEntry);
+								if(($len > 3) and !(strripos($thisEntry, "log") == ($len-3)) and !(strripos($thisEntry, SPIDERFILE) == ($len-strlen(SPIDERFILE))) and !(strripos($thisEntry, DATAFILE) == ($len-strlen(DATAFILE)))) {
+									// Note: Ignore files ending in "log"
+									// Note: Ignore files ending with the name of our data file
+									// Otherwise, note a changed size
+									echoAndLog("New size: ".$status[$thisEntry]." -> [$fileSize] $thisEntry ");
+									$newSizes++;
+								}
+							}
+						}
+						
+						// And scan PHP/HTML/HTM/JS files for eval and gzinflate and base64
+						try {
+							$len = strlen($thisEntry);
+							if(($len > 4) and ((strripos($thisEntry, ".php") == ($len-4))
+							|| (strripos($thisEntry, ".htm") == ($len-4))
+							|| (strripos($thisEntry, ".html") == ($len-5))
+							|| (strripos($thisEntry, ".js") == ($len-3))
+							) and (stripos($thisEntry, '/'.$myName)===false)) {
+								$thisFile = fopen($thisEntry,"r");
+								$thisContents = fread($thisFile, $maxFileSize);
+								fclose($thisFile);
+								$phpFiles++;
+								if (strlen($thisContents) > 0) {
+									// check for PHP and javascript active code
+									foreach ($checkSignatures as $signature=>$value) {
+										if (stripos($thisContents, $signature) !== false) {
+											echoAndLog("Found '$signature' $value: -> $thisEntry");
+											$newSuspect++;
+										}
 									}
 								}
 							}
 						}
+						catch (Exception $egbx) {
+						}
+	
+						// Remove from 'previous status' array.  When we finish, anything left in
+						// this array will be a file that has disappeared.
+						unset($status[$thisEntry]);
 					}
-					catch (Exception $egbx) {
-					}
-
-					// Remove from 'previous status' array.  When we finish, anything left in
-					// this array will be a file that has disappeared.
-					unset($status[$thisEntry]);
+					// Otherwise ignore   ("." and ".." for instance)
 				}
-				// Otherwise ignore   ("." and ".." for instance)
+				$depth--;
 			}
-			$depth--;
 		}
 		catch (Exception $x) {
-			echoAndLog( "Exception: ".$x->getMessage());
+			echoAndLog( "Exception in spiderThis($baseDirectory,$maxDepth): ".$x->getMessage());
 		}
 	}
 }  
