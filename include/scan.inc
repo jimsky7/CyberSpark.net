@@ -17,11 +17,12 @@ function scan($properties, $filters, &$store) {
 	$urls = $properties['urls'];		// array of URLs to look at
 	while ($urlNumber < $urlCount) {
 		$url 				= $urls[$urlNumber]->url;
-		$conditions			= $urls[$urlNumber]->conditions;
+		$conditions		= $urls[$urlNumber]->conditions;
 		$emails 			= $urls[$urlNumber]->emails;
 		
 		// Note that a very few servers cannot handle CAPS in FQDNs, so purify them now.
-		// (This only lowercases the FQDN and not the rest of the URL.)
+		// (This only lowercases the FQDN and not the rest of the URL; otherwise we'd have
+		//   trouble with case-sensitive filesystems, which is trouble we do not seek.)
 		$url = lowercaseFQDN($url);
 
 		echoIfVerbose("Scanning   $url \n");
@@ -125,21 +126,24 @@ function scan($properties, $filters, &$store) {
 		}
 		else {
 			/////////////////////////////////////////////////////////
+			// HTTP succeeded (code==200)
 			// SCAN ONE URL HERE USING ALL DEFINED FILTERS
 			$rankIndex = 0;
 			$top = count($filters);
 			$message = "";
 			$isOK = true;
 						
+			
 			// Run all filters (including 'basic')
 			while ($rankIndex < $top) {
+
 				// There are filters in different flavors ('scan' 'init' 'destroy') -- only use 'scan' !
 				// They've already been ranked in the order they should be applied (and thus displayed or emailed)
 				if (isset($filters[$rankIndex]->scan)) {
 					$filterName = $filters[$rankIndex]->name;
-					if (($filterName == "basic") || isACondition($urls[$urlNumber], $filterName)) {
-						// Filter either was asked for in the properties for this URL
-						// OR its name is 'basic'
+					if (($filterName == "basic") || ($filterName == "find") || isACondition($urls[$urlNumber], $filterName)) {
+						// Filter either was asked for in the properties for this URL,
+						// OR its name is 'basic' OR its name is 'find'
 						echoIfVerbose("Applying filter '$filterName' to URL $url \n");		
 						
 						$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);

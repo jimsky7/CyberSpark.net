@@ -1,7 +1,7 @@
 <?php
 	/**
 		CyberSpark.net monitoring-alerting system
-		FILTER: basic
+		FILTER: find
 		This filter is always applied to all URLs.
 	*/
 
@@ -15,57 +15,33 @@
 include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
 
-function basicScan($content, $args, $privateStore) {
-	$REFUSAL_TIME = 5;						// connections failing FASTER than this are "refusals"
-											// longer than this number will be "timeouts" - in seconds
-	$filterName = "basic";
+function findScan($content, $args, $privateStore) {
+		
+	$filterName = "find";
 	$result   = "OK";						// default result
 	$url = $args['url'];
 	$message = '';
 	$contentLength = strlen($content);
-	$elapsedTime = $args['elapsedtime'];
-	$httpResult  = $args['httpresult'];
+	$conditions = $args['conditions'];		// This is the raw set of conditions from properties file
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
+	if (strpos($conditions, '"') !== false) {
+		$i = strpos	($conditions, '"');
+		$j = strpos	($conditions, '"', $i+1);
+		$key = substr($conditions, $i+1, $j-1);		
+		if (stripos($content, $key) !== false) {
+			$result = "Alert";
+			$message = "The value \"$key\" is present.";
+		}
+	}
 
-	if (!isset($httpResult['code'])) {
-		// No code means connection failed (could be many reasons)
-		$result = "Failed";
-		if ($elapsedTime < $REFUSAL_TIME) {
-			$message = "Connection failed or was refused within $elapsedTime seconds.";
-//echo "[$filtername] HTTP code " . $httpResult['code'] . " HTTP error " . $httpResult['error'] . " time $elapsedTime $url \n"; 
-//echo "  JUDGMENT == refused\n";
-		}
-		else {
-			$message = "Connection timed out or failed after $elapsedTime seconds.";
-//echo "[$filtername] HTTP code " . $httpResult['code'] . " HTTP error " . $httpResult['error'] . " time $elapsedTime $url \n"; 
-//echo "  JUDGMENT == timed out\n";
-		}
-	}
-	else {
-		if ($elapsedTime > $args['slow']) {
-			$result = "Slow";
-			$message = "Slow response after " . $elapsedTime . " seconds.";
-//echo "  Slow\n";
-		}
-		if (($httpResult['code'] != 200) && ($elapsedTime > $args['timeout'])) {
-			$result = "Timeout";
-			$message = "Timeout after " . $elapsedTime . " seconds.";
-//echo "  Timeout\n";
-		}
-		if ($httpResult['code'] == 521) {
-			$result = "HTTP";
-			$message = "If you are using Cloudflare, it thinks your underlying host is unresponsive. If not, then there is still something pretty nasty going on.";
-		}
-	}
 	return array($message, $result, $privateStore);
-	
 }
 
-function basicInit($content, $args, $privateStore) {
-	$filterName = "basic";
+function findInit($content, $args, $privateStore) {
+	$filterName = "find";
 	// $content is the CONTENT returned from the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	//    The actual URL is in $args['url']
@@ -78,8 +54,8 @@ function basicInit($content, $args, $privateStore) {
 	
 }
 
-function basicDestroy($content, $args, $privateStore) {
-	$filterName = "basic";
+function findDestroy($content, $args, $privateStore) {
+	$filterName = "find";
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -90,8 +66,8 @@ function basicDestroy($content, $args, $privateStore) {
 	
 }
 
-function basic($args) {
-	$filterName = "basic";
+function find($args) {
+	$filterName = "find";
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
