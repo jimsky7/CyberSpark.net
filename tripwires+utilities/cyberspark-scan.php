@@ -1,6 +1,6 @@
 <?php
 
-/** Version 4.14 on 2014-03-06 **/
+/** Version 4.15 on 2014-04-11 **/
 
 /**
 	Spider the site starting in a base directory.
@@ -141,16 +141,23 @@ function writeData($path, $base) {
 	else {
 		$cleanBase = '';
 	}
-
-	if($fileHandle = fopen("$path".CYBERDIR.$cleanBase.SPIDERFILE,"w+")) {
+	$fn = $path.CYBERDIR.$cleanBase.SPIDERFILE;
+	if($fileHandle = fopen($fn,"w+")) {
 		rewind($fileHandle);
 		fwrite($fileHandle, serialize($results));
 		fclose($fileHandle);
+	} 
+	else {
+		echoAndLog("Unable to write a 'spider' file ($fn) \r\n");
 	}
-	if($fileHandle = fopen($path.CYBERDIR.$cleanBase.STOREFILE,'w+')) {
+	$fn = $path.CYBERDIR.$cleanBase.STOREFILE;
+	if($fileHandle = fopen($fn,'w+')) {
 		rewind($fileHandle);
 		fwrite($fileHandle, serialize($store));
 		fclose($fileHandle);
+	} 
+	else {
+		echoAndLog("Unable to write a 'store' file ($fn) \r\n");
 	}
 }
 
@@ -168,6 +175,9 @@ function writeLog($path, $base, $message) {
 		rewind($logHandle);
 		fwrite($logHandle, $message);
 		fclose($logHandle);
+	}
+	else {
+		echo "Unable to write a log file. \r\n";
 	}
 }
 
