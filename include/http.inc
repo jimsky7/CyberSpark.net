@@ -79,7 +79,9 @@ function httpPost($url, $userAgent, $timeout) {
 // echo "Set timeout in seconds = " . $timeout . "\n";
 	
 		$headers = array();
-		$headers['User-Agent'] = $userAgent;
+		if ($userAgent != null) {
+			$headers['User-Agent'] = $userAgent;
+		}
 		$headers['Connection'] = 'close';
 		$headers['Accept'] = 'text/html,text/plain';	// Need this for compatibility and FOR CLOUDFLARE
 														//   (otherwise get a 403 from cloudflare)
@@ -113,5 +115,52 @@ function httpPost($url, $userAgent, $timeout) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+function httpPostParams($url, $userAgent, $paramArray, $timeout) {
+	//// Use PEAR HTTP_Client to post to a URL
+	//   http://pear.php.net/manual/en/package.http.http-client.http-client.post.php
+	try {
+
+		$params = array();
+		if ($timeout > 0) {
+			$params['timeout'] = $timeout;		// in seconds
+		}
+// timeout doesn't work; at least not this way
+// echo "Set timeout in seconds = " . $timeout . "\n";
+	
+		$headers = array();
+		if ($userAgent != null) {
+			$headers['User-Agent'] = $userAgent;
+		}
+		$headers['Connection'] = 'close';
+		$headers['Accept'] = 'text/html,text/plain';		// Need this for compatibility and FOR CLOUDFLARE
+														//   (otherwise get a 403 from cloudflare)
+		// Add POST parameters
+		$postString = '';
+		foreach ($paramArray as $param=>$value) {
+			$postString .= $param.'='.urlencode($value).'&';
+		}
+
+		// Make the request
+		////////////////////
+		// POST
+		try {
+			$httpClient = new HTTP_Client($params, $headers);
+			$httpResult = $httpClient->post($url, $postString, true);	// is already urlencoded
+
+			if(PEAR::isError($httpClient)) { 
+				return array('code'=>0, 'error'=>'Exception[1] POST in httpPostParams: '.$x->getMessage());
+			}
+			// result is associative array containing 'code' 'headers' and 'body'
+			return $httpClient->currentResponse();		
+		}
+		catch (Exception $x) {
+			return array('code'=>0, 'error'=>'Exception[2] POST in httpPostParams: '.$x->getMessage());
+		}
+	}
+	catch (Exception $mx) {
+		return array('code'=>0,'error'=>'Exception in httpPostParams: '.$mx->getMessage());
+	}
+}
 
 ?>

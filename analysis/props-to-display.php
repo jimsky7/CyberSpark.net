@@ -1,6 +1,5 @@
 <?php
-/**** Read properties files and sort for HTML display ****/
-/**** Note that REAL URLs are displayed               ****/
+/**** Read properties files and convert to a sorted CSV for later analysis ****/
 
 /*
 	This file must be located at /analysis/ relative to server docroot.
@@ -22,7 +21,7 @@
 		This is relative to directory this script is in.
 		For example, if the script is in /analysis/ and the properties are in /analysis/properties/
 		  then use
-		properties-to-csv.php?base=properties
+		http://slice.red7.com/analysis/props-to-display.php?base=properties
 
 	//////////
 */
