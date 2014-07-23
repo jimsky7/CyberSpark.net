@@ -55,7 +55,7 @@ case "$1" in
     fi
     log_daemon_msg "Starting $DESCRIPTION $ID" "cybersparkd"
     CSOPTIONS="$CSPATH/cybersparkd.php --id $ID --daemon"
-    if start-stop-daemon --start --quiet --oknodo —background ——pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH" —exec /usr/bin/php -- $CSOPTIONS; then
+    if start-stop-daemon --start --quiet --oknodo --background --pidfile "$CSPATH/$ID.pid" --chdir "$CSPATH" --exec /usr/bin/php -- $CSOPTIONS; then
       log_end_msg 0
     else
       log_end_msg 1
@@ -95,7 +95,7 @@ case "$1" in
         CSNAME=$( echo $CSNAME | sed "s|.pid||" )
        case "$RUNNING" in
           *cyberspark*) 
-            echo "  Sniffer $CSNAME is running as process $PID."
+            echo "  $CSNAME is running as process $PID."
           ;;
           *) 
             echo "  Daemon $CSNAME (process $PID) mentioned in $CSPATH/$ID.pid should be running but is not."

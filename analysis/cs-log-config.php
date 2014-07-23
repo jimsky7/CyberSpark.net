@@ -4,11 +4,14 @@
 // **** http://php.net/manual/en/class.mysqli.php
 // **** http://d3js.org/
 
+define ('DEBUG', false);
+
 // Your MySQL user information
 define ('MYSQL_HOST', 'localhost');
 define ('MYSQL_USER', 'cybersparkUSER');
 define ('MYSQL_PASSWORD', 'blurk-spork#mqxin-425748');
 define ('MYSQL_DATABASE', 'cyberspark_analysis');
+define ('MYSQL_ERROR_DUPLICATE', 1062);
 
 // Files and scripts used in analysis
 // Note: These may reside in a subdirectory on your web server and you do not need to explicitly
@@ -22,8 +25,9 @@ define ('CS_URL_FROM_HASH',    'cs-log-get-url-from-hash.php');	// given a HASH,
 define ('CS_URL_POST',   	   'cs-log-post-entry.php');			// put one log entry into database
 
 // Other definitions
-define ('PAD_VALUE', 3600);								// value to add when padding (3600 == one hour)
-define ('PAD_CODE', 222);								// HTTP result code to insert when padding
+define ('PAD_VALUE', 3600);				// value to add when padding (3600 == one hour)
+define ('PAD_CODE', 222);				// HTTP result code to insert when padding
+define ('SAVE_MESSAGES', true);			// causes messages to be saved in table `messages` //need lots of storage
 
 if (!function_exists('ifGetOrPost')) {
 	function ifGetOrPost($name) {

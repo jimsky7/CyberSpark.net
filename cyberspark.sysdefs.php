@@ -70,6 +70,7 @@ define('FILTERS_EXT', '.php');				// extension for filter files
 // LOG FILES
 define('LOG_DIR', 'log/');					// where the csv logs will be written
 define('LOG_EXT', '.log');					// extension for log files
+define('LOG_TRANSPORT', 'log-transport.php');	// name of log transport PHP file
 // ZIP FILES
 define('ZIP_EXT', '.gz');					// extension for gzipped files
 // PID and heartbeat and 'last url' files

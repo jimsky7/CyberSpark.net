@@ -47,7 +47,6 @@ include('cs-log-config.php');
 define ('ECHO_SAMPLE', false);			// echo one sample SQL
 define ('LINE_LIMIT', 0);				// how many log entries to process before exiting (0==unlimited)
 define ('DUPLICATE_LIMIT', 0);			// how many duplicate log entries to count before exiting (0=unlimited)
-define ('SAVE_MESSAGES', true);			// causes messages to be saved in table `messages` //need lots of storage
 define ('MYSQL_ERROR_DUPLICATE', 1062);	// MySQL error number for "duplicate"
 
 ini_set('auto_detect_line_endings', true);
@@ -57,7 +56,6 @@ if (!isset($_POST['FILE_NAME'])) {
 $fileName = $_POST['FILE_NAME'];
 	
 // Check the "filename" to see whether it might be a complete directory
-
 if (is_dir($fileName)) {
 	$base = trim($fileName, '/');	// trim leading and trailing to even them out
 	$base = "/$base/";			// put a slash on both ends, giving us a base

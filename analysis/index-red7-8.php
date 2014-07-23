@@ -20,26 +20,29 @@ $WIDTH_CHART 	= 950;
 $HEIGHT_CHART	= 30;
 
 $URL_HASHES		= array(
-					'ab0d9abedb77357a563dd1339d51a516',	// msf.org
-					'9048cfcacb30d9c2781959b94313cdcd', // nobelprize.org
-					'79346372039750b5aafc783a1cf8702f', // globalforceforhealing.org
-					'0916ea889a723c2f691b5a12c175fd09', // humanityunited.org
-					'a4a03119d94266896e70fb9d4fb5f3c4', // alkasir.com
-//					'fdbe6d429307d63108491564cd5ce0cb', // red7.com
-					'383f65f95363c204221bd6b4cc4d6701', // en.rsf.org
-					'a88f27ca8bf9348cce493fd4aafef0e8', // avaaz.org
-					'8e7e3b9ec73001a8035360fbd966ad91', // accessnow.org
-					'2a49903efca953e340a5a31748f342eb', // theforgotten.org
-					'ba5e509c82ebbab6be69a00fb47be270', // chinese-leaders.org
-					'37a66f4e8898391c3c2210f1097f0b7a', // www.codethechange.org
-//					'6ab5eaca112b4186de8b0102d5e7332e', //chokepointproject.net
-					'd18b5c4405eab654f212216a8650782f', // publeaks.nl
-					'a4ecd3013c8306027453b05779051210', // http://www.civilrightsdefenders.org/ { 156 samples }
-					'8dd9360ab6cfe963fd05360ac82e379e', // http://www.fidh.org/ { 157 samples }
-//					'b3eaf4bce2b85708a6c930a5d527340d', // cyberspark.net
+					'a88f27ca8bf9348cce493fd4aafef0e8',	// avaaz.org
+					'10b21ef24fde03c3260577743b3dde26', // bolobhi.org
+					'3eaf9a25677e8da2c57eec2a2c8a1feb', // carnegielibrary.org
+					'308c12cb5a9b3d1be9578444080361ca', // necessarandproportionate.org
+					'8d4b1c075f2d6126908bbae47922b9a2', // ila-net.com
+					'735e49bc60f5e45a1e6705a2451fa244', // mettacenter.org
+					'd65023b92259538d2369b2c876e31394', // privatemanning.org
 					'7cccc4f514f29db8c9723cd0104497cd', // restorethe4th.com
+					'f0eb7c108adbbc0f113d666b0041d8b2', // http://wiki.15m.cc/wiki/Portada
 					'befe55de3f99cae5945b03f87fd54767', // apc.org
-					'b622717f93236090dc6f117f866904b6'  // chinachange.org
+					'37fa21533ea9de1e1b4565569538bff6', // freedomnotfear.org
+					'1a45797d0341eaa06f475eba43261cd5', // irex.org
+					'9d3ff4a865aac42f230c467200495546', // meta-activism.org
+					'18f534fe420b24dede2935a76da9f052', // openrightsgroup.org
+					'70fc1509399d3a5e0122ee85c9b2a66a', // theelders.org
+					'29947a4ad95e365778eaaacd731d6ff3', // onlinecensorship.org
+					'6031d39bab652bf1df49d849ae6be59b', // optin.stopwatching.us
+					'2c8c34a61c2d8b1d932c11de8559eada', // secure.avaaz.org/en/
+					'4fd9c9a2de4fbab8494b2f27d37f3118', // https://twitter.com
+					'e203e98e4c606735cf56db84a002fd22', // https://facebook.com
+					'd75277cdffef995a46ae59bdaef1db86', // https://google.com
+					'4a1def3e9ff704e9fefbc0415f05237a' // thunderclap.it
+//					'fdbe6d429307d63108491564cd5ce0cb' // red7.com
 			);
 $URLS 			= array();
 $getDataURL		= array();
@@ -95,16 +98,16 @@ function cs_http_get($url) {
 	<!-- D3js version 3.4.8 is being used -->
 	<script src="/d3/d3.min.js" charset="utf-8"></script>
     <meta charset='utf-8' />
-    <link href="/css/d3.css" media="all" rel="stylesheet" type="text/css" />   
+    <link href="/css/d3.css" media="all" rel="stylesheet" type="text/css" /> 
 	<!-- refresh page every 5 minutes -->
 	<meta http-equiv="refresh" content="300; url=<?php echo $_SERVER['REQUEST_URI']; ?>">
-    <title>CyberSpark.net hot sites</title>
+    <title>CS9 (dev system) sites</title>
 </head>
 <body style="padding-left:40px;">
 	<p>
 &laquo; <a href='/analysis/'>Back</a> 
 	</p>
-    <p style="font-size:22px;">CyberSpark.net hot sites
+    <p style="font-size:22px;">CS9 (dev system) sites — all CS9 data are “real time”
     </p>
     <div id="section" style="height:30px; width:<?php echo $WIDTH_CHART; ?>;">
     <div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
