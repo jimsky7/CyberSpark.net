@@ -55,6 +55,8 @@ if (!isset($_POST['FILE_NAME'])) {
 }
 $fileName = $_POST['FILE_NAME'];
 	
+echo "<html><body><p>&laquo; <a href='/analysis/'>Back</a></p>";
+
 // Check the "filename" to see whether it might be a complete directory
 if (is_dir($fileName)) {
 	$base = trim($fileName, '/');	// trim leading and trailing to even them out
@@ -348,5 +350,7 @@ foreach ($fileArray as $fn) {
 // All done
 
 $mysqli->close();
+
+echo '</body></html>';
 
 ?>

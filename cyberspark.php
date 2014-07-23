@@ -227,7 +227,7 @@ if (file_exists('log-transport.php')) {
 	// Later on we will first use the process ID from the 'pid' file to kill the 'php'
 	//   process.  Then when that terminates, we read any stdout it has produced, and we
 	//   terminate the 'sh' as well.
-	$logTransportProcess = proc_open("php $path/".LOG_TRANSPORT." --id $ID", $descriptorspec, $pipes);
+	$logTransportProcess = proc_open("php $path".LOG_TRANSPORT." --id $ID", $descriptorspec, $pipes);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
