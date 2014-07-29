@@ -17,12 +17,12 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 // User-Agent and other identity to be presented by CyberSpark when sniffing using HTTP.
-define('CYBERSPARK_VERSION', '4.20140103=PHP+SSL');
+define('CYBERSPARK_VERSION', '4.20140731=PHP+SSL+analysis');
 if (!defined('DEFAULT_IDENTITY')) {
 	define('DEFAULT_IDENTITY', "CyberSpark Version ".CYBERSPARK_VERSION." http://cyberspark.net/agent;");
 }
 if (!defined('DEFAULT_USERAGENT')) {
-	define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version ".CYBERSPARK_VERSION." http://cyberspark.net/agent;) Ubuntu/12.04");
+	define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version ".CYBERSPARK_VERSION." http://cyberspark.net/agent;) Ubuntu/14.04");
 }
 
 /////////////////////////////////////////////////////////////////////////////////

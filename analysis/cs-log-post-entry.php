@@ -8,6 +8,7 @@
 // **** http://php.net/manual/en/class.mysqli.php
 // **** http://d3js.org/
 include('cs-log-config.php');
+include('cs-log-pw.php');
 
 // >>> For production
 // >>> Add the log entry to the database
@@ -28,6 +29,20 @@ $outputFieldQuote = array (0=>false, 1=>true, 2=>true, 3=>true,
 $outputFieldTypes = '';
 foreach ($outputFieldQuote as $key=>$value) {
 	$outputFieldTypes .= ($value?'s':'i');
+}
+
+// Authentication (it's minimal, but it's something)
+// CS_API_KEY is required (if defined)
+if (defined('CS_API_KEY') && (strlen(CS_API_KEY) > 0)) {
+	if (!isset($_POST['CS_API_KEY']) || (strcmp($_POST['CS_API_KEY'],CS_API_KEY) != 0)) {
+		header($_SERVER['SERVER_PROTOCOL'].' 401 Not Authorized', true, 401);
+		exit;
+	}
+}
+// POST items 'log' and 'header' are required
+if (!isset($_POST['log']) || !isset($_POST['header'])) {
+	header($_SERVER['SERVER_PROTOCOL'].' 401 Not Authorized', true, 401);
+	exit;
 }
 
 ob_start();

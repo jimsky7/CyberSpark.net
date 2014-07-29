@@ -4,13 +4,14 @@
 /**** 
 	CyberSpark.net log daemon 
 	Monitor local logs, send entries to central repository.
+	Note: Requires php5-curl (not the PEAR HTTP client)
 ****/
 
-require_once 'HTTP/Client.php';
-require_once 'HTTP/Request.php';
+// require_once 'HTTP/Client.php';
+// require_once 'HTTP/Request.php';
+// require_once 'include/http.inc';				// HTTP functions
 require_once 'log-transport-config.php';		// same directory as this script
-require_once 'log-transport-pw.php';				// same directory as this script
-require_once 'include/http.inc';				// HTTP functions
+require_once 'log-transport-pw.php';			// same directory as this script
 require_once 'include/args.inc';
 require_once 'cyberspark.sysdefs.php';
 
@@ -122,12 +123,17 @@ while (($maxLines==0) || ($i<$maxLines)) {
 		    }
     		else {
 				// Send one log entry
-				// Note that PEAR isn't used here because our version doesn't do Basic Auth.
+				// Note that PEAR isn't used here because our version doesn't do HTTP Basic Auth.
 				try {
 					$ch = curl_init();
         			curl_setopt($ch, CURLOPT_POST, 1);
 					$u = $uploadURL;
-					$ueData = 'header='.urlencode($csvHeader).'&log='.urlencode($s);
+					if (defined('CS_API_KEY') && (strlen(CS_API_KEY) > 0)) {
+						$ueData = 'header='.urlencode($csvHeader).'&log='.urlencode($s).'&CS_API_KEY='.urlencode(CS_API_KEY);
+					}
+					else {
+						$ueData = 'header='.urlencode($csvHeader).'&log='.urlencode($s);
+					}
 					curl_setopt($ch, CURLOPT_URL, 				$u);
 					if(defined('CS_HTTP_USER') && defined('CS_HTTP_PASS')) {
 						// You can define user name and password in cs-log-pw.php
@@ -145,10 +151,6 @@ while (($maxLines==0) || ($i<$maxLines)) {
 				}
 				catch (Exception $chgx) {
 				}
-
-// >>> Nah, the basic auth doesn't work in this PEAR package
-//				$result = httpPostParams($uploadURL, null, $params, $timeout, $auth);
-//    	    	echo $s."\r\n";
     		}	
 		}
 		$fpos = ftell($f);
