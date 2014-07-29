@@ -15,8 +15,8 @@
 
 set -e
 
-ID="CS9"
 CSPATH="/usr/local/cyberspark"
+ID=`cat $CSPATH/cyberspark.id.txt`
 INITDPATH="/etc/init.d"
 DESCRIPTION="CyberSpark service"
 STARTUPMSGFILE="important_startup_message.txt"
