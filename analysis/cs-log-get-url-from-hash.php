@@ -18,6 +18,8 @@
 // Setup
 
 include('cs-log-config.php');
+include('cs-log-functions.php');
+include('cs-log-pw.php');
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Parameters
@@ -25,7 +27,7 @@ $URL_HASH = ifGetOrPost('URL_HASH');
 $API_KEY = ifGetOrPost('API_KEY');
 
 // Validate 'API_KEY'
-
+// NOT
 // >>>
 
 

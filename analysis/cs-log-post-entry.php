@@ -8,6 +8,7 @@
 // **** http://php.net/manual/en/class.mysqli.php
 // **** http://d3js.org/
 include('cs-log-config.php');
+include('cs-log-functions.php');
 include('cs-log-pw.php');
 
 // >>> For production
@@ -32,13 +33,21 @@ foreach ($outputFieldQuote as $key=>$value) {
 }
 
 // Authentication (it's minimal, but it's something)
-// CS_API_KEY is required (if defined)
-if (defined('CS_API_KEY') && (strlen(CS_API_KEY) > 0)) {
-	if (!isset($_POST['CS_API_KEY']) || (strcmp($_POST['CS_API_KEY'],CS_API_KEY) != 0)) {
+// POST Parameter CS_API_KEY must match an entry in $CS_API_KEYS (if defined)
+if (isset($CS_API_KEYS)) {
+	// Does param CS_API_KEY exist?
+	if (!isset($_POST['CS_API_KEY'])) {
+		header($_SERVER['SERVER_PROTOCOL'].' 401 Not Authorized', true, 401);
+		exit;
+	}
+	$API_KEY = $_POST['CS_API_KEY'];
+	// Does param match? (strict comparison)
+	if (($API_KEY==null) || !in_array($API_KEY, $CS_API_KEYS, true)) {
 		header($_SERVER['SERVER_PROTOCOL'].' 401 Not Authorized', true, 401);
 		exit;
 	}
 }
+
 // POST items 'log' and 'header' are required
 if (!isset($_POST['log']) || !isset($_POST['header'])) {
 	header($_SERVER['SERVER_PROTOCOL'].' 401 Not Authorized', true, 401);

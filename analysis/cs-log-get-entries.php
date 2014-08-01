@@ -41,19 +41,24 @@ some other consideration I'm not aware of.
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Setup
-
 include('cs-log-config.php');
-
+include('cs-log-functions.php');
+include('cs-log-pw.php');
 ini_set('auto_detect_line_endings', true);
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Parameters
-$URL_HASH = ifGetOrPost('URL_HASH');
-$span = ifGetOrPost('span');
-$API_KEY = ifGetOrPost('API_KEY');
-$format = ifGetOrPost('format');
-$limit = ifGetOrPost('limit');
-$pad = ifGetOrPost('pad');		// pad entries to span the entire interval
+if (false) {
+	header('Content-type: text/plain');
+	echo "### Good morning, Dr.\r\n";
+}
+$URL_HASH 	= ifGetOrPost('URL_HASH');
+$span 		= ifGetOrPost('span');
+$API_KEY 	= ifGetOrPost('API_KEY');
+$format 		= ifGetOrPost('format');
+$limit 		= ifGetOrPost('limit');
+$pad 		= ifGetOrPost('pad');
+
 if (($pad != null) && ((strcasecmp('true',$pad)==0) || (strcasecmp('1',$pad)==0) || (strcasecmp('yes',$pad)==0))) {
 	$pad=true;
 }
@@ -68,7 +73,11 @@ $endTimestamp   =  0;
 $paddedStart    = false;		// goes 'true' when start has been completely padded out
 
 // Validate 'API_KEY'
-// >>>
+// Since this is protected by HTTP Basic Authentication, we don't really need a CS_API_KEY.
+// But go for it if you wish.
+//	if (isset($CS_API_KEYS) && (!isset($API_KEY) || ($API_KEY==null) || (!in_array($API_KEY, $CS_API_KEYS, true)))) {
+//		die("Error: An API key is required");
+//	}
 
 // Validate format
 if (!isset($format) || ($format == null)) {
@@ -87,17 +96,15 @@ if (!isset($format) || ($format == null)) {
 // HEX only
 // >>>
 
+// Convert 'limit'
+if ($limit != null) {
+	$limit = (int) $limit;
+}
+
 // TEST
 // http://example.com/analysis/cs-log-get-entries.php?URL_HASH=b3eaf4bce2b85708a6c930a5d527340d&span=P1W&format=csv
 // http://example.com/analysis/cs-log-get-entries.php?URL_HASH=b3eaf4bce2b85708a6c930a5d527340d&span=P1W&format=csv&pad=1
 // TEST
-
-if (!isset($limit) || ($limit == null)) {
-	$limit = 0;
-}
-else {
-	$limit = (int) $limit;
-}
 
 if ($URL_HASH == null || $span == null || strlen($span)<2) {
 	die("Error: Required parameters are missing");
@@ -137,6 +144,13 @@ $dt->sub(new DateInterval($span));
 //	echo "Start: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
 $startTimestamp = ((int)$dt->format('U'))*1000;
 
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// EXPERIMENT
+//	$dtm1 = new DateTime('2014-07-01 00:00:00');
+//	$dtm2 = new DateTime('2014-07-01 00:00:00');
+//	$dtm2->add(new DateInterval('P2D'));
+//	$startTimestamp = ((int)$dtm1->format('U'))*1000;
+//	$endTimestamp   = ((int)$dtm2->format('U'))*1000;
 
 //	echo "Start: $startTimestamp <br/>\r\n";
 //	echo "End:  $endTimestamp <br/>\r\n";
@@ -148,12 +162,17 @@ $startTimestamp = ((int)$dt->format('U'))*1000;
 
 $query = "SELECT `milliseconds`,`http_ms`,`result_code`,`date`,`year`,`month`,`day`,`hour`,`minute`,`second` FROM `logs` WHERE (`URL_HASH` = ? AND `milliseconds` >= ? AND `milliseconds` <= ?)";
 if ($limit != null) {
-	$query .= " LIMIT $limit";
+	$query .= " LIMIT ?";
 }
 
 $stmt =  $mysqli->stmt_init();
 $result = $stmt->prepare($query);
-$result = $stmt->bind_param('sii', $URL_HASH, $startTimestamp, $endTimestamp);
+if ($limit != null) {
+	$result = $stmt->bind_param('siii', $URL_HASH, $startTimestamp, $endTimestamp, $limit);
+}
+else {
+	$result = $stmt->bind_param('sii', $URL_HASH, $startTimestamp, $endTimestamp);
+}
 $result = $stmt->execute();
 if ($stmt->errno) {
 	echo "Error: [alert] number ".$stmt->errno." <br/>\r\n";
@@ -162,6 +181,7 @@ if ($stmt->errno) {
 }
 $result = $stmt->bind_result($milliseconds,$http_ms,$result_code,$date,$year,$month,$day,$hour,$minute,$second) ;
 $result   = $stmt->store_result();
+
 if ($result) {
 
 	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

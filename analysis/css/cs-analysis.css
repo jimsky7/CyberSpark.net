@@ -1,0 +1,32 @@
+/* CSS for CyberSpark.net analysis pages */
+/* ////////////////////////////////////// */
+body {
+	padding-left: 40px;
+}
+.CS_CHART {
+}
+
+/* ////////////////////////////////////// */
+@media only screen and (max-width: 1024px), only screen and (max-device-width: 1024px) {
+}
+
+/* ////////////////////////////////////// */
+@media only screen and (max-width: 768px), only screen and (max-device-width: 768px) {
+body {
+	padding-left: 10px;
+}
+}
+
+/* ////////////////////////////////////// */
+@media only screen and (max-width: 480px), only screen and (max-device-width: 480px) {
+body {
+	padding-left: 5px;
+}
+}
+
+/* ////////////////////////////////////// */
+@media only screen and (max-width: 320px), only screen and (max-device-width: 320px) {
+body {
+	padding-left: 5px;
+}
+}

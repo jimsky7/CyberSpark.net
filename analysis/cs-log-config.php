@@ -6,13 +6,6 @@
 
 define ('DEBUG', false);
 
-// Your MySQL user information
-define ('MYSQL_HOST', 'localhost');
-define ('MYSQL_USER', 'cybersparkUSER');
-define ('MYSQL_PASSWORD', 'blurk-spork#mqxin-425748');
-define ('MYSQL_DATABASE', 'cyberspark_analysis');
-define ('MYSQL_ERROR_DUPLICATE', 1062);
-
 // Files and scripts used in analysis
 // Note: These may reside in a subdirectory on your web server and you do not need to explicitly
 //       specify the subdirectory here, as long as they're all in the same subdirectory. If some are
@@ -29,16 +22,13 @@ define ('PAD_VALUE', 3600);				// value to add when padding (3600 == one hour)
 define ('PAD_CODE', 222);				// HTTP result code to insert when padding
 define ('SAVE_MESSAGES', true);			// causes messages to be saved in table `messages` //need lots of storage
 
-if (!function_exists('ifGetOrPost')) {
-	function ifGetOrPost($name) {
-	if (isset($_GET[$name])) {
-		return $_GET[$name];
-	}
-	if (isset($_POST[$name])) {
-		return $_POST[$name];
-	}
-	return null;
-	}
-}
+////////////////////////////////////////////////////////////////////////
+define('ONE_COLUMN', 720);
+define('CHART_WIDE', 720);
+define('TWO_COLUMN', 350);
+define('CHART_NARROW', 350);
+define('TOOL_TIP_WIDTH', 300);
+define('TOOL_TIP_HEIGHT', 20);
+define('CHART_HEIGHT', 30);
 
 /* Do not close the php */

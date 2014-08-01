@@ -11,6 +11,6 @@ define ('CS_HTTP_USER',	'your_user_name_here');		// define these only if require
 define ('CS_HTTP_PASS', 'your_password_here' );		// define these only if required for HTTP access to analysis directory
 
 // Define the "API KEY" that will be used for authentication to the log+analysis subsystem.
-define ('CS_API_KEY',	'zjvNwjrizemUC3zh42');
+define ('CS_API_KEY',	'your_API_KEY_here');		// MUST MATCH in cs-log-pw.php on analysis system
 
 /* Do not close the php */

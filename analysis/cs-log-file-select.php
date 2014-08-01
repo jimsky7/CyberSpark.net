@@ -1,5 +1,6 @@
 <?php
 include('cs-log-config.php');
+include('cs-log-functions.php');
 ?>
 <html>
 <body>

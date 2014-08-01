@@ -43,6 +43,7 @@ mysqli is documented here => http://us2.php.net/manual/en/class.mysqli.php
 // Setup
 
 include('cs-log-config.php');
+include('cs-log-functions.php');
 
 define ('ECHO_SAMPLE', false);			// echo one sample SQL
 define ('LINE_LIMIT', 0);				// how many log entries to process before exiting (0==unlimited)
