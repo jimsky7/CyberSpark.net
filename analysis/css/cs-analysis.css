@@ -2,11 +2,18 @@
 /* ////////////////////////////////////// */
 body {
 	padding-left: 40px;
+	font-family:Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 .CS_CHART {
 }
 #LEGEND_NARROW {
 	display:none;
+}
+.CS_TITLE {
+	font-size:22px;
+}
+.CS_SUBTITLE {
+	font-size:14px;
 }
 
 /* ////////////////////////////////////// */

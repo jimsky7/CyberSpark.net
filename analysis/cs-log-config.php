@@ -31,4 +31,7 @@ define('TOOL_TIP_WIDTH', 300);
 define('TOOL_TIP_HEIGHT', 20);
 define('CHART_HEIGHT', 30);
 
+define('TIME_WHEN_HIDDEN', 1800000);		// 30 minutes
+define('TIME_WHEN_VISIBLE', 300000);		// 5 minutes
+
 /* Do not close the php */

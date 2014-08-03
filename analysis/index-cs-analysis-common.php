@@ -92,14 +92,29 @@ if ($calendar) {
 
 ////////////////////////////////////////////////////////////////////////
 // Visual start-end dates
-$dt = new DateTime;
-$endTimestamp = ((int)$dt->format('U'))*1000;
-$endDate = $dt->format('d-M-Y H:i');
+if ($calendar) {
+	$dt = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
+	$dtm2 = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
+	$dtm2->add(new DateInterval($span));
+	$startTimestamp = ((int)$dt->format('U'))*1000;
+	$endTimestamp   = ((int)$dtm2->format('U'))*1000;
+	$startDate = $dt->format('d-M-Y').' [UTC]';
+	$endDate   = $dtm2->format('d-M-Y').' [UTC]';
+}
+else {
+	$dt = new DateTime;
+	$endTimestamp = ((int)$dt->format('U'))*1000;
+	$endDate = $dt->format('d-M-Y H:i');
+	$dt->sub(new DateInterval($span));
+	$startTimestamp = ((int)$dt->format('U'))*1000;
+	$startDate = $dt->format('d-M-Y H:i');
+}
 //	echo "End: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
-$dt->sub(new DateInterval($span));
-$startTimestamp = ((int)$dt->format('U'))*1000;
-$startDate = $dt->format('d-M-Y H:i');
 //	echo "Start: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////
 function cs_http_get($url) {
@@ -140,16 +155,33 @@ function cs_http_get($url) {
 <?php
 	if (!$calendar) {
 ?>
-   	<!-- refresh page every 5 minutes -->
-	<meta http-equiv="refresh" content="300; url=<?php echo $_SERVER['REQUEST_URI']; ?>">
+   	<!-- refresh page every 60 minutes even if JS fails -->
+	<meta http-equiv="refresh" content="3600; url=<?php echo $_SERVER['REQUEST_URI']; ?>">
 <?php
 	} /* not calendar */
 ?>
 	<title><? echo $TITLE; ?></title>
     <link href="css/d3.css"          rel="stylesheet" type="text/css" media="all" /> 
 	<link href="css/cs-analysis.css" rel="stylesheet" type="text/css" media="all" />    
+    <script type="text/javascript">
+		var timer = 0;
+		var counter=0;
+		var timeWhenVisible =  <?php echo TIME_WHEN_VISIBLE; ?>;	/* a minute is 60000 */
+		var timeWhenHidden  =  <?php echo TIME_WHEN_HIDDEN; ?>;	/* a minute is 60000 */
+		function cs_onload() {
+			timer = setInterval(cs_reload, (document.hidden) ? timeWhenHidden : timeWhenVisible);
+			if(document.addEventListener) document.addEventListener("visibilitychange", visibilityChanged);
+		}
+		function visibilityChanged() {
+			clearTimeout(timer);
+			timer = setInterval(cs_reload, (document.hidden) ? timeWhenHidden : timeWhenVisible);
+		}
+		function cs_reload() { 
+			window.location.href = "<?php echo $_SERVER['REQUEST_URI']; ?>";
+		}
+	</script>
 </head>
-<body>
+<body<?php if (!$calendar) { ?> onload="cs_onload()" <?php } ?>>
     <p style="font-size:22px;"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a><a href='index.php'><img src="images/uparrow.jpg" width="52" height="48" alt="Analysis home page"/></a>
     
 <form id='CS_FORM' action='<?php echo $_SERVER['REQUEST_URI']; ?>' method='post'>
@@ -177,7 +209,7 @@ function cs_http_get($url) {
     <input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go to date' />&nbsp;&nbsp;||&nbsp;&nbsp;<input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
 </form>    
     
-    <hr/><span style="font-size:22px;"><? echo $TITLE; ?></span><?php if (!$calendar) { ?><br/><span style="font-size:14px;">This page reloads every 5 minutes</span><?php } ?>
+    <hr/><span class="CS_TITLE"><? echo $TITLE; ?></span><?php if (!$calendar) { ?><br/><span class="CS_SUBTITLE">This page reloads every few minutes</span><?php } ?>
     </p><hr/>
     <div id="section" style="height:30px; width:<?php echo $WIDTH_CHART; ?>;">
     <div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
