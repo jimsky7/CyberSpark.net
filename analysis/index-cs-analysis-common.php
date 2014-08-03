@@ -23,10 +23,32 @@ if (!isset($TITLE)) {
 	$TITLE			= 'Untitled &mdash;';
 }
 
+////////////////////////////////////////////////////////////////////////
+// Determine whether date is "NOW" or a specific calendar date
+$calendar=false;
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+	echo '<!-- POST -->';
+	if (isset($_POST['SUBMIT_CALENDAR'])) {
+		echo '<!-- SUBMIT_CALENDAR -->';
+		$calendar = true;
+	}
+	if (isset($_POST['SUBMIT_NOW'])) {
+		echo '<!-- SUBMIT_NOW -->';
+	}
+}
+if (!$calendar) {
+	$_SESSION['MONTH'] = date('m');
+	$_SESSION['DAY']   = date('j');
+	$_SESSION['YEAR']  = date('Y');
+echo "<!-- DEFAULTS $_SESSION[MONTH]-$_SESSION[DAY]-$_SESSION[YEAR] -->";
+}
+
+////////////////////////////////////////////////////////////////////////
 $URLS 			= array();
 $getDataURL		= array();
 $sites			= array();
 
+////////////////////////////////////////////////////////////////////////
 // Set up dates+times based on span or explicit dates given
 $startTimestamp = new DateTime();
 
@@ -35,6 +57,41 @@ $endDate   = '';
 $startTimestamp =  0;
 $endTimestamp   =  0;
 
+if ($calendar) {
+	if (isset($_POST['MONTH'])) {
+		$_SESSION['MONTH'] = $_POST['MONTH'];
+	}
+	else {
+		if (!isset($_SESSION['MONTH'])) {
+			$_SESSION['MONTH'] = '01';
+		}
+	}
+	echo "<!-- MONTH:$_SESSION[MONTH] -->";
+	if (isset($_POST['DAY'])) {
+		$_SESSION['DAY'] = (int)$_POST['DAY'];
+		if ($_SESSION['DAY'] == 0) {
+			$_SESSION['DAY'] = '1';
+		}
+	}
+	else {
+		if (!isset($_SESSION['DAY'])) {
+			$_SESSION['DAY'] = '1';
+		}
+	}
+	echo "<!-- DAY:$_SESSION[DAY] -->";
+	if (isset($_POST['YEAR'])) {
+		$_SESSION['YEAR'] = $_POST['YEAR'];
+	}
+	else {
+		if (!isset($_SESSION['YEAR'])) {
+			$_SESSION['YEAR'] = '2014';
+		}
+	}
+	echo "<!-- YEAR:$_SESSION[YEAR] -->";
+}
+
+////////////////////////////////////////////////////////////////////////
+// Visual start-end dates
 $dt = new DateTime;
 $endTimestamp = ((int)$dt->format('U'))*1000;
 $endDate = $dt->format('d-M-Y H:i');
@@ -44,6 +101,7 @@ $startTimestamp = ((int)$dt->format('U'))*1000;
 $startDate = $dt->format('d-M-Y H:i');
 //	echo "Start: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
 
+////////////////////////////////////////////////////////////////////////
 function cs_http_get($url) {
 	$result = '';
 	try {
@@ -70,24 +128,57 @@ function cs_http_get($url) {
 	return $result;
 }
 
+////////////////////////////////////////////////////////////////////////
+// Begin HTML
+
 ?>
 <html>
 <head>
 	<!-- D3js version 3.4.8 is being used -->
 	<script src="/d3/d3.min.js" charset="utf-8"></script>
     <meta charset='utf-8' />
-	<!-- refresh page every 5 minutes -->
+<?php
+	if (!$calendar) {
+?>
+   	<!-- refresh page every 5 minutes -->
 	<meta http-equiv="refresh" content="300; url=<?php echo $_SERVER['REQUEST_URI']; ?>">
-    <title><? echo $TITLE; ?></title>
+<?php
+	} /* not calendar */
+?>
+	<title><? echo $TITLE; ?></title>
     <link href="css/d3.css"          rel="stylesheet" type="text/css" media="all" /> 
 	<link href="css/cs-analysis.css" rel="stylesheet" type="text/css" media="all" />    
 </head>
 <body>
-	<div style="position:absolute; left:<?php echo $WIDTH_CHART; ?>;">
-&laquo; <a href='index.php'>Back</a> 
-	</div>
-    <p style="font-size:22px;"><? echo $TITLE; ?><br/><span style="font-size:14px;">This page reloads every 5 minutes</span>
-    </p>
+    <p style="font-size:22px;"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a><a href='index.php'><img src="images/uparrow.jpg" width="52" height="48" alt="Analysis home page"/></a>
+    
+<form id='CS_FORM' action='<?php echo $_SERVER['REQUEST_URI']; ?>' method='post'>
+    <select id='MONTH' name='MONTH'>
+    	<option value='01' <?php if($_SESSION['MONTH']=='01') { echo 'selected'; } ?>>Jan</option>
+    	<option value='02' <?php if($_SESSION['MONTH']=='02') { echo 'selected'; } ?>>Feb</option>
+    	<option value='03' <?php if($_SESSION['MONTH']=='03') { echo 'selected'; } ?>>Mar</option>
+    	<option value='04' <?php if($_SESSION['MONTH']=='04') { echo 'selected'; } ?>>Apr</option>
+    	<option value='05' <?php if($_SESSION['MONTH']=='05') { echo 'selected'; } ?>>May</option>
+    	<option value='06' <?php if($_SESSION['MONTH']=='06') { echo 'selected'; } ?>>Jun</option>
+    	<option value='07' <?php if($_SESSION['MONTH']=='07') { echo 'selected'; } ?>>Jul</option>
+    	<option value='08' <?php if($_SESSION['MONTH']=='08') { echo 'selected'; } ?>>Aug</option>
+    	<option value='09' <?php if($_SESSION['MONTH']=='09') { echo 'selected'; } ?>>Sep</option>
+    	<option value='10' <?php if($_SESSION['MONTH']=='10') { echo 'selected'; } ?>>Oct</option>
+    	<option value='11' <?php if($_SESSION['MONTH']=='11') { echo 'selected'; } ?>>Nov</option>
+    	<option value='12' <?php if($_SESSION['MONTH']=='12') { echo 'selected'; } ?>>Dec</option>
+    </select>
+    <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?> />
+    <select id='YEAR' name='YEAR'>
+    	<option value='2014' <?php if($_SESSION['YEAR']=='2014') { echo 'selected'; } ?>>2014</option>
+    	<option value='2013' <?php if($_SESSION['YEAR']=='2013') { echo 'selected'; } ?>>2013</option>
+    	<option value='2012' <?php if($_SESSION['YEAR']=='2012') { echo 'selected'; } ?>>2012</option>
+    	<option value='2011' <?php if($_SESSION['YEAR']=='2011') { echo 'selected'; } ?>>2011</option>
+	</select>
+    <input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go to date' />&nbsp;&nbsp;||&nbsp;&nbsp;<input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
+</form>    
+    
+    <hr/><span style="font-size:22px;"><? echo $TITLE; ?></span><?php if (!$calendar) { ?><br/><span style="font-size:14px;">This page reloads every 5 minutes</span><?php } ?>
+    </p><hr/>
     <div id="section" style="height:30px; width:<?php echo $WIDTH_CHART; ?>;">
     <div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
     <div style="float:right;"><?php echo $endDate; ?>&nbsp;&nbsp;&darr;</div>
@@ -95,7 +186,7 @@ function cs_http_get($url) {
 
 <?php
 ////////////////////////////////////////////////////////////////////////
-// Write the SVG objects
+// Write the SVG objects for the charts
 
 	$thisSite = $_SERVER['SERVER_NAME'];
 //	echo "<!-- SERVER_NAME: $thisSite -->\r\n";
@@ -115,7 +206,12 @@ function cs_http_get($url) {
 		if (defined('DEBUG') && DEBUG) {
 			echo "<!-- sites[$key]: ".$sites[$key]."	 -->\r\n";
 		}
-		$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
+		if ($calendar) {
+			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span&MONTH=$_SESSION[MONTH]&DAY=$_SESSION[DAY]&YEAR=$_SESSION[YEAR]";
+		}
+		else {
+			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
+		}
 		echo "<svg class='chart' id='H_$URL_HASH' width='$WIDTH_CHART'></svg>\r\n";
 	}
 
@@ -307,9 +403,13 @@ function type(d) {
 }
 		
 	</script>
+<?php
+////////////////////////////////////////////////////////////////////////
+// Page footer
+?>
+<hr/>
 <!-- legend -->
-<?php if ($WIDTH_CHART == CHART_NARROW) { ?>
-	<table cellspacing='5' cellpadding='0' border='0' style='width:<? echo $WIDTH_CHART; ?>px; font-size:12px;'>
+<table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px;'>
 		<tr>
 			<td class='rect_green' style='width:20px;'></td>
 			<td>Under 2 sec
@@ -330,9 +430,12 @@ function type(d) {
 			<td>Timeout
 			</td>
 		</tr>
+        <tr>
+        	<td colspan='6'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>
+        	</td>
+        </tr>
 	</table>
-<?php } else { ?>
-	<table cellspacing='5' cellpadding='0' border='0' style='width:<? echo $WIDTH_CHART; ?>px; font-size:12px;'>
+	<table id='LEGEND_WIDE' cellspacing='5' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px;'>
 		<tr>
 			<td class='rect_green' style='width:20px;'></td>
 			<td>Under 2 seconds
@@ -353,7 +456,10 @@ function type(d) {
 			<td>Timeout
 			</td>
 		</tr>
+        <tr>
+        	<td colspan='6'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>&nbsp;CyberSpark open source code is provided under a <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">Creative Commons by-nc-sa 3.0</a> license
+        	</td>
+        </tr>
 	</table>
-<?php } ?>
 </body>
 </html>

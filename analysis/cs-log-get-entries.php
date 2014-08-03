@@ -59,6 +59,10 @@ $format 		= ifGetOrPost('format');
 $limit 		= ifGetOrPost('limit');
 $pad 		= ifGetOrPost('pad');
 
+$DAY		= ifGetOrPost('DAY');
+$MONTH		= ifGetOrPost('MONTH');
+$YEAR		= ifGetOrPost('YEAR');
+
 if (($pad != null) && ((strcasecmp('true',$pad)==0) || (strcasecmp('1',$pad)==0) || (strcasecmp('yes',$pad)==0))) {
 	$pad=true;
 }
@@ -145,12 +149,14 @@ $dt->sub(new DateInterval($span));
 $startTimestamp = ((int)$dt->format('U'))*1000;
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// EXPERIMENT
-//	$dtm1 = new DateTime('2014-07-01 00:00:00');
-//	$dtm2 = new DateTime('2014-07-01 00:00:00');
-//	$dtm2->add(new DateInterval('P2D'));
-//	$startTimestamp = ((int)$dtm1->format('U'))*1000;
-//	$endTimestamp   = ((int)$dtm2->format('U'))*1000;
+// A specific date requested?
+if ($MONTH != null && $DAY != null && $YEAR != null) {
+	$dtm1 = new DateTime("$YEAR-$MONTH-$DAY 00:00:00");
+	$dtm2 = new DateTime("$YEAR-$MONTH-$DAY 00:00:00");
+	$dtm2->add(new DateInterval($span));
+	$startTimestamp = ((int)$dtm1->format('U'))*1000;
+	$endTimestamp   = ((int)$dtm2->format('U'))*1000;
+}
 
 //	echo "Start: $startTimestamp <br/>\r\n";
 //	echo "End:  $endTimestamp <br/>\r\n";
