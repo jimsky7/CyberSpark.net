@@ -1,0 +1,86 @@
+		/* Charts are SVG objects containing 'rect' and 'text' objects */
+		.chart {
+			margin-top:4px;
+			margin-bottom:4px;
+			border:thin;
+			border-style:solid;
+			border-width:1px;
+			border-color:#909090;
+			padding:2px;
+		}
+		
+		.chart rect {
+			fill: #ffffff;	/* just a default #EED13A */
+		}
+
+		.chart text {
+			fill: black;	/* was #C57B03 */
+			font: 10px sans-serif;
+			text-anchor: middle;
+		}
+		
+		.chart .title {
+			font: 10px sans-serif;
+			fill: black;					/* this is 'text' fill color */
+			text-anchor: start !important;
+		}
+		
+		/* We do not use axes */
+		.axis text {
+			font: 10px sans-serif;
+		}
+
+		.axis path,
+		.axis line {
+			fill: none;
+			stroke: #000;
+			shape-rendering: crispEdges;
+		}
+		.x_axis {
+			margin-top:4px;
+		}
+		
+		/* Rectangle fills for various levels of alert */
+		.rect_alert {
+			fill: #0000ff !important; /* background for SVG */
+			background-color: #0000ff !important; /* for HTML */
+		}
+		.rect_blue {
+			fill: #0000ff !important; /* background for SVG */
+			background-color: #0000ff !important; /* for HTML */
+		}
+		.rect_magenta {
+			fill: #FF26FF !important; /* override background */
+			background-color: #FF26FF !important; /* for HTML */
+		}
+		.rect_red {
+			fill: #c00000 !important; /* override background */
+			background-color: #c00000 !important; /* for HTML */
+		}
+		.rect_orange {
+			fill: #f08000 !important; /* override background */
+			background-color: #f08000 !important; /* for HTML */
+		}
+		.rect_yellow {
+			fill: #f0f000 !important; /* override background */
+			background-color: #f0f000 !important; /* for HTML */
+		}
+		.rect_green {
+			fill: #00c000 !important; /* override background */
+			background-color: #00c000 !important; /* for HTML */
+		}
+		
+		/* pop-up tooltips as you mouse over rectangles */
+		div.tooltip {   
+			position: absolute;           
+			text-align: center;           
+			width: <?php echo $WIDTH_TT; ?>px;                  
+			height: <?php echo $HEIGHT_TT; ?>px;  
+			padding: 2px;             
+			padding-top:11px;               
+			font: 13px sans-serif;        
+			background: lightsteelblue;   
+			border: 0px;      
+			border-radius: 8px;           
+			pointer-events: none;         
+		}

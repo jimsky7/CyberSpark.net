@@ -1,11 +1,12 @@
 #!/usr/bin/php -q
 <?php
-	/**
+/****
 		CyberSpark.net monitoring-alerting system
-		called from the command line as
+		launched from the command line as
 		  /usr/local/cyberspark/cyberspark.php --arg --arg
-	*/
+****/
 
+///////////////////////////////////////////////////////////////////////////////////
 // Local (your installation) variables, definitions, declarations
 include_once "cyberspark.config.php";
 // CyberSpark system variables, definitions, declarations
@@ -16,7 +17,7 @@ include_once "include/shutdown.inc";
 include_once "include/startup.inc";
 include_once "include/functions.inc";
 
-///////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////
 // 
 $ID			= INSTANCE_ID;			// this "sniffer" ID (like "CS9-0")
 $identity	= DEFAULT_IDENTITY;		// from config
@@ -51,7 +52,7 @@ $store		= null;					// persistent storage for filters
 // Google Safe Browsing interface parameters
 $gsbServer = GSB_SERVER;			// from config
 
-///////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////
 // Filter-related stuff
 // Filters are *.inc files within the filters/ subdirectory that contain code to
 //   be applied to the URLs we examine.  See filters/basic.php for internal
@@ -60,7 +61,7 @@ include "include/classdefs.inc";
 $filters = array();					// this array is numerically ordered/indexed
 									// and contains all filter information.
 	
-///////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////
 // Email-related 
 // All SMTP parameters are initially from the config, although the properties
 //   file can supplant them.
@@ -75,7 +76,7 @@ $replyTo	= EMAIL_REPLYTO;				// default from config
 $to			= EMAIL_TO;						// default from config (properties can override)
 $abuseTo	= EMAIL_ABUSETO;				// default from config
 	
-///////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////
 // include supporting code
 include_once "include/store.inc";
 include_once "include/args.inc";
@@ -86,7 +87,7 @@ include_once "include/scan.inc";
 include_once "include/filters.inc";
 include_once "include/echolog.inc";
 	
-///////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////
 // initialization
 // Get the filesystem path to this file (only the PATH) including an ending "/"
 // NOTE: This overrides the APP_PATH from the config file, which will be unused.
@@ -97,7 +98,7 @@ $filtersDir  = $path . $filtersDir;
 $logDir 	 = $path . $logDir;
 $scriptName	 = $argv[0];
 
-///////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////
 // Parse the command-line arguments
 list($isDaemon, $ID) = getArgs($argv);
 $propsFileName		 = $propsDir . $ID . PROPS_EXT;
@@ -107,16 +108,75 @@ $pidFileName		 = $path . $ID . PID_EXT;
 $heartbeatFileName	 = $path . $ID . HEARTBEAT_EXT;
 $urlFileName         = $path . $ID . URL_EXT;
 $running = true;
+$pipes = null;
+$logTransportProcess = null;
 
-// Register shutdown functions
+///////////////////////////////////////////////////////////////////////////////////
+// Define the shutdown function
+function shutdownFunctionWrapper($sig) {
+	global $pipes;
+	global $ID;
+	global $logTransportProcess;
+	// Terminate log-transport process
+	if ($pipes != null && ($sig === SIGINT || $sig === SIGTERM)) {
+		echo "Shutting down $ID log transport. \n";
+		try {
+			@fclose($pipes[0]);			// note MUST do this or proc_terminate() may fail
+			$LTpidFileName = $path . $ID . '-transport' . PID_EXT;
+			//// First, send SIGINT to the log transport.
+			//   Note that each transport is run using the PHP command line interpreter,
+			//   so it is "enclosed" by an 'sh' shell. What we're doing first is sending
+			//   the SIGINT to the PHP child, not to the 'sh' that surrounds it.
+			if (file_exists($LTpidFileName)) {
+				$pidNumber = file_get_contents($LTpidFileName, PID_FILESIZE_LIMIT);
+				shell_exec ("kill -INT $pidNumber");	// terminate as if CTRL-C
+			}
+			// Pass on any output that came through a pipe from the child process
+			if (isset($pipes[1])) {
+				try {
+					while (($line = fgets($pipes[1])) !== false) {
+						echo $line;
+					}
+				}
+				catch (Exception $x) {
+				}
+			}
+			@fclose($pipes[1]);			// note MUST do this or proc_terminate() may fail
+			@fclose($pipes[2]);			// note MUST do this or proc_terminate() may fail
+			// Terminate the 'sh' process we launched
+			//   Each of these has a child log transport process which has already been
+			//   terminated (see the 'kill' above) and we have flushed the output pipe and
+			//   echoed it to stdout as well.
+			proc_terminate($logTransportProcess, SIGTERM);
+			$i = 10;			// loop maximum of this many times
+			while ($i-- > 0) {
+				$status = proc_get_status($logTransportProcess);
+				if ($status['running']) {
+					usleep(SHUTDOWN_WAIT_TIME);	// wait if process has not stopped
+				}
+				else {
+					break;			// process has stopped. Don't need to wait any more.
+				}
+			}
+			// Formally close the process
+			proc_close($logTransportProcess);
+		}
+		catch (Exception $txp) {
+		}
+	}
+	return shutdownFunction($sig);		// in includes/shutdown.inc
+}
+///////////////////////////////////////////////////////////////////////////////////
+// Register the shutdown function
 try {
-	pcntl_signal(SIGTERM, 'shutdownFunction');		// kill
-	pcntl_signal(SIGINT,  'shutdownFunction');		// Ctrl-C
+	pcntl_signal(SIGTERM, 'shutdownFunctionWrapper');		// kill
+	pcntl_signal(SIGINT,  'shutdownFunctionWrapper');		// Ctrl-C
 }
 catch (Exception $x) {
 	echo "Critical: $ID unable to register shutdown functions.\n";
 }
 	
+///////////////////////////////////////////////////////////////////////////////////
 // Write process ID to a file
 // Note that if we were run from cybersparkd.php then this pid file is critical because
 //   our parent is an 'sh' and not cybersparkd itself.  So the pid file is the only way
@@ -135,6 +195,7 @@ catch (Exception $x) {
 	echo "Critical: $ID unable to write process ID to 'pid' file.\n";
 }
 	
+///////////////////////////////////////////////////////////////////////////////////
 // Open the log file
 beginLog();
 
@@ -146,6 +207,27 @@ if ($isDaemon) {
 	$subject = $ID . " Daemon launched " . date("r");
 	$message = date("r") . "\nLaunched as a daemon\n";
 	textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServer, $smtpPort, $user, $pass);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Launch a log-transport process.
+if (file_exists('log-transport.php')) {
+	$timeStamp = date("r");
+	echo "$ID is launching its log transport - $timeStamp\n";	
+	$descriptorspec = array(
+  		0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
+  		1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
+  		2 => array("file", "/tmp/stderr-log-transport-$ID.txt", "a") // stderr is a file to write to
+	);	
+	// Launch a child process corresponding to self.
+	// Actually a 'sh' gets launched, and that in turn runs 'php' which picks up the
+	//   cyberspark.php script that does the actual monitoring.  So there are two levels
+	//   of child proces below us now.  First is the 'sh' and below that a 'php' instance.
+	//   The 'php' instance of cyberspark.php records its process id in a 'pid' file.
+	// Later on we will first use the process ID from the 'pid' file to kill the 'php'
+	//   process.  Then when that terminates, we read any stdout it has produced, and we
+	//   terminate the 'sh' as well.
+	$logTransportProcess = proc_open("php $path".LOG_TRANSPORT." --id $ID", $descriptorspec, $pipes);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

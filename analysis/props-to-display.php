@@ -1,6 +1,5 @@
 <?php
-/**** Read properties files and sort for HTML display ****/
-/**** Note that REAL URLs are displayed               ****/
+/**** Read properties files and convert to a sorted CSV for later analysis ****/
 
 /*
 	This file must be located at /analysis/ relative to server docroot.
@@ -22,7 +21,7 @@
 		This is relative to directory this script is in.
 		For example, if the script is in /analysis/ and the properties are in /analysis/properties/
 		  then use
-		properties-to-csv.php?base=properties
+		http://slice.red7.com/analysis/props-to-display.php?base=properties
 
 	//////////
 */
@@ -47,14 +46,18 @@ $propsDir	= PROPS_DIR;		// get from config - this will be a local copy
 // NOTE: This overrides the APP_PATH from the config file, which will be unused.
 $path 		= substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
 
-echo "<HTML>\r\n";
-echo "<HEAD>\r\n";
-echo "<STYLE TYPE='text/css'>.RED_ALERT { color:#FF0000; font-weight:bold; } </STYLE>\r\n";
-echo "<STYLE TYPE='text/css'>.TABLE_ROW { border-top:thin; border-top-style:solid; border-top-color:#888888; border-top-width:1px; } </STYLE>\r\n";
-echo "<STYLE TYPE='text/css'>.LOWER_LINE { font-size:12px; } </STYLE>\r\n";
-echo "</HEAD>\r\n";
-echo "<BODY style='font-family:Arial;'>\r\n";
-
+?>
+<HTML>
+<HEAD>
+  <STYLE TYPE='text/css'>.RED_ALERT { color:#FF0000; font-weight:bold; } </STYLE>
+  <STYLE TYPE='text/css'>.TABLE_ROW { border-top:thin; border-top-style:solid; border-top-color:#888888; border-top-width:1px; } </STYLE>
+  <STYLE TYPE='text/css'>.LOWER_LINE { font-size:12px; } </STYLE>
+</HEAD>
+<BODY style='font-family:Arial;'>
+  <p>
+&laquo; <a href='/analysis/'>Back</a> 
+  </p>
+<?php
 if (!isset($_GET['base']) || (strlen($_GET['base']) == 0)) {
 	echo "Requires ?base=/dir/";
 	exit;
@@ -116,8 +119,10 @@ ksort($data);
 echo "<table cellspacing='4' cellpadding='2' border='0'>\r\n";
 foreach ($data as $url => $values) {
 	$values['emails'] = str_replace(array('<','>'), array('&lt;','&gt;'), $values['emails']);
-	echo "<tr><td width='50%' valign='top' class='TABLE_ROW'>$url&nbsp;<a href='$url' target='_blank' style='text-decoration:none;'>&rarr;</a><br/><span class='LOWER_LINE'>&nbsp;&nbsp;$values[filters]&nbsp;&nbsp;||&nbsp;&nbsp;$values[emails]</span></td><td width='50%' valign='top' class='TABLE_ROW'>$values[ID]</td></tr>\r\n";
+	$URL_HASH = md5($url);
+	echo "<tr><td width='50%' valign='top' class='TABLE_ROW'>$url&nbsp;<a href='$url' target='_blank' style='text-decoration:none;'>&rarr;</a><br/><span class='LOWER_LINE'>&nbsp;&nbsp;$values[filters]&nbsp;&nbsp;||&nbsp;&nbsp;$values[emails]&nbsp;&nbsp;||&nbsp;&nbsp;".$URL_HASH."</span></td><td width='50%' valign='top' class='TABLE_ROW'>$values[ID]</td></tr>\r\n";
 }
 echo "</table>\r\n";
-echo "</BODY>\r\n";
-?> 
+?>
+</BODY>
+</HTML>

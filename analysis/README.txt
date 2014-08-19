@@ -1,19 +1,31 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-/analysis
+README.txt
 
-This directory will contain files related to analysis of cyberspark monitoring data.
+// **** http://cyberspark.net/
+// **** https://github.com/jimsky7/CyberSpark.net
+// **** See also http://d3js.org/
 
-Initially (early 2013) the plan is:
 
-°	Write a utility that will read CS logs and move entries into a MySQL database. This'll probably be command-line on a server.
+'Index' files in this directory contain samples in which we use D3js to graph CyberSpark 
+data.
 
-°	Write a utility that will process data from MySQL into some format that can then be graphed. This will probably have a web interface.
+'PHP' files in this directory may be used to:
+	1) upload new log files to MySQL
+	2) upload (using HTTP POST) new log entries to MySQL
+	3) fetch log entries for a time period as CSV or TSV files
 
-°	Write a grapher to display these data. The display will be on a web site.
+Important note: These PHP scripts should be on their own server, running a web server, 
+and not on any 'sniffer' system(s). They've been tested on NGINX but should run with
+no modification on an Apache server.
 
-Beyond that, some things that might be nice are:
+You may add HTTP "Basic authentication" to the directory containing the scripts and 
+analysis files. You will have to set those credentials in two CS config files. These
+need not be on the same server.
+FIRST add credentials on the cyberspark sniffer systems (typical path to CS):
+  /usr/local/cyberspark/log-transport-pw.php
+SECOND add credentials on the analysis system (typical docroot /var/www/):
+  /var/www/analysis/cs-log-pw.php
 
-°	Highly interactive ways to select data
-	-	Point-and-click to select URLs to analyze. 
-	-	Drag-to-select date ranges.
-°	Ways to select the "type" of analysis you want. For instance, length changes in pages on highly dynamic sites should be ignored most of the time. You might want to know about slowness only on the sites that are normally fast, and not on all sites. A site might be down for a while due to its developer, and you'd want to ignore the site, or ignore a particular time period.
+You will need to put "D3JS" in a directory /d3/ for the javascript to work. Please get
+and install the latest version.
+
+See documentation in "CyberSpark Analysis Architecture and tech dox.doc"

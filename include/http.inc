@@ -11,7 +11,7 @@ require_once 'HTTP/Request.php';
 // http://pear.php.net/manual/en/package.http.http-client.php
 
 ////////////////////////////////////////////////////////////////////////////////////
-function httpGet($url, $userAgent, $timeout) {
+function httpGet($url, $userAgent, $timeout, $auth=null) {
 	//// Use PEAR HTTP_Client to get a URL
 	//   http://pear.php.net/manual/en/package.http.http-client.http-client.get.php
 	try {
@@ -47,6 +47,9 @@ function httpGet($url, $userAgent, $timeout) {
 		// GET
 		try {
 			$httpClient = new HTTP_Client($params, $headers);
+			if (($auth != null) && isset($auth['CS_HTTP_USER']) && isset($auth['CS_HTTP_PASS'])) {
+				$httpClient->setBasicAuth($auth['CS_HTTP_USER'], $auth['CS_HTTP_PASS']);
+			}
 			$httpResult = $httpClient->get($url);
 
 			if(PEAR::isError($httpClient)) { 
@@ -66,7 +69,7 @@ function httpGet($url, $userAgent, $timeout) {
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-function httpPost($url, $userAgent, $timeout) {
+function httpPost($url, $userAgent, $timeout, $auth=null) {
 	//// Use PEAR HTTP_Client to post to a URL
 	//   http://pear.php.net/manual/en/package.http.http-client.http-client.post.php
 	try {
@@ -79,7 +82,9 @@ function httpPost($url, $userAgent, $timeout) {
 // echo "Set timeout in seconds = " . $timeout . "\n";
 	
 		$headers = array();
-		$headers['User-Agent'] = $userAgent;
+		if ($userAgent != null) {
+			$headers['User-Agent'] = $userAgent;
+		}
 		$headers['Connection'] = 'close';
 		$headers['Accept'] = 'text/html,text/plain';	// Need this for compatibility and FOR CLOUDFLARE
 														//   (otherwise get a 403 from cloudflare)
@@ -96,6 +101,9 @@ function httpPost($url, $userAgent, $timeout) {
 		// POST
 		try {
 			$httpClient = new HTTP_Client($params, $headers);
+			if (($auth != null) && isset($auth['CS_HTTP_USER']) && isset($auth['CS_HTTP_PASS'])) {
+				$httpClient->setBasicAuth($auth['CS_HTTP_USER'], $auth['CS_HTTP_PASS']);
+			}
 			$httpResult = $httpClient->post($url, $postString, true);	// is already urlencoded
 
 			if(PEAR::isError($httpClient)) { 
@@ -113,5 +121,55 @@ function httpPost($url, $userAgent, $timeout) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+function httpPostParams($url, $userAgent, $paramArray, $timeout, $auth=null) {
+	//// Use PEAR HTTP_Client to post to a URL
+	//   http://pear.php.net/manual/en/package.http.http-client.http-client.post.php
+	try {
+
+		$params = array();
+		if ($timeout > 0) {
+			$params['timeout'] = $timeout;		// in seconds
+		}
+// timeout doesn't work; at least not this way
+// echo "Set timeout in seconds = " . $timeout . "\n";
+	
+		$headers = array();
+		if ($userAgent != null) {
+			$headers['User-Agent'] = $userAgent;
+		}
+		$headers['Connection'] = 'close';
+		$headers['Accept'] = 'text/html,text/plain';		// Need this for compatibility and FOR CLOUDFLARE
+														//   (otherwise get a 403 from cloudflare)
+		// Add POST parameters
+		$postString = '';
+		foreach ($paramArray as $param=>$value) {
+			$postString .= $param.'='.urlencode($value).'&';
+		}
+
+		// Make the request
+		////////////////////
+		// POST
+		try {
+			$httpClient = new HTTP_Client($params, $headers);
+			if (($auth != null) && isset($auth['CS_HTTP_USER']) && isset($auth['CS_HTTP_PASS'])) {
+				$httpClient->setBasicAuth($auth['CS_HTTP_USER'], $auth['CS_HTTP_PASS']);
+			}
+			$httpResult = $httpClient->post($url, $postString, true);	// is already urlencoded
+
+			if(PEAR::isError($httpClient)) { 
+				return array('code'=>0, 'error'=>'Exception[1] POST in httpPostParams: '.$x->getMessage());
+			}
+			// result is associative array containing 'code' 'headers' and 'body'
+			return $httpClient->currentResponse();		
+		}
+		catch (Exception $x) {
+			return array('code'=>0, 'error'=>'Exception[2] POST in httpPostParams: '.$x->getMessage());
+		}
+	}
+	catch (Exception $mx) {
+		return array('code'=>0,'error'=>'Exception in httpPostParams: '.$mx->getMessage());
+	}
+}
 
 ?>
