@@ -62,7 +62,7 @@ $sleepTime  	= $defaultSleep;
 $timeout		= 20;
 $userAgent		= '';
 $csvHeader		= null;
-$fn 				= "log/$ID.log";							// note: relative to current dir
+$fn 				= "log/$ID.log";				// note: relative to current dir
 $LTpidFileName = $ID . '-transport' . PID_EXT;		// pid file goes into local dir
 
 // Write process ID to a file
@@ -88,7 +88,12 @@ catch (Exception $x) {
 while (($maxLines==0) || ($i<$maxLines)) {
     $i++;
 	clearstatcache(false, $fn);
-	$length = filesize($fn);
+	if (file_exists($fn) ) {
+		$length = filesize($fn);
+	}
+	else {
+		$length = 0;
+	}
 	// If file is shorter now than before, then assume it's new
 	if ($length < $fpos) {
 		// File was recreated (shortened)
@@ -98,6 +103,7 @@ while (($maxLines==0) || ($i<$maxLines)) {
 	if ($length == 0) {
 		$fpos = 0;			// back to the beginning
 		$sleepTime = $defaultSleep;
+    	sleep($sleepTime);
 		continue;
 	}
 	// Get header if don't have it yet
