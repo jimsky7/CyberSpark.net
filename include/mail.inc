@@ -92,6 +92,9 @@ function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $mess
                 }
 			}
 		}
+		else {
+			echoIfVerbose("textMail() cannot send email without a 'to'\n");
+		}
 	}
 	catch (Exception $mx) {
 		echoIfVerbose("textMail() Exception: " . $mx->getMessage() . "\n");
@@ -204,6 +207,9 @@ function attachmentMail($to='', $from='', $replyTo='', $abuseTo='', $subject='',
 			    	}
                 }
 			}
+		}
+		else {
+			echoIfVerbose("attachmentMail() cannot send email without a 'to'\n");
 		}
 	}
 	catch (Exception $mx) {
