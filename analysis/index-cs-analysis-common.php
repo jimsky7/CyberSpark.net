@@ -244,7 +244,7 @@ function cs_http_get($url) {
 		else {
 			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
 		}
-		echo "<svg class='chart' id='H_$URL_HASH' width='$WIDTH_CHART'></svg><span style='size:32pt;'><a href='$sites[$key]' style='text-decoration:none;' target='W_$URL_HASH'>»</a></span>\r\n";
+		echo "<svg class='chart' id='H_$URL_HASH' width='$WIDTH_CHART'></svg><span><a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'>»</a></span>\r\n";
 	}
 
 ////////////////////////////////////////////////////////////////////////
