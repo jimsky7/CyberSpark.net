@@ -244,7 +244,7 @@ function cs_http_get($url) {
 		else {
 			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
 		}
-		echo "<svg class='chart' id='H_$URL_HASH' width='$WIDTH_CHART'></svg><span><a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'>»</a></span>\r\n";
+		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart' id='H_$URL_HASH' width='$WIDTH_CHART'></svg></a>\r\n";
 	}
 
 ////////////////////////////////////////////////////////////////////////
@@ -488,7 +488,11 @@ function type(d) {
 			<td>Timeout
 			</td>
 		</tr>
-        <tr>
+         <tr>
+        	<td colspan='6'>“Mouse over” the colored bars in a chart to see details.<br/>Click/tap a chart to view the associated URL.
+        	</td>
+        </tr>
+       <tr>
         	<td colspan='6'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>&nbsp;CyberSpark open source code is provided under a <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">Creative Commons by-nc-sa 3.0</a> license
         	</td>
         </tr>
