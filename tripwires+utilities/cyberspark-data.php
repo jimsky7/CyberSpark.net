@@ -1,7 +1,7 @@
 <?php
 echo '<html>
  <head>
-  <title>PHP-MySQL tripwire</title>
+  <title>CyberSpark.net PHP-MySQL tripwire</title>
  </head>
  <body>
   <div align="justify"><blockquote><blockquote><font face="Arial" size=2><br />';
@@ -76,8 +76,7 @@ define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
 			echo "Connected to the database using mysqli() class.<br/><br/>\r\n";
 
 			$stmt =  $mysqli->stmt_init();
-//			$query = "SHOW TABLES";
-			$query = "SHOW TABLE STATUS";
+			$query = "SHOW TABLES";
 			$result = $stmt->prepare($query);
 
 			$result = $stmt->execute();
@@ -86,31 +85,47 @@ define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
 				echo "Error: [alert] message ".$stmt->error." <br/>\r\n";
 				die ("Program ended.");
 			}
-			$result = $stmt->bind_result($tableName, $engine, $version, $rf, $rowCount, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10, $x11, $x12, $x13) ;
+			$result = $stmt->bind_result($tableName) ;
 			$result = $stmt->store_result();
 			if ($result) {
 				if (($nt=$stmt->num_rows) > 0) {
 					while($stmt->fetch()) {
         	     		echo "<!-- $tableName $tableName $tableName $tableName $tableName -->\r\n"; // Pour allonger la taille de la page, pour permettre la détection par l'outil de Jim
+// get row count for display or to trigger a change in this page
+						$stmtR  =  $mysqli->stmt_init();
+						$queryR = "SELECT COUNT(*) FROM $tableName";
+						$resultR = $stmtR->prepare($queryR);
+						$resultR = $stmtR->execute();
+						$resultR = $stmtR->bind_result($rowCount) ;
+						$resultR = $stmtR->store_result();
+						$resultR = $stmtR->fetch();
+						if ($stmtR->errno) {
+							echo "Error: [alert rows] number " .$stmtR->errno." <br/>\r\n";
+							echo "Error: [alert rows] message ".$stmtR->error." <br/>\r\n";
+						}
 						$checked = '';
 						if (WATCH_SOME_ROW_COUNTS) {
-	        	     		$j = $rowCount;
 							if (WATCH_ALL_ROW_COUNTS || in_array($tableName, $tables)) {
+	        	     			$j = $rowCount;
 								echo "<!-- $tableName ";
 								while ($j-- > 0) {
 									echo '.........|';
 								}
-								$checked = " $emphasisStart(this table&rsquo;s row count is being monitored)$emphasisEnd";
+								$checked = " $emphasisStart(this table&rsquo;s row count can be monitored)$emphasisEnd";
 								echo " -->\r\n"; // Pour allonger la taille de la page, pour permettre la détection par l'outil de Jim
 							}
 						}
+						$stmtR->free_result();
+						$stmtR->close();
 						echo "$tableName [$rowCount rows] $checked<br/>\r\n";	
 					}
-		        	echo "<br />$emphasisStart There are $nt tables in database $dbname. (Is this what you expected?)$emphasisEnd<br /><br />";
+		        	echo "<br />$emphasisStart There are $nt tables in database &ldquo;$dbname&rdquo; &mdash; is this what you expected?)$emphasisEnd<br /><br />";
 				}
+				$stmt->free_result();
+				$stmt->close();
 			}
 			else {
-		        echo "<br />$emphasisStart There are no tables in database $dbname. (Is this what you expected?)$emphasisEnd<br /><br />";
+		        echo "<br />$emphasisStart There are no tables in database &ldquo;$dbname&rdquo; &mdash; is this what you expected?)$emphasisEnd<br /><br />";
 			}
 			$mysqli->close();
 		}
@@ -132,12 +147,12 @@ define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
         	     echo " <!-- $tablename $tablename $tablename $tablename $tablename -->"; // Pour allonger la taille de la page, pour permettre la détection par l'outil de Jim
         	     $i++;
         	    }
-        	    echo "$emphasisStart<br />There are $i tables in database $dbname. (Is this what you expected?)$emphasisEnd<br /><br />";
+        	    echo "$emphasisStart<br />There are $i tables in database &ldquo;$dbname&rdquo; &mdash; is this what you expected?)$emphasisEnd<br /><br />";
 				mysql_close($connection);
 			}
         	else
         	{
-        	    echo "$emphasisStart<br/>Couldn't connect to the database. Error:".mysql_error()."$emphasisEnd<br /><br />";
+        	    echo "$emphasisStart<br/>Couldn't connect to the database &ldquo;$dbname&rdquo; &mdash; Error:".mysql_error()."$emphasisEnd<br /><br />";
         	}
 		}
 	}
@@ -160,7 +175,7 @@ define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
      	 echo " --><br />";
      	}
 	}
-	echo "$emphasisStart<br/>The size of the raw HTML of this page will change if a database table is removed or added, or if an 'important file' changes.$emphasisEnd";
+	echo "$emphasisStart<br/>The size of the raw HTML of this page will change if a database table is removed or added, if a monitored row count changes, or if an 'important file' changes.$emphasisEnd";
 	echo '<br/><br/>Get CyberSpark.net source code from <a href="http://cyberspark.net/code">cyberspark.net/code</a>';	
 	echo '    </font></blockquote></blockquote>
  </body>
