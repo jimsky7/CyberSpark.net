@@ -493,7 +493,14 @@ function type(d) {
         	</td>
         </tr>
        <tr>
-        	<td colspan='6'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>&nbsp;CyberSpark open source code is provided under a <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">Creative Commons by-nc-sa 3.0</a> license
+        	<td colspan='6'>
+            <table cellspacing='0' cellpadding='5px' border='0'>
+            <tr><td>
+            <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a></td>
+            <td style='font-size:12px; padding-top:12px;'>CyberSpark open source code is provided under a <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">Creative Commons by-nc-sa 3.0</a> license
+            </td>
+            </tr>
+            </table>
         	</td>
         </tr>
 	</table>
