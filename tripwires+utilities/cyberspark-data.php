@@ -4,21 +4,37 @@ echo '<html>
   <title>PHP-MySQL tripwire</title>
  </head>
  <body>
-  <div align="justify"><blockquote><blockquote><font face="Arial" size=2><br /><br /><br />
-';
-	// THANKS to Chris for refining this script!
-    // On va afficher les tables de la base
-    // Pour le watchdog de Jim Schuyler
+  <div align="justify"><blockquote><blockquote><font face="Arial" size=2><br />';
+
+//////////////////////////////////////////////////////
+// MYSQLI 'true' if you want to use PHP mysqli
+//////////////////////////////////////////////////////
+define (MYSQLI, true);					// to use newer mysqli() class
+define (WATCH_SOME_ROW_COUNTS, true);	// to track change in SOME row counts of specific table
+										// BEST for WordPress sites
+define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
+										// NOT advisable for WordPress sites
+
+//////////////////////////////////////////////////////
+//  INSTRUCTIONS AND CONFIGURATION
+///////////////////////////////////////////////////
+
+	// THANKS to Chris (in Paris) for refining this script!
+    // On va afficher les tables de la base de données WordPress
+    // Pour le watchdog de Jim Schuyler (maintenant "CyberSpark")
     // Si la taille de cette page change, c'est que le nombre de tables a changé
-    // ou que la taille de login.php a changé
+    // ou que la taille de wp-login.php (ou d'autres fichiers) a changé
 	   
 	// This file must be installed at the web server's docroot for the monitored site
 	
-	/** Version 4.03 on 2011-09-15 **/
+	// It access the WordPress database and reports the number of tables present, plus the number
+	// of rows in each. It can be configured to report back based on the size of each table, or
+	// only specific table sizes. The monitoring system is responsible for detecting any change
+	// in the length of this report and signalling or alerting a responsible person.
 	
-//////////////////////////////////////////////////////
-//  INSTRUCTIONS
-///////////////////////////////////////////////////
+	/** Version 4.03 on 2011-09-15 **/
+	/** Revised 2014-08-24 by sky@cyberspark.net **/
+	
 	// Change the file extension to PHP from TXT and copy it to your docroot for the desired site
 	// Be sure PHP is installed and configured for your web server
 	
@@ -33,47 +49,97 @@ echo '<html>
 	$dbname = constant('DB_NAME');
 
 	// Names of files to check - must be path from docroot
-	$fichiers = array('wp-config.php','.htaccess');
-
+	$fichiers = array('wp-config.php', '.htaccess', 'wp-login.php');
+	// Names of tables to check lengths
+	$tables = array('wp_posts', 'wp_links', ' wp_options', ' wp_postmeta', 'wp_terms', 'wp_users');
+	// Color to emphasize words on the page
+	$emphasisColor = '#FF2222';
+	$emphasisStart = "<span style='color:$emphasisColor;'>";
+	$emphasisEnd   = "</span>";
+	
 	// When installed, test by viewing http://YOURDOMAIN/cyberspark-data.php from a web browser
+
 //////////////////////////////////////////////////////
-//  INSTRUCTIONS
+//  THE ACTIVE CODE
 ///////////////////////////////////////////////////
 
-
-
-
-
-
-
 	try {
-		
-		/** With the help of -> http://www.w3schools.com/PHP/php_ref_mysql.asp **/
-        $connection = mysql_connect($dbhost,$dbuser,$dbpassword);
-        // We do not need this any longer, unset for safety purposes
-        unset($dbpassword);
 
-        if ($connection) {
-            echo "<b>CyberSpark.net </b> database scanner. Designed for WordPress sites.";
-            echo "<b>Database ".$dbname." :</b>";
-            mysql_select_db($dbname, $connection);
+		if (MYSQLI) {
+			$mysqli = new mysqli($dbhost, $dbuser, $dbpassword, $dbname);
 
-            $queryresult = mysql_query("SHOW TABLES");
-            $i = 0;
-            while($row = mysql_fetch_array($queryresult))
-            {
-             $tablename = $row["Tables_in_".$dbname];
-             echo "<br />&nbsp;&nbsp;$tablename";
-             echo " <!-- $tablename $tablename $tablename $tablename $tablename -->"; // Pour allonger la taille de la page, pour permettre la détection par l'outil de Jim
-             $i++;
-            }
-            mysql_close($connection);
-            echo "<br /><b>There are $i tables in database $dbname. (Is this what you expected?)</b><br /><br />";
-        }
-        else
-        {
-            echo "Couldn't connect to the database. Error:".mysql_error()."<br /><br />";
-        }
+			if ($mysqli == null) {
+				die("Error: mysqli couldn't connect to MySQL on ".MYSQL_HOST." with user name and password specified.");
+			}
+        	echo "<b>CyberSpark.net </b> database scanner. Designed for WordPress sites.<br/>";
+        	echo "<b>Database ".$dbname." :</b><br/>";
+			echo "Connected to the database using mysqli() class.<br/><br/>\r\n";
+
+			$stmt =  $mysqli->stmt_init();
+//			$query = "SHOW TABLES";
+			$query = "SHOW TABLE STATUS";
+			$result = $stmt->prepare($query);
+
+			$result = $stmt->execute();
+			if ($stmt->errno) {
+				echo "Error: [alert] number ".$stmt->errno." <br/>\r\n";
+				echo "Error: [alert] message ".$stmt->error." <br/>\r\n";
+				die ("Program ended.");
+			}
+			$result = $stmt->bind_result($tableName, $engine, $version, $rf, $rowCount, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10, $x11, $x12, $x13) ;
+			$result = $stmt->store_result();
+			if ($result) {
+				if (($nt=$stmt->num_rows) > 0) {
+					while($stmt->fetch()) {
+        	     		echo "<!-- $tableName $tableName $tableName $tableName $tableName -->\r\n"; // Pour allonger la taille de la page, pour permettre la détection par l'outil de Jim
+						$checked = '';
+						if (WATCH_SOME_ROW_COUNTS) {
+	        	     		$j = $rowCount;
+							if (WATCH_ALL_ROW_COUNTS || in_array($tableName, $tables)) {
+								echo "<!-- $tableName ";
+								while ($j-- > 0) {
+									echo '.........|';
+								}
+								$checked = " $emphasisStart(this table&rsquo;s row count is being monitored)$emphasisEnd";
+								echo " -->\r\n"; // Pour allonger la taille de la page, pour permettre la détection par l'outil de Jim
+							}
+						}
+						echo "$tableName [$rowCount rows] $checked<br/>\r\n";	
+					}
+		        	echo "<br />$emphasisStart There are $nt tables in database $dbname. (Is this what you expected?)$emphasisEnd<br /><br />";
+				}
+			}
+			else {
+		        echo "<br />$emphasisStart There are no tables in database $dbname. (Is this what you expected?)$emphasisEnd<br /><br />";
+			}
+			$mysqli->close();
+		}
+		else {
+			/** With the help of -> http://www.w3schools.com/PHP/php_ref_mysql.asp **/
+	        $connection = mysql_connect($dbhost, $dbuser, $dbpassword);
+			if ($connection) {
+        	    echo "<b>CyberSpark.net </b> database scanner. Designed for WordPress sites.<br/>";
+        	    echo "<b>Database ".$dbname." :</b><br/>";
+				echo "Connected to the database using (deprecated) mysql_connect().<br/>\r\n";
+				mysql_select_db($dbname, $connection);
+
+        	    $queryresult = mysql_query("SHOW TABLES");
+        	    $i = 0;
+        	    while($row = mysql_fetch_array($queryresult))
+        	    {
+        	     $tablename = $row["Tables_in_".$dbname];
+        	     echo "<br />&nbsp;&nbsp;$tablename";
+        	     echo " <!-- $tablename $tablename $tablename $tablename $tablename -->"; // Pour allonger la taille de la page, pour permettre la détection par l'outil de Jim
+        	     $i++;
+        	    }
+        	    echo "$emphasisStart<br />There are $i tables in database $dbname. (Is this what you expected?)$emphasisEnd<br /><br />";
+				mysql_close($connection);
+			}
+        	else
+        	{
+        	    echo "$emphasisStart<br/>Couldn't connect to the database. Error:".mysql_error()."$emphasisEnd<br /><br />";
+        	}
+		}
 	}
 	catch (Exception $nobase) {
 	}
@@ -94,7 +160,8 @@ echo '<html>
      	 echo " --><br />";
      	}
 	}
-	echo "The size of this page will change if a table is removed or added or if an 'important file' changes.";
+	echo "$emphasisStart<br/>The size of the raw HTML of this page will change if a database table is removed or added, or if an 'important file' changes.$emphasisEnd";
+	echo '<br/><br/>Get CyberSpark.net source code from <a href="http://cyberspark.net/code">cyberspark.net/code</a>';	
 	echo '    </font></blockquote></blockquote>
  </body>
 </html>
