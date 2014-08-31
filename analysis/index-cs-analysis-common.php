@@ -112,10 +112,6 @@ else {
 //	echo "End: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
 //	echo "Start: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
 
-
-
-
-
 ////////////////////////////////////////////////////////////////////////
 function cs_http_get($url) {
 	$result = '';
@@ -201,10 +197,21 @@ function cs_http_get($url) {
     </select>
     <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?> />
     <select id='YEAR' name='YEAR'>
-    	<option value='2014' <?php if($_SESSION['YEAR']=='2014') { echo 'selected'; } ?>>2014</option>
-    	<option value='2013' <?php if($_SESSION['YEAR']=='2013') { echo 'selected'; } ?>>2013</option>
-    	<option value='2012' <?php if($_SESSION['YEAR']=='2012') { echo 'selected'; } ?>>2012</option>
-    	<option value='2011' <?php if($_SESSION['YEAR']=='2011') { echo 'selected'; } ?>>2011</option>
+<?php
+$yx = (int)date('Y');
+$ys = $yx;
+if (isset($_SESSION['YEAR'])) {
+	$ys = (int)$_SESSION['YEAR'];
+}
+while ($yx > 2009) {
+    echo "<option value='$yx'";
+    if ($yx==$ys) {
+    	echo " selected";
+    }
+    echo ">$yx</option>\r\n";
+	$yx--;
+}
+?>
 	</select>
     <input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go to date' />&nbsp;&nbsp;||&nbsp;&nbsp;<input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
 </form>    
@@ -333,7 +340,7 @@ for (ix=0; ix<hashes.length; ix++) {
 // Javascript functions that are used by D3 to build the charts
 ?>
 function csIntensityPlot(error,data,hash) {
-//	y.domain([0, d3.max(data, function(d) { return Math.min(CHART_MAX,d.http_ms); })]);
+//	y.domain([0,     d3.max(data, function(d) { return Math.min(CHART_MAX,d.http_ms); })]);
 	y.domain([-0.20, d3.max(data, function(d) { return CHART_MAX; })]);	// height is always CHART_MAX
 
 //	var section = d3.selectAll(".chart");
@@ -350,8 +357,10 @@ function csIntensityPlot(error,data,hash) {
       .attr("transform", function(d, i) { return "translate(" + i * barWidth + ",0)"; });
 
 	bar.append("rect")
-      .attr("y", function(d) { return y(d.http_ms); })
-      .attr("height", function(d) { return height - y(d.http_ms); })
+//      .attr("y", function(d) { return y(d.http_ms); })
+//      .attr("height", function(d) { return height - y(d.http_ms); })
+      .attr("y", function(d) { return y(Math.min(CHART_MAX,d.http_ms)); })
+      .attr("height", function(d) { return height - y(Math.min(CHART_MAX,d.http_ms)); })
       .attr("class", function(d) { 
       		if (d.http_ms>CHART_ALERT) { 
       			return "rect_alert"; 
@@ -441,10 +450,10 @@ function type(d) {
 ?>
 <hr/>
 <!-- legend -->
-<table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px;'>
+<table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
 		<tr>
 			<td class='rect_green' style='width:20px;'></td>
-			<td>Under 2 sec
+			<td>&lt;=2 sec
 			</td>
 			<td class='rect_yellow' style='width:20px;'></td>
 			<td>3 or 4
@@ -453,7 +462,7 @@ function type(d) {
 			<td>5 or 6
 			</td	>
 			<td class='rect_red' style='width:20px;'></td>
-			<td>Over 6
+			<td>&gt;6 sec
 			</td>
 			<td class='rect_blue' style='width:20px;'></td>
 			<td>Err
@@ -462,8 +471,14 @@ function type(d) {
 			<td>Timeout
 			</td>
 		</tr>
+         <tr>
+        	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
+        	Click (or tap) a chart to view the associated URL.<br/>
+        	Resize or maximize and the charts will float to fill the window.
+        	</td>
+        </tr>
         <tr>
-        	<td colspan='6'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>
+        	<td colspan='12'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>
         	</td>
         </tr>
 	</table>
@@ -489,11 +504,13 @@ function type(d) {
 			</td>
 		</tr>
          <tr>
-        	<td colspan='6'>“Mouse over” the colored bars in a chart to see details.<br/>Click/tap a chart to view the associated URL.
+        	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
+        	Click (or tap) a chart to view the associated URL.<br/>
+        	Resize or maximize and the charts will float to fill the window.
         	</td>
         </tr>
        <tr>
-        	<td colspan='6'>
+        	<td colspan='12'>
             <table cellspacing='0' cellpadding='5px' border='0'>
             <tr><td>
             <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a></td>
