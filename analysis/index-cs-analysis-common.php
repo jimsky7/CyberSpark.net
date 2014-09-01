@@ -29,8 +29,20 @@ $calendar=false;
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 	echo '<!-- POST -->';
 	if (isset($_POST['SUBMIT_CALENDAR'])) {
-		echo '<!-- SUBMIT_CALENDAR -->';
+		echo '<!-- SUBMIT_CALENDAR '.$_POST['SUBMIT_CALENDAR'].' -->';
 		$calendar = true;
+	}
+	$direction = 0;
+	if (isset($_POST['DIRECTION'])) {
+		echo '<!-- DIRECTION '.$_POST['DIRECTION'].' -->';
+		if (strcasecmp($_POST['DIRECTION'], 'minus')==0) {
+			$direction = -1;
+			$calendar = true;
+		}
+		if (strcasecmp($_POST['DIRECTION'], 'plus')==0) {
+			$direction = +1;
+			$calendar = true;
+		}
 	}
 	if (isset($_POST['SUBMIT_NOW'])) {
 		echo '<!-- SUBMIT_NOW -->';
@@ -93,9 +105,23 @@ if ($calendar) {
 ////////////////////////////////////////////////////////////////////////
 // Visual start-end dates
 if ($calendar) {
-	$dt = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
+	$dt   = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
 	$dtm2 = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
 	$dtm2->add(new DateInterval($span));
+// Moving backward or forward in time?
+	if ($direction > 0) {
+		$dt->add(new DateInterval($span));
+		$dtm2->add(new DateInterval($span));
+	}
+	if ($direction < 0) {
+		$dt->sub(new DateInterval($span));
+		$dtm2->sub(new DateInterval($span));
+	}
+	if ($direction) {
+		$_SESSION['YEAR'] = $dt->format('Y');
+		$_SESSION['MONTH']= $dt->format('m');
+		$_SESSION['DAY']  = $dt->format('d');
+	}
 	$startTimestamp = ((int)$dt->format('U'))*1000;
 	$endTimestamp   = ((int)$dtm2->format('U'))*1000;
 	$startDate = $dt->format('d-M-Y').' [UTC]';
@@ -178,8 +204,7 @@ function cs_http_get($url) {
 	</script>
 </head>
 <body<?php if (!$calendar) { ?> onload="cs_onload()" <?php } ?>>
-    <p style="font-size:22px;"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a><a href='index.php'><img src="images/uparrow.jpg" width="52" height="48" alt="Analysis home page"/></a>
-    
+    <a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a>&nbsp;<a href='index.php'><img src="images/cyberspark-arrow-up-32x32.gif" width="32" height="32" alt="Analysis home page"/></a><div id="ENCLOSE_SELECT">
 <form id='CS_FORM' action='<?php echo $_SERVER['REQUEST_URI']; ?>' method='post'>
     <select id='MONTH' name='MONTH'>
     	<option value='01' <?php if($_SESSION['MONTH']=='01') { echo 'selected'; } ?>>Jan</option>
@@ -212,9 +237,8 @@ while ($yx > 2009) {
 	$yx--;
 }
 ?>
-	</select>
-    <input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go to date' />&nbsp;&nbsp;||&nbsp;&nbsp;<input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
-</form>    
+	</select><input id='DIRECTION' name='DIRECTION' type='hidden' value='none' /><input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go' />&nbsp;<input id='SUBMIT_MINUS' name='SUBMIT_MINUS' type='image' src='images/cyberspark-triangle-lf-32x32.gif' value='minus' onclick='var e=document.getElementById("DIRECTION"); e.value="minus";'/><input id='SUBMIT_PLUS' name='SUBMIT_PLUS' type='image' src='images/cyberspark-triangle-rt-32x32.gif' value='plus' onclick='var e=document.getElementById("DIRECTION"); e.value="plus";'/>&nbsp;&nbsp;||&nbsp;&nbsp;<input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
+</form>    </div>
     
     <hr/><span class="CS_TITLE"><? echo $TITLE; ?></span><?php if (!$calendar) { ?><br/><span class="CS_SUBTITLE">This page reloads every few minutes</span><?php } ?>
     </p><hr/>
