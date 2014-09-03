@@ -44,6 +44,20 @@ define('EMAIL_REPLYTO', 'email@example.com');		// MUST USE NO quotes or <> brack
 define('EMAIL_ABUSETO', 'email@example.com');		// MUST USE NO quotes or <> brackets
 
 /////////////////////////////////////////////////////////////////////////////////
+// If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to true, the 'ssl' filter looks for a definitive
+//   "OK" result and if it's not there, you'll get a report saying there's a problem.
+// If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to false, then the filter only considers certain
+//   explicit error conditions, and may let some unanticipated errors slip through.
+//   As long as the checker returns "OK" status in its messages, we consider the
+//   cert to be OK. This kind of ambiguous "not OK and not bad" situations arises
+//   many times and with 4 years of experience (written in 2014) I have seen many
+//   cases like this, and the cert was just fine in all cases so far.
+// (Recommended default setting is false.)
+if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
+	define (SSL_FILTER_REQUIRE_EXPLICIT_OK, false);
+}
+
+/////////////////////////////////////////////////////////////////////////////////
 // If you have a GSB server, or if CyberSpark gave you the IP address to use theirs,
 //   insert the actual IP address here instead of "0.0.0.0" -- this is used in the GSB-
 //   related filters. The CyberSpark GSB implementation listens only on port 4040.

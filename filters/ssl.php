@@ -30,6 +30,20 @@ include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
 include_once "include/functions.inc";
 
+/////////////////////////////////////////////////////////////////////////////////
+// If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to true, the 'ssl' filter looks for a definitive
+//   "OK" result and if it's not there, you'll get a report saying there's a problem.
+// If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to false, then the filter only considers certain
+//   explicit error conditions, and may let some unanticipated errors slip through.
+//   As long as the checker returns "OK" status in its messages, we consider the
+//   cert to be OK. This kind of ambiguous "not OK and not bad" situations arises
+//   many times and with 4 years of experience (written in 2014) I have seen many
+//   cases like this, and the cert was just fine in all cases so far.
+// (Recommended default setting is false.)
+if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
+	define (SSL_FILTER_REQUIRE_EXPLICIT_OK, false);
+}
+
 ///////////////////////////////// 
 function extractCertificates($string) {
 	$result = '';
@@ -129,6 +143,14 @@ function sslScan($content, $args, $privateStore) {
 			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$message .= INDENT.$stderrString."\n";
 		}
+		else if (stripos($stderrString,'subjectaltname does not match')>0) {
+			// cURL is reporting a problem directly - return everything it said.
+			// This does NOT include any cert, so we don't update the store.
+			$result = "Critical";
+			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
+			$message .= INDENT."The name in the certificate does not match the site domain.\n";
+			$message .= INDENT.$stderrString."\n";
+		}
 		else if (stripos($stderrString,'SSL peer certificate or SSH remote key was not OK')>0) {
 			// cURL is reporting a problem directly - return everything it said.
 			// This does NOT include any cert, so we don't update the store.
@@ -137,10 +159,18 @@ function sslScan($content, $args, $privateStore) {
 			$message .= INDENT."The difficulty might be with the root CA signature.\n";
 			$message .= INDENT.$stderrString."\n";
 		}
-		else if (stripos($stderrString,'SSL certificate verify ok')>0) {
+		else if (stripos($stderrString,'SSL connection timeout')>0) {
+			// cURL timed out when attempting to connect.
+			// This does NOT include any cert, so we don't update the store.
+			$result = "Critical";
+			$message .= INDENT."The HTTPS connection timed out, so there is no new (current) certificate info.\n";
+			$message .= INDENT."The previous cert information will be retained for comparison during the next attempt.\n";
+			$message .= INDENT.$stderrString."\n";
+		}
+		else if ((!SSL_FILTER_REQUIRE_EXPLICIT_OK) || (stripos($stderrString,'SSL certificate verify ok')>0)) {
 			// The cert is valid.
 			$result = "OK";
-			// Check the cert(s) that were presented to us against the BASELINE cert in our store
+			// Check the cert(s) that were presented to us against the BASELINE cert we have from last time
 			$certs = extractCertificates($stderrString);
 			if (isset($privateStore[$filterName][$domain]['SSL_BASELINE_CERT'])) {
 				// Compare the cert(s) against what we have in our store
@@ -162,17 +192,11 @@ function sslScan($content, $args, $privateStore) {
 			// Save just the cert(s) - note that if the BASELINE differed above, the new cert replaces the former baseline
 			$privateStore[$filterName][$domain]['SSL_BASELINE_CERT'] = $certs;
 		}
-		else if (stripos($stderrString,'SSL connection timeout')>0) {
-			// cURL timed out when attempting to connect.
-			// This does NOT include any cert, so we don't update the store.
-			$result = "Critical";
-			$message .= INDENT."The HTTPS connection timed out, so there is no new (current) certificate info.\n";
-			$message .= INDENT."The previous cert information will be retained for comparison during the next attempt.\n";
-			$message .= INDENT.$stderrString."\n";
-		}
 		else if (strcasecmp($privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT'], $stderrString) != 0) {
 			// The "verbose" result returned by the CURLOPT_SSL_VERIFY option is neither OK nor failed
 			//   so report out what it contains.
+			// This is a kind of ambiguous situation and many times we see this on a
+			// cert that verifies just fine using other methods.
 			$result = "Critical";
 			$message .= INDENT."Something is odd here. The certificate is neither 'valid' nor 'failed' - - Examine the details carefully under 'CURRENT' below. These are transcripts of the interactions with the HTTPS server.\n\n";
 			$message .= INDENT."PREVIOUS:\n".$privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT']."\n\n";
