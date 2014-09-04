@@ -36,13 +36,13 @@ include_once "include/functions.inc";
 // If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to false, then the filter only considers certain
 //   explicit error conditions, and may let some unanticipated errors slip through.
 //   As long as the checker returns "OK" status in its messages, we consider the
-//   cert to be OK. This kind of ambiguous "not OK and not bad" situations arises
-//   many times and with 4 years of experience (written in 2014) I have seen many
-//   cases like this, and the cert was just fine in all cases so far.
-// (Recommended default setting is false.)
+//   cert to be OK.
+// (Recommended default setting is TRUE.)
 if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
-	define (SSL_FILTER_REQUIRE_EXPLICIT_OK, false);
+	define (SSL_FILTER_REQUIRE_EXPLICIT_OK, true);
 }
+
+define ('SSL_FILTER_BUFFER_SIZE', 100000);	// buffer size for reading SSL results (over this is discarded)
 
 ///////////////////////////////// 
 function extractCertificates($string) {
@@ -124,7 +124,14 @@ function sslScan($content, $args, $privateStore) {
 					$curlResult = curl_exec($ch);
 					curl_errno($ch);
 					fseek($tf, 0); // rewind
-					while(strlen($stderrString.=fread($tf,8192))==8192);
+					// Get the full analysis that was returned from the SSL connection
+					// Note there is an absolute maximum size used, and although it's very high,
+					//   there is a chance the report could be truncated. Mostly what this 
+					//   would mean is you'd have no "OK" final result found in the result.
+					$s = fread($tf, SSL_FILTER_BUFFER_SIZE);
+					if ($s !== false) {
+						$stderrString .= $s;
+					}
 					fclose($tf);
 					curl_close($ch);
 				}
