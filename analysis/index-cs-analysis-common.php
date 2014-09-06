@@ -2,8 +2,20 @@
 ////////////////////////////////////////////////////////////////////////
 // EVERYTHING AFTER THIS IS COMMON
 
+// Note: This code is usually invoked via POST, with a bunch of input variables.
+//   However, it may be invoked via GET with year, month, and day only:
+//     https://viz.cyberspark.net/analysis/index.php?YEAR=2014&MONTH=6&DAY=5
+//   The parameter names must be uppercase.
+
+////////////////////////////////////////////////////////////////////////
+require ('cs-log-functions.php');
+
 ////////////////////////////////////////////////////////////////////////
 // Check/set any missing layout values
+// In general these should be set by the surrounding index.php file and 
+// not set down in this common code. Then the index.php should include()
+// this file to do all the work of setting up and emitting the page.
+
 if (!isset($WIDTH_TT)) {
 	$WIDTH_TT    	= TOOL_TIP_WIDTH;
 }
@@ -48,6 +60,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		echo '<!-- SUBMIT_NOW -->';
 	}
 }
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+	echo '<!-- GET -->';
+	if (($getYEAR = ifGetOrPost('YEAR')) != null && ($getMONTH = ifGetOrPost('MONTH')) != null && ($getDAY = ifGetOrPost('DAY')) != null) {
+//		$_SESSION['YEAR'] = (int)$getYEAR;		// converts string to integer, avoid SQL injections
+//		$_SESSION['MONTH']= (int)$getMONTH;		// converts string to integer, avoid SQL injections
+//		$_SESSION['DAY']  = (int)$getDAY;		// converts string to integer, avoid SQL injections
+		$calendar = true;		
+	}
+}
 if (!$calendar) {
 	$_SESSION['MONTH'] = date('m');
 	$_SESSION['DAY']   = date('j');
@@ -70,33 +91,44 @@ $startTimestamp =  0;
 $endTimestamp   =  0;
 
 if ($calendar) {
-	if (isset($_POST['MONTH'])) {
-		$_SESSION['MONTH'] = $_POST['MONTH'];
+echo '<!-- calendaring -->';
+	$s = ifGetOrPost('MONTH');
+	if ($s != null) {
+echo '<!-- 1 -->';
+		if (strlen($s) < 2) {
+			$s = '0'.$s;			// add leading zero
+		}
+echo '<!-- 2 -->';
+		$_SESSION['MONTH'] = $s;
 	}
 	else {
+echo '<!-- 3 -->';
 		if (!isset($_SESSION['MONTH'])) {
 			$_SESSION['MONTH'] = '01';
 		}
 	}
 	echo "<!-- MONTH:$_SESSION[MONTH] -->";
-	if (isset($_POST['DAY'])) {
-		$_SESSION['DAY'] = (int)$_POST['DAY'];
+	if (($s = ifGetOrPost('DAY')) != null) {
+		if (strlen($s) < 2) {
+			$s = '0'.$s;			// add leading zero
+		}
+		$_SESSION['DAY'] = $s;
 		if ($_SESSION['DAY'] == 0) {
-			$_SESSION['DAY'] = '1';
+			$_SESSION['DAY'] = '01';
 		}
 	}
 	else {
 		if (!isset($_SESSION['DAY'])) {
-			$_SESSION['DAY'] = '1';
+			$_SESSION['DAY'] = '01';
 		}
 	}
 	echo "<!-- DAY:$_SESSION[DAY] -->";
-	if (isset($_POST['YEAR'])) {
-		$_SESSION['YEAR'] = $_POST['YEAR'];
+	if (($s = ifGetOrPost('YEAR')) != null) {
+		$_SESSION['YEAR'] = $s;
 	}
 	else {
 		if (!isset($_SESSION['YEAR'])) {
-			$_SESSION['YEAR'] = '2014';
+			$_SESSION['YEAR'] = date('Y');
 		}
 	}
 	echo "<!-- YEAR:$_SESSION[YEAR] -->";
@@ -205,7 +237,14 @@ function cs_http_get($url) {
 </head>
 <body<?php if (!$calendar) { ?> onload="cs_onload()" <?php } ?>>
     <a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a>&nbsp;<a href='index.php'><img src="images/cyberspark-arrow-up-32x32.gif" width="32" height="32" alt="Analysis home page"/></a><div id="ENCLOSE_SELECT">
-<form id='CS_FORM' action='<?php echo $_SERVER['REQUEST_URI']; ?>' method='post'>
+<?php 
+	// Remove GET parameters (may not be any)
+	$myURI = $_SERVER['REQUEST_URI'];
+	$i = strpos($myURI, '?');
+	if ($i > 0) {
+		$myURI = substr($myURI, 0, $i);
+	}
+?><form id='CS_FORM' action='<?php echo $myURI; ?>' method='post'>
     <select id='MONTH' name='MONTH'>
     	<option value='01' <?php if($_SESSION['MONTH']=='01') { echo 'selected'; } ?>>Jan</option>
     	<option value='02' <?php if($_SESSION['MONTH']=='02') { echo 'selected'; } ?>>Feb</option>
