@@ -54,7 +54,7 @@ define('EMAIL_ABUSETO', 'email@example.com');		// MUST USE NO quotes or <> brack
 //   cases like this, and the cert was just fine in all cases so far.
 // (Recommended default setting is false.)
 if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
-	define (SSL_FILTER_REQUIRE_EXPLICIT_OK, false);
+	define ('SSL_FILTER_REQUIRE_EXPLICIT_OK', false);
 }
 
 /////////////////////////////////////////////////////////////////////////////////

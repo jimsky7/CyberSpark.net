@@ -71,6 +71,7 @@ include_once "include/echolog.inc";
 include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
 
+define ('FILTER_NAME', 'how_to_make_a_plugin_filter');
 
 //// how_to_make_a_plugin_filterScan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -80,7 +81,7 @@ include_once "include/echolog.inc";
 //// $privateStore is an associative array of data which contains, if indexed properly,
 ////   persistent data related to the URL being scanned.
 function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
-	$filterName = "how_to_make_a_plugin_filter";
+	$filterName = FILTER_NAME;
 	$result   = "OK";						// default result
 	$url = $args['url'];					// the actual URL, not its contents
 
@@ -92,14 +93,14 @@ function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
 	//   Get $privateStore properly, based on filter name and URL being checked
 	//   You can define any number of last-position values ... don't use 'sampledata' use
 	//   something meaningful for your filter.
-	if (isset($privateStore[$filterName][$url]['SAMPLEDATA'])) {
+	if (isset($privateStore[$filterName][$url][$filterName])) {
 		// Get value from previous run
-		$sampleData = $privateStore[$filterName][$url]['SAMPLEDATA'];
+		$sampleData = $privateStore[$filterName][$url][$filterName];
 	}
 	else {
 		// Set up value because this URL has not been seen before
 		$sampleData = '';
-		$privateStore[$filterName][$url]['SAMPLEDATA'] = $sampleData;
+		$privateStore[$filterName][$url][$filterName] = $sampleData;
 	}
 
 	//// If something changed, for example, return status
@@ -122,7 +123,7 @@ function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
 //// This function is called by the daemon once when it is first loaded.
 //// It returns a message, but doesn't touch the private date (in $privateStore).
 function how_to_make_a_plugin_filterInit($content, $args, $privateStore) {
-	$filterName = "how_to_make_a_plugin_filter";
+	$filterName = FILTER_NAME;
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the 
@@ -139,7 +140,7 @@ function how_to_make_a_plugin_filterInit($content, $args, $privateStore) {
 //// the daemon's "private" database in $privateStore, which we simply pass back. We also
 //// pass back a message saying that this filter has properly shut down.
 function how_to_make_a_plugin_filterDestroy($content, $args, $privateStore) {
-	$filterName = "length";
+	$filterName = FILTER_NAME;
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -157,7 +158,7 @@ function how_to_make_a_plugin_filterDestroy($content, $args, $privateStore) {
 //// (Note that the name "how_to_make_a_plugin_filter" matches the filename
 ////    "how_to_make_a_plugin_filter.php" -- this is required.)
 function how_to_make_a_plugin_filter($args) {
-	$filterName = "how_to_make_a_plugin_filter";
+	$filterName = FILTER_NAME;
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
