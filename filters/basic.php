@@ -55,9 +55,11 @@ function basicScan($content, $args, $privateStore) {
 			$message = "Timeout after " . $elapsedTime . " seconds.";
 //echo "  Timeout\n";
 		}
-		if ($httpResult['code'] == 521) {
+		if ($httpResult['code'] >= 520 && $httpResult['code'] <= 524) {
 			$result = "HTTP";
-			$message = "If you are using Cloudflare, it thinks your underlying host is unresponsive. If not, then there is still something pretty nasty going on.";
+			$message = "If you are using Cloudflare, it thinks your underlying host is unresponsive. ";
+			$message .= "If you are not, then you still should look into this. ";
+			$message .= "The Cloudflare HTTP error number is ".$httpResult['code'].". ";
 		}
 	}
 	return array($message, $result, $privateStore);
