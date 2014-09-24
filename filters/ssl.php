@@ -39,10 +39,12 @@ include_once "include/functions.inc";
 //   cert to be OK.
 // (Recommended default setting is TRUE.)
 if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
-	define (SSL_FILTER_REQUIRE_EXPLICIT_OK, true);
+	define ('SSL_FILTER_REQUIRE_EXPLICIT_OK', true);
 }
 
 define ('SSL_FILTER_BUFFER_SIZE', 100000);	// buffer size for reading SSL results (over this is discarded)
+define ('SSL_FILTER_EXCERPT_BACKSPACE', 50);
+define ('SSL_FILTER_EXCERPT_LENGTH'   , 150);
 
 ///////////////////////////////// 
 function extractCertificates($string) {
@@ -143,11 +145,21 @@ function sslScan($content, $args, $privateStore) {
 			}
 		}
 		//// If got the cert information, look for certain telltales
-		if (stripos($stderrString,'failed')>0 || stripos($stderrString,'problem')>0) {
+		$iFailed = stripos($stderrString,'failed');
+		$iProblem = stripos($stderrString,'problem');
+		if ($iFailed>0 || $iProblem>0) {
 			// cURL is reporting a problem directly - return everything it said.
 			// This does NOT include any cert, so we don't update the store.
 			$result = "Critical";
 			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
+			if ($iFailed !== false) {
+				$iFailed = ($iFailed>SSL_FILTER_EXCERPT_BACKSPACE)?($iFailed-SSL_FILTER_EXCERPT_BACKSPACE):0;
+				$message .= INDENT.INDENT."The word 'Failed' appears near '".substr($stderrString, $iFailed, SSL_FILTER_EXCERPT_LENGTH)."'\n";
+			}
+			if ($iProblem !== false) {
+				$iProblem = ($iProblem>SSL_FILTER_EXCERPT_BACKSPACE)?($iProblem-SSL_FILTER_EXCERPT_BACKSPACE):0;
+				$message .= INDENT.INDENT."The word 'Problem' appears near '".substr($stderrString, $iProblem, SSL_FILTER_EXCERPT_LENGTH)."'\n";
+			}
 			$message .= INDENT.$stderrString."\n";
 		}
 		else if (stripos($stderrString,'subjectaltname does not match')>0) {

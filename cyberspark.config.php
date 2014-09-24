@@ -49,12 +49,10 @@ define('EMAIL_ABUSETO', 'email@example.com');		// MUST USE NO quotes or <> brack
 // If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to false, then the filter only considers certain
 //   explicit error conditions, and may let some unanticipated errors slip through.
 //   As long as the checker returns "OK" status in its messages, we consider the
-//   cert to be OK. This kind of ambiguous "not OK and not bad" situations arises
-//   many times and with 4 years of experience (written in 2014) I have seen many
-//   cases like this, and the cert was just fine in all cases so far.
-// (Recommended default setting is false.)
+//   cert to be OK.
+// (Recommended default setting is TRUE.)
 if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
-	define ('SSL_FILTER_REQUIRE_EXPLICIT_OK', false);
+	define ('SSL_FILTER_REQUIRE_EXPLICIT_OK', true);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
