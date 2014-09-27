@@ -133,11 +133,41 @@ function smartscanScan($content, $args, $privateStore) {
 
 
 	///////////////////////////////// 
+	// Parse DOM to be used later in analysis
+	$dom = new DOMDocument();
+	@$dom->loadHTML($content);
+
+	///////////////////////////////// 
+	// Check 'meta' 'generator' if one is present within this page
+	$genContent = extractHTMLsubtag('meta', 'name', 'generator', 'content', $dom);
+	if ($genContent != null) {
+		if (isset($privateStore[$filterName][$url]['generator'])) {
+			// Check against previous generator name
+			$s = $privateStore[$filterName][$url]['generator'];
+			if (strcmp($s, $genContent) != 0) {
+				// Changed
+				if ($result != "OK") {
+					// Some message was inserted above, so need extra space
+					$message .= "          ";
+				}
+				$message .= "Smart scan says <meta name='generator'> has changed to '$genContent'";
+				$message .= "Smart scan says <meta name='generator'> was previously '$s'";
+				$result = "Critical";
+				$privateStore[$filterName][$url]['generator'] = $genContent;
+			}
+		}
+		else {
+			// New generator name
+			$privateStore[$filterName][$url]['generator'] = $genContent;
+			$message .= "Smart scan says <meta name='generator'> has appeared '$genContent'";
+			$result = "Warning";
+		}	
+	}
+
+	///////////////////////////////// 
 	// Check for changes in SCRIPT or IFRAMEs within this page
 	//   Thanks for the DOM suggestion! - see
 	//     http://w-shadow.com/blog/2009/10/20/how-to-extract-html-tags-and-their-attributes-with-php/
-	$dom = new DOMDocument();
-	@$dom->loadHTML($content);
 	$smartContent = "";
 	$smartContent .= extractHTMLtags("script", array("src", "type", "language"), $dom);
 	$smartContent .= extractHTMLtags("iframe", "src", $dom);
@@ -244,18 +274,41 @@ function extractHTMLtags($tag, $subs, $dom) {
 		$subs = array($subs);
 	}
 	$elements = $dom->getElementsByTagName($tag);
-	$tagContent = "";
-	foreach($elements as $oneElement) {
+	$tagContent = '';
+	foreach($elements as $element) {
 		$tagContent .= "<$tag>";
 		foreach ($subs as $sub) {
-			if ($oneElement->hasAttribute($sub)) {
-				$tagContent .= $oneElement->getAttribute($sub) . "|";
+			if ($element->hasAttribute($sub)) {
+				$tagContent .= $element->getAttribute($sub) . "|";
 			}
 		}
-		$tagContent .= $oneElement->textContent;
+		$tagContent .= $element->textContent;
 		$tagContent .= "</$tag>";
 	}
 	return $tagContent;
 }
+
+///////////////////////////////// 
+///////////////////////////////// 
+function extractHTMLsubtag($tag, $sub, $subMatch, $subExtract, $dom) {
+	// Example
+	// extractHTMLsubtag('metta', 'name', 'generator', 'content', $dom);
+// 	$genContent = extractHTMLsubtag('metta', 'name', 'generator', 'content', $dom);
+	// looks for
+	// <meta name='generator' content='xxxxxxx' />
+	// and returns 'xxxxxxx'
+	// return null if nothing found
+	$elements = $dom->getElementsByTagName($tag);
+	foreach($elements as $element) {
+		if ($element->hasAttribute($sub)) {
+			if (strcasecmp($element->getAttribute($sub), $subMatch) == 0) {
+				if ($element->hasAttribute($subExtract)) {
+					return $element->getAttribute($subExtract);
+				}
+			}
+		}
+	}
+	return null;
+} 
 
 ?>

@@ -16,7 +16,6 @@ include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
 
 function findScan($content, $args, $privateStore) {
-		
 	$filterName = "find";
 	$result   = "OK";						// default result
 	$url = $args['url'];

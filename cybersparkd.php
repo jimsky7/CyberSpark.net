@@ -288,8 +288,8 @@ while ($running) {
 						// discovered the child process is no longer running. Lag is determined by $sleepTime
 						if ($remainingTime <= 0 ) {
 							$subject = "$ID-$i Terminated (was unresponsive) $timeStamp";
-							$message .= "$ID-$i is being terminated NOW.\n";
-							echo "$ID-$i is being terminated NOW. $timeStamp\n";
+							$message .= "$ID-$i is being terminated NOW. $timeStamp\n";
+							echo        "$ID-$i is being terminated NOW. $timeStamp\n";
 							// Remember there are two layers below this daemon.
 							// The topmost is a PHP process that launched the monitor (the child)
 							// The monitor itself is a child of that PHP process, and has written
@@ -297,6 +297,7 @@ while ($running) {
 							// Let the top PHP process keep running - it will detect that its child
 							//   process has been terminated and it will also terminate.
 							// First, read 'Child' PID from file
+							// Terminate the monitor
 							$pfn = "$path/$ID-$i". PID_EXT;
 							$childPidString = '';
 							if (file_exists($pfn)) {
@@ -304,22 +305,50 @@ while ($running) {
 									$pidNumber = file_get_contents($pfn, PID_FILESIZE_LIMIT);
 								}
 								catch (Exception $x) {
-									$message .= "Couldn't read the PID file $pfn. Error: ".$x->getMessage()."\n";
-									echo "Couldn't read the PID file $pfn. $timeStamp Error: ".$x->getMessage()."\n";
+									$message .= "Couldn't read the PID file $pfn. $timeStamp Error: ".$x->getMessage()."\n";
+									echo        "Couldn't read the PID file $pfn. $timeStamp Error: ".$x->getMessage()."\n";
 								}
 								// Kill the monitor process;
 								if (strlen($pidNumber) > 0) {
-									echo "$ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
-									$message .= "$ID-$i is being terminated.\n";
+									$message .= "$ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
+									echo        "$ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
 									shell_exec ("kill -KILL $pidNumber");	// terminate as if CTRL-C ... this is "graceful"
 								}
 								// When the monitor is restarted (next time around the loop) it will
-								// remove its PID file "$ID-$i.pid" and its heartbeat file "$ID-$i.next";
+								// remove its PID file "$ID-$i.pid" and its heartbeat file "$ID-$i.next".
+								// It should also remove the PID file for its log-transport.
 							}
 							else {
-								$message .= "$ID-$i There's no PID file for the child process.\nYou'll have to deal with this manually.\n";
-								echo "$ID-$i There's no PID file for the child process.\nYou'll have to deal with this manually. $timeStamp\n";
+								$message .= "$ID-$i There's no PID file for the child process.\nYou'll have to deal with this manually. $timeStamp\n";
+								echo        "$ID-$i There's no PID file for the child process.\nYou'll have to deal with this manually. $timeStamp\n";
 							}
+							// Terminate the log transport (if it remains after the monitor is gone)
+							$pfn = "$path/$ID-$i-transport". PID_EXT;
+							$childPidString = '';
+							if (file_exists($pfn)) {
+								$message .= "The log transport for $ID-$i did not stop propertly. It will now be shut down. \n";
+								echo        "The log transport for $ID-$i did not stop propertly. It will now be shut down. \n";
+								try {
+									$pidNumber = file_get_contents($pfn, PID_FILESIZE_LIMIT);
+								}
+								catch (Exception $x) {
+									$message .= "Couldn't read the PID file $pfn for the log transport. $timeStamp Error: ".$x->getMessage()."\n";
+									echo        "Couldn't read the PID file $pfn for the log transport. $timeStamp Error: ".$x->getMessage()."\n";
+								}
+								// Kill the log-transport process;
+								if (strlen($pidNumber) > 0) {
+									$message .= "The log transport for $ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
+									echo        "The log transport for $ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
+									shell_exec ("kill -KILL $pidNumber");	// terminate as if CTRL-C ... this is "graceful"
+								}
+								// When the monitor is restarted (next time around the loop) it will
+								// remove the log-transport PID files.
+							}
+							else {
+								$message .= "$ID-$i There's no PID file for the log transport process.\nYou'll have to deal with this manually. $timeStamp\n";
+								echo        "$ID-$i There's no PID file for the log transport process.\nYou'll have to deal with this manually. $timeStamp\n";
+							}
+
 							// You only want to do this after a SIGNIFICANT TIME has passed - say 30 to 60 minutes. Or number of notifications.
 							// Child processes can go unresponsive just because the sites they're monitoring all get very slow...so you should wait
 							//   enough minutes that the maximum number of GET timeouts could be completely processed.  For example, if child is monitoring

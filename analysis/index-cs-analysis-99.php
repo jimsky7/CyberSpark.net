@@ -8,16 +8,20 @@ include('cs-log-config.php');
 // Using http://D3js.org for visualization
 //	 Tutorials at http://bost.ocks.org/mike/bar/3/
 
-////////////////////////////////////////////////////////////////////////
+$WIDTH_TT    	= 300;
+$HEIGHT_TT		= 20;
 $WIDTH_CHART 	= CHART_NARROW;
-$span 			= 'P1D';
-$TITLE			= 'Blotto sites not working? &mdash;';
-$URL_HASHES		= array(
-					'd9a74ffcbe241ef00f8181ae555ee509', // hrw.org
-					'61568e84058a9a3f4b1bf63f36d3deaa', // www.phayul.com
-					
-			);
+$HEIGHT_CHART	= 30;
 
 ////////////////////////////////////////////////////////////////////////
+$span 			= 'P1D';
+$TITLE			= 'Humanity United &mdash;';
+$URL_HASHES		= array(
+					'b3eaf4bce2b85708a6c930a5d527340d', // cyberspark.net
+					'383f65f95363c204221bd6b4cc4d6701', // rsf.org/en
+					'a585d97bc0f09e282bd9973002db6c50'  // rsf.org/fr
+
+			);
+
 include('index-cs-analysis-common.php');
 ?>

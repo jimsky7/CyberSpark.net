@@ -13,7 +13,6 @@
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-
 include_once "include/echolog.inc";
 
 // IMPORTANT NOTE:

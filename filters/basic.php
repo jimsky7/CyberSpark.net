@@ -18,7 +18,7 @@ include_once "include/echolog.inc";
 function basicScan($content, $args, $privateStore) {
 	$REFUSAL_TIME = 5;						// connections failing FASTER than this are "refusals"
 											// longer than this number will be "timeouts" - in seconds
-	$filterName = "basic";
+	$filterName = 'basic';
 	$result   = "OK";						// default result
 	$url = $args['url'];
 	$message = '';
@@ -55,9 +55,11 @@ function basicScan($content, $args, $privateStore) {
 			$message = "Timeout after " . $elapsedTime . " seconds.";
 //echo "  Timeout\n";
 		}
-		if ($httpResult['code'] == 521) {
+		if ($httpResult['code'] >= 520 && $httpResult['code'] <= 524) {
 			$result = "HTTP";
-			$message = "If you are using Cloudflare, it thinks your underlying host is unresponsive. If not, then there is still something pretty nasty going on.";
+			$message = "If you are using Cloudflare, it thinks your underlying host is unresponsive. ";
+			$message .= "If you are not, then you still should look into this. ";
+			$message .= "The Cloudflare HTTP error number is ".$httpResult['code'].". ";
 		}
 	}
 	return array($message, $result, $privateStore);
@@ -65,7 +67,7 @@ function basicScan($content, $args, $privateStore) {
 }
 
 function basicInit($content, $args, $privateStore) {
-	$filterName = "basic";
+	$filterName = 'basic';
 	// $content is the CONTENT returned from the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	//    The actual URL is in $args['url']
@@ -79,7 +81,7 @@ function basicInit($content, $args, $privateStore) {
 }
 
 function basicDestroy($content, $args, $privateStore) {
-	$filterName = "basic";
+	$filterName = 'basic';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -91,7 +93,7 @@ function basicDestroy($content, $args, $privateStore) {
 }
 
 function basic($args) {
-	$filterName = "basic";
+	$filterName = 'basic';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

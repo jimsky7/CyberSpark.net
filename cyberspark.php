@@ -113,10 +113,13 @@ $logTransportProcess = null;
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Define the shutdown function
+// Note that if this process becomes 'unresponsive' the shutdown will not be
+//   performed. Specifically, this could leave a log-transport running.
 function shutdownFunctionWrapper($sig) {
 	global $pipes;
 	global $ID;
 	global $logTransportProcess;
+	global $path;
 	// Terminate log-transport process
 	if ($pipes != null && ($sig === SIGINT || $sig === SIGTERM)) {
 		echo "Shutting down $ID log transport. \n";

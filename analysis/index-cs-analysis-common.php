@@ -2,8 +2,20 @@
 ////////////////////////////////////////////////////////////////////////
 // EVERYTHING AFTER THIS IS COMMON
 
+// Note: This code is usually invoked via POST, with a bunch of input variables.
+//   However, it may be invoked via GET with year, month, and day only:
+//     https://viz.cyberspark.net/analysis/index.php?YEAR=2014&MONTH=6&DAY=5
+//   The parameter names must be uppercase.
+
+////////////////////////////////////////////////////////////////////////
+require ('cs-log-functions.php');
+
 ////////////////////////////////////////////////////////////////////////
 // Check/set any missing layout values
+// In general these should be set by the surrounding index.php file and 
+// not set down in this common code. Then the index.php should include()
+// this file to do all the work of setting up and emitting the page.
+
 if (!isset($WIDTH_TT)) {
 	$WIDTH_TT    	= TOOL_TIP_WIDTH;
 }
@@ -29,11 +41,32 @@ $calendar=false;
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 	echo '<!-- POST -->';
 	if (isset($_POST['SUBMIT_CALENDAR'])) {
-		echo '<!-- SUBMIT_CALENDAR -->';
+		echo '<!-- SUBMIT_CALENDAR '.$_POST['SUBMIT_CALENDAR'].' -->';
 		$calendar = true;
+	}
+	$direction = 0;
+	if (isset($_POST['DIRECTION'])) {
+		echo '<!-- DIRECTION '.$_POST['DIRECTION'].' -->';
+		if (strcasecmp($_POST['DIRECTION'], 'minus')==0) {
+			$direction = -1;
+			$calendar = true;
+		}
+		if (strcasecmp($_POST['DIRECTION'], 'plus')==0) {
+			$direction = +1;
+			$calendar = true;
+		}
 	}
 	if (isset($_POST['SUBMIT_NOW'])) {
 		echo '<!-- SUBMIT_NOW -->';
+	}
+}
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+	echo '<!-- GET -->';
+	if (($getYEAR = ifGetOrPost('YEAR')) != null && ($getMONTH = ifGetOrPost('MONTH')) != null && ($getDAY = ifGetOrPost('DAY')) != null) {
+//		$_SESSION['YEAR'] = (int)$getYEAR;		// converts string to integer, avoid SQL injections
+//		$_SESSION['MONTH']= (int)$getMONTH;		// converts string to integer, avoid SQL injections
+//		$_SESSION['DAY']  = (int)$getDAY;		// converts string to integer, avoid SQL injections
+		$calendar = true;		
 	}
 }
 if (!$calendar) {
@@ -58,33 +91,44 @@ $startTimestamp =  0;
 $endTimestamp   =  0;
 
 if ($calendar) {
-	if (isset($_POST['MONTH'])) {
-		$_SESSION['MONTH'] = $_POST['MONTH'];
+echo '<!-- calendaring -->';
+	$s = ifGetOrPost('MONTH');
+	if ($s != null) {
+echo '<!-- 1 -->';
+		if (strlen($s) < 2) {
+			$s = '0'.$s;			// add leading zero
+		}
+echo '<!-- 2 -->';
+		$_SESSION['MONTH'] = $s;
 	}
 	else {
+echo '<!-- 3 -->';
 		if (!isset($_SESSION['MONTH'])) {
 			$_SESSION['MONTH'] = '01';
 		}
 	}
 	echo "<!-- MONTH:$_SESSION[MONTH] -->";
-	if (isset($_POST['DAY'])) {
-		$_SESSION['DAY'] = (int)$_POST['DAY'];
+	if (($s = ifGetOrPost('DAY')) != null) {
+		if (strlen($s) < 2) {
+			$s = '0'.$s;			// add leading zero
+		}
+		$_SESSION['DAY'] = $s;
 		if ($_SESSION['DAY'] == 0) {
-			$_SESSION['DAY'] = '1';
+			$_SESSION['DAY'] = '01';
 		}
 	}
 	else {
 		if (!isset($_SESSION['DAY'])) {
-			$_SESSION['DAY'] = '1';
+			$_SESSION['DAY'] = '01';
 		}
 	}
 	echo "<!-- DAY:$_SESSION[DAY] -->";
-	if (isset($_POST['YEAR'])) {
-		$_SESSION['YEAR'] = $_POST['YEAR'];
+	if (($s = ifGetOrPost('YEAR')) != null) {
+		$_SESSION['YEAR'] = $s;
 	}
 	else {
 		if (!isset($_SESSION['YEAR'])) {
-			$_SESSION['YEAR'] = '2014';
+			$_SESSION['YEAR'] = date('Y');
 		}
 	}
 	echo "<!-- YEAR:$_SESSION[YEAR] -->";
@@ -93,9 +137,23 @@ if ($calendar) {
 ////////////////////////////////////////////////////////////////////////
 // Visual start-end dates
 if ($calendar) {
-	$dt = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
+	$dt   = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
 	$dtm2 = new DateTime("$_SESSION[YEAR]-$_SESSION[MONTH]-$_SESSION[DAY] 00:00:00");
 	$dtm2->add(new DateInterval($span));
+// Moving backward or forward in time?
+	if ($direction > 0) {
+		$dt->add(new DateInterval($span));
+		$dtm2->add(new DateInterval($span));
+	}
+	if ($direction < 0) {
+		$dt->sub(new DateInterval($span));
+		$dtm2->sub(new DateInterval($span));
+	}
+	if ($direction) {
+		$_SESSION['YEAR'] = $dt->format('Y');
+		$_SESSION['MONTH']= $dt->format('m');
+		$_SESSION['DAY']  = $dt->format('d');
+	}
 	$startTimestamp = ((int)$dt->format('U'))*1000;
 	$endTimestamp   = ((int)$dtm2->format('U'))*1000;
 	$startDate = $dt->format('d-M-Y').' [UTC]';
@@ -111,10 +169,6 @@ else {
 }
 //	echo "End: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
 //	echo "Start: " . $dt->format('Y-m-d H:i:s') . "<br/>\r\n";
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////
 function cs_http_get($url) {
@@ -157,6 +211,7 @@ function cs_http_get($url) {
 ?>
    	<!-- refresh page every 60 minutes even if JS fails -->
 	<meta http-equiv="refresh" content="3600; url=<?php echo $_SERVER['REQUEST_URI']; ?>">
+	<meta name="viewport" content="width=device-width; initial-scale=1.0; minimum-scale=1.0; user-scalable=yes;">
 <?php
 	} /* not calendar */
 ?>
@@ -182,10 +237,18 @@ function cs_http_get($url) {
 	</script>
 </head>
 <body<?php if (!$calendar) { ?> onload="cs_onload()" <?php } ?>>
-    <p style="font-size:22px;"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a><a href='index.php'><img src="images/uparrow.jpg" width="52" height="48" alt="Analysis home page"/></a>
-    
-<form id='CS_FORM' action='<?php echo $_SERVER['REQUEST_URI']; ?>' method='post'>
-    <select id='MONTH' name='MONTH'>
+    <div id="ENCLOSE_HEADER"> 
+    <div id="ENCLOSE_HEADER_LEFT"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" id="CS_LOGO" alt="CyberSpark web site"/></a>&nbsp;<a href='index.php'><img src="images/cyberspark-arrow-up-32x32.gif" width="32" height="32" alt="Analysis home page"/></a></div><!-- ENCLOSE_HEADER_LEFT -->
+    <div id="ENCLOSE_HEADER_RIGHT">
+<?php 
+	// Remove GET parameters (may not be any)
+	$myURI = $_SERVER['REQUEST_URI'];
+	$i = strpos($myURI, '?');
+	if ($i > 0) {
+		$myURI = substr($myURI, 0, $i);
+	}
+?><form id='CS_FORM' action='<?php echo $myURI; ?>' method='post'>
+    <select id='MONTH' name='MONTH' class='CS_SELECTOR'>
     	<option value='01' <?php if($_SESSION['MONTH']=='01') { echo 'selected'; } ?>>Jan</option>
     	<option value='02' <?php if($_SESSION['MONTH']=='02') { echo 'selected'; } ?>>Feb</option>
     	<option value='03' <?php if($_SESSION['MONTH']=='03') { echo 'selected'; } ?>>Mar</option>
@@ -199,21 +262,33 @@ function cs_http_get($url) {
     	<option value='11' <?php if($_SESSION['MONTH']=='11') { echo 'selected'; } ?>>Nov</option>
     	<option value='12' <?php if($_SESSION['MONTH']=='12') { echo 'selected'; } ?>>Dec</option>
     </select>
-    <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?> />
-    <select id='YEAR' name='YEAR'>
-    	<option value='2014' <?php if($_SESSION['YEAR']=='2014') { echo 'selected'; } ?>>2014</option>
-    	<option value='2013' <?php if($_SESSION['YEAR']=='2013') { echo 'selected'; } ?>>2013</option>
-    	<option value='2012' <?php if($_SESSION['YEAR']=='2012') { echo 'selected'; } ?>>2012</option>
-    	<option value='2011' <?php if($_SESSION['YEAR']=='2011') { echo 'selected'; } ?>>2011</option>
-	</select>
-    <input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go to date' />&nbsp;&nbsp;||&nbsp;&nbsp;<input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
+    <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?>  class='CS_SELECTOR' />
+    <select id='YEAR' name='YEAR'  class='CS_SELECTOR'>
+<?php
+$yx = (int)date('Y');
+$ys = $yx;
+if (isset($_SESSION['YEAR'])) {
+	$ys = (int)$_SESSION['YEAR'];
+}
+while ($yx > 2009) {
+    echo "<option value='$yx'";
+    if ($yx==$ys) {
+    	echo " selected";
+    }
+    echo ">$yx</option>\r\n";
+	$yx--;
+}
+?>
+	</select><input id='DIRECTION' name='DIRECTION' type='hidden' value='none' /><input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go' />&nbsp;<input id='SUBMIT_MINUS' name='SUBMIT_MINUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-lf-32x32.gif' value='minus' onclick='var e=document.getElementById("DIRECTION"); e.value="minus";'/><input id='SUBMIT_PLUS' name='SUBMIT_PLUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-rt-32x32.gif' value='plus' onclick='var e=document.getElementById("DIRECTION"); e.value="plus";'/><div style='display:inline;' id='CS_CONTROL_PANEL_VERTICAL_SEPARATOR'>&nbsp;&nbsp;||&nbsp;&nbsp;</div><input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
 </form>    
+	</div><!-- ENCLOSE_HEADER_RIGHT -->
+	</div><!-- ENCLOSE_HEADER -->
     
     <hr/><span class="CS_TITLE"><? echo $TITLE; ?></span><?php if (!$calendar) { ?><br/><span class="CS_SUBTITLE">This page reloads every few minutes</span><?php } ?>
     </p><hr/>
-    <div id="section" style="height:30px; width:<?php echo $WIDTH_CHART; ?>;">
-    <div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
-    <div style="float:right;"><?php echo $endDate; ?>&nbsp;&nbsp;&darr;</div>
+    <div id="CS_START_END">
+    	<div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
+    	<div style="float:right;"><?php echo $endDate; ?>&nbsp;&nbsp;&darr;</div>
     </div>
 
 <?php
@@ -244,7 +319,7 @@ function cs_http_get($url) {
 		else {
 			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
 		}
-		echo "<svg class='chart' id='H_$URL_HASH' width='$WIDTH_CHART'></svg><span><a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'>»</a></span>\r\n";
+		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart CS_CHART' id='H_$URL_HASH' <?php /* width='$WIDTH_CHART' */ ?> ></svg></a>\r\n";
 	}
 
 ////////////////////////////////////////////////////////////////////////
@@ -333,7 +408,7 @@ for (ix=0; ix<hashes.length; ix++) {
 // Javascript functions that are used by D3 to build the charts
 ?>
 function csIntensityPlot(error,data,hash) {
-//	y.domain([0, d3.max(data, function(d) { return Math.min(CHART_MAX,d.http_ms); })]);
+//	y.domain([0,     d3.max(data, function(d) { return Math.min(CHART_MAX,d.http_ms); })]);
 	y.domain([-0.20, d3.max(data, function(d) { return CHART_MAX; })]);	// height is always CHART_MAX
 
 //	var section = d3.selectAll(".chart");
@@ -350,8 +425,10 @@ function csIntensityPlot(error,data,hash) {
       .attr("transform", function(d, i) { return "translate(" + i * barWidth + ",0)"; });
 
 	bar.append("rect")
-      .attr("y", function(d) { return y(d.http_ms); })
-      .attr("height", function(d) { return height - y(d.http_ms); })
+//      .attr("y", function(d) { return y(d.http_ms); })
+//      .attr("height", function(d) { return height - y(d.http_ms); })
+      .attr("y", function(d) { return y(Math.min(CHART_MAX,d.http_ms)); })
+      .attr("height", function(d) { return height - y(Math.min(CHART_MAX,d.http_ms)); })
       .attr("class", function(d) { 
       		if (d.http_ms>CHART_ALERT) { 
       			return "rect_alert"; 
@@ -441,10 +518,10 @@ function type(d) {
 ?>
 <hr/>
 <!-- legend -->
-<table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px;'>
+<table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
 		<tr>
 			<td class='rect_green' style='width:20px;'></td>
-			<td>Under 2 sec
+			<td>&lt;=2 sec
 			</td>
 			<td class='rect_yellow' style='width:20px;'></td>
 			<td>3 or 4
@@ -453,7 +530,7 @@ function type(d) {
 			<td>5 or 6
 			</td	>
 			<td class='rect_red' style='width:20px;'></td>
-			<td>Over 6
+			<td>&gt;6 sec
 			</td>
 			<td class='rect_blue' style='width:20px;'></td>
 			<td>Err
@@ -462,8 +539,14 @@ function type(d) {
 			<td>Timeout
 			</td>
 		</tr>
+         <tr>
+        	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
+        	Click (or tap) a chart to view the associated URL.<br/>
+        	Resize or maximize and the charts will float to fill the window.
+        	</td>
+        </tr>
         <tr>
-        	<td colspan='6'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>
+        	<td colspan='12'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>
         	</td>
         </tr>
 	</table>
@@ -488,8 +571,21 @@ function type(d) {
 			<td>Timeout
 			</td>
 		</tr>
-        <tr>
-        	<td colspan='6'><a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a>&nbsp;CyberSpark open source code is provided under a <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">Creative Commons by-nc-sa 3.0</a> license
+         <tr>
+        	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
+        	Click (or tap) a chart to view the associated URL.<br/>
+        	Resize or maximize and the charts will float to fill the window.
+        	</td>
+        </tr>
+       <tr>
+        	<td colspan='12'>
+            <table cellspacing='0' cellpadding='5px' border='0'>
+            <tr><td>
+            <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank"><img src="images/CC-by-nc-sa-88x31.png" width="88" height="31" alt="Creative Commons license" style="margin-top:10px;" /></a></td>
+            <td style='font-size:12px; padding-top:12px;'>CyberSpark open source code is provided under a <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">Creative Commons by-nc-sa 3.0</a> license
+            </td>
+            </tr>
+            </table>
         	</td>
         </tr>
 	</table>

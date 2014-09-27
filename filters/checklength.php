@@ -19,8 +19,8 @@
 include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
 
-function checkLengthScan($content, $args, $privateStore) {
-	$filterName = "checklength";
+function checklengthScan($content, $args, $privateStore) {
+	$filterName = 'checklength';
 	$result   = "OK";						// default result
 	$url = $args['url'];
 	$contentLength = strlen($content);
@@ -66,8 +66,8 @@ function checkLengthScan($content, $args, $privateStore) {
 	
 }
 
-function checkLengthInit($content, $args, $privateStore) {
-	$filterName = "checklength";
+function checklengthInit($content, $args, $privateStore) {
+	$filterName = 'checklength';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -79,8 +79,8 @@ function checkLengthInit($content, $args, $privateStore) {
 	
 }
 
-function checkLengthDestroy($content, $args, $privateStore) {
-	$filterName = "checklength";
+function checklengthDestroy($content, $args, $privateStore) {
+	$filterName = 'checklength';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -92,7 +92,7 @@ function checkLengthDestroy($content, $args, $privateStore) {
 }
 
 function checklength($args) {
-	$filterName = "checklength";
+	$filterName = 'checklength';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
