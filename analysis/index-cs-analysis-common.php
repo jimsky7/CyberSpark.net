@@ -211,6 +211,7 @@ function cs_http_get($url) {
 ?>
    	<!-- refresh page every 60 minutes even if JS fails -->
 	<meta http-equiv="refresh" content="3600; url=<?php echo $_SERVER['REQUEST_URI']; ?>">
+	<meta name="viewport" content="width=device-width; initial-scale=1.0; minimum-scale=1.0; user-scalable=yes;">
 <?php
 	} /* not calendar */
 ?>
@@ -236,7 +237,9 @@ function cs_http_get($url) {
 	</script>
 </head>
 <body<?php if (!$calendar) { ?> onload="cs_onload()" <?php } ?>>
-    <a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a>&nbsp;<a href='index.php'><img src="images/cyberspark-arrow-up-32x32.gif" width="32" height="32" alt="Analysis home page"/></a><div id="ENCLOSE_SELECT">
+    <div id="ENCLOSE_HEADER"> 
+    <div id="ENCLOSE_HEADER_LEFT"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" id="CS_LOGO" alt="CyberSpark web site"/></a>&nbsp;<a href='index.php'><img src="images/cyberspark-arrow-up-32x32.gif" width="32" height="32" alt="Analysis home page"/></a></div><!-- ENCLOSE_HEADER_LEFT -->
+    <div id="ENCLOSE_HEADER_RIGHT">
 <?php 
 	// Remove GET parameters (may not be any)
 	$myURI = $_SERVER['REQUEST_URI'];
@@ -245,7 +248,7 @@ function cs_http_get($url) {
 		$myURI = substr($myURI, 0, $i);
 	}
 ?><form id='CS_FORM' action='<?php echo $myURI; ?>' method='post'>
-    <select id='MONTH' name='MONTH'>
+    <select id='MONTH' name='MONTH' class='CS_SELECTOR'>
     	<option value='01' <?php if($_SESSION['MONTH']=='01') { echo 'selected'; } ?>>Jan</option>
     	<option value='02' <?php if($_SESSION['MONTH']=='02') { echo 'selected'; } ?>>Feb</option>
     	<option value='03' <?php if($_SESSION['MONTH']=='03') { echo 'selected'; } ?>>Mar</option>
@@ -259,8 +262,8 @@ function cs_http_get($url) {
     	<option value='11' <?php if($_SESSION['MONTH']=='11') { echo 'selected'; } ?>>Nov</option>
     	<option value='12' <?php if($_SESSION['MONTH']=='12') { echo 'selected'; } ?>>Dec</option>
     </select>
-    <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?> />
-    <select id='YEAR' name='YEAR'>
+    <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?>  class='CS_SELECTOR' />
+    <select id='YEAR' name='YEAR'  class='CS_SELECTOR'>
 <?php
 $yx = (int)date('Y');
 $ys = $yx;
@@ -276,14 +279,16 @@ while ($yx > 2009) {
 	$yx--;
 }
 ?>
-	</select><input id='DIRECTION' name='DIRECTION' type='hidden' value='none' /><input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go' />&nbsp;<input id='SUBMIT_MINUS' name='SUBMIT_MINUS' type='image' src='images/cyberspark-triangle-lf-32x32.gif' value='minus' onclick='var e=document.getElementById("DIRECTION"); e.value="minus";'/><input id='SUBMIT_PLUS' name='SUBMIT_PLUS' type='image' src='images/cyberspark-triangle-rt-32x32.gif' value='plus' onclick='var e=document.getElementById("DIRECTION"); e.value="plus";'/>&nbsp;&nbsp;||&nbsp;&nbsp;<input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
-</form>    </div>
+	</select><input id='DIRECTION' name='DIRECTION' type='hidden' value='none' /><input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go' />&nbsp;<input id='SUBMIT_MINUS' name='SUBMIT_MINUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-lf-32x32.gif' value='minus' onclick='var e=document.getElementById("DIRECTION"); e.value="minus";'/><input id='SUBMIT_PLUS' name='SUBMIT_PLUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-rt-32x32.gif' value='plus' onclick='var e=document.getElementById("DIRECTION"); e.value="plus";'/><div style='display:inline;' id='CS_CONTROL_PANEL_VERTICAL_SEPARATOR'>&nbsp;&nbsp;||&nbsp;&nbsp;</div><input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
+</form>    
+	</div><!-- ENCLOSE_HEADER_RIGHT -->
+	</div><!-- ENCLOSE_HEADER -->
     
     <hr/><span class="CS_TITLE"><? echo $TITLE; ?></span><?php if (!$calendar) { ?><br/><span class="CS_SUBTITLE">This page reloads every few minutes</span><?php } ?>
     </p><hr/>
-    <div id="section" style="height:30px; width:<?php echo $WIDTH_CHART; ?>;">
-    <div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
-    <div style="float:right;"><?php echo $endDate; ?>&nbsp;&nbsp;&darr;</div>
+    <div id="CS_START_END">
+    	<div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
+    	<div style="float:right;"><?php echo $endDate; ?>&nbsp;&nbsp;&darr;</div>
     </div>
 
 <?php
@@ -314,7 +319,7 @@ while ($yx > 2009) {
 		else {
 			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
 		}
-		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart' id='H_$URL_HASH' width='$WIDTH_CHART'></svg></a>\r\n";
+		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart CS_CHART' id='H_$URL_HASH' <?php /* width='$WIDTH_CHART' */ ?> ></svg></a>\r\n";
 	}
 
 ////////////////////////////////////////////////////////////////////////

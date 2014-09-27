@@ -3,27 +3,62 @@
 body {
 	padding-left: 40px;
 	font-family:Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	background-color: #F4EED3;
 }
 .CS_CHART {
+	width:      350px;
+	background-color: white;
 }
 #LEGEND_NARROW {
-	display:none;
+	display:     none;
+}
+#CS_LOGO {
+	width:      300px;
+	height:      50px;
 }
 .CS_TITLE {
-	font-size:22px;
+	font-size:   22px;
 }
 .CS_SUBTITLE {
-	font-size:14px;
+	font-size:   14px;
+}
+#CS_START_END {
+	width:      350px;
+	height:      30px;
+	font-size:   14px;
+}
+.CS_TRIANGLE {
+	height:      32px;
+	width:       32px;
+}
+#ENCLOSE_HEADER {
+	max-width:   720px;
+	height:       54px;
+}
+
+#ENCLOSE_HEADER_LEFT {
+	float:        left;
+	max-width:   350px;
+}
+#ENCLOSE_HEADER_RIGHT {
+	float:       right;
+	max-width:   350px;
+	margin-top:    6px;
+	margin-right: 10px;
 }
 
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 1024px), only screen and (max-device-width: 1024px) {
+	body {
+		padding-left: 10px;
+	}
 }
 
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 768px), only screen and (max-device-width: 768px) {
 	body {
 		padding-left: 10px;
+		background-color: #F4EED3;
 	}
 }
 
@@ -38,6 +73,11 @@ body {
 	#LEGEND_NARROW {
 		display:block;
 	}
+	#ENCLOSE_HEADER_RIGHT {
+		float:       none;
+		margin-top:   5px;
+		margin-right: 0px;
+	}
 }
 
 /* ////////////////////////////////////// */
@@ -51,17 +91,84 @@ body {
 	#LEGEND_NARROW {
 		display:block;
 	}
+	.CS_CHART {
+		width: 290px;
+		background-color: white;
+	}
+	#CS_START_END {
+		width:    290px;
+		height:    20px;
+		font-size: 13px;
+	}
+	#CS_LOGO {
+		width:  260px;
+		height:  40px;
+	}
+	.CS_TRIANGLE {
+		height: 20px;
+		width:  20px;
+	}	
+	#CS_CONTROL_PANEL_VERTICAL_SEPARATOR {
+		display:none;
+		visibility: hidden;
+	}
+	#ENCLOSE_HEADER {
+		height:       74px;
+	}
+	#ENCLOSE_HEADER_RIGHT {
+		float:       none;
+		margin-top:   5px;
+		margin-right: 0px;
+	}
 }
 
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 320px), only screen and (max-device-width: 320px) {
 	body {
-		padding-left: 5px;
+		padding-left: 0px;
 	}
 	#LEGEND_WIDE {
 		display:none;
 	}
 	#LEGEND_NARROW {
 		display:block;
+	}
+	.CS_CHART {
+		width: 290px;
+		background-color: white;
+	}
+	.CS_TITLE {
+		font-size:20px;
+	}
+	.CS_SUBTITLE {
+		font-size:12px;
+	}
+	#CS_START_END {
+		width:    290px;
+		height:    20px;
+		font-size: 13px;
+	}
+	#CS_LOGO {
+		width:  260px;
+		height:  40px;
+	}
+	.CS_TRIANGLE {
+		height: 20px;
+		width:  20px;
+	}	
+	#CS_CONTROL_PANEL_VERTICAL_SEPARATOR {
+		display:none;
+		visibility: hidden;
+	}
+	.CS_SELECTOR {
+		font-size: 10px;
+	}
+	#ENCLOSE_HEADER {
+		height:       74px;
+	}
+	#ENCLOSE_HEADER_RIGHT {
+		float:       none;
+		margin-top:   5px;
+		margin-right: 0px;
 	}
 }
