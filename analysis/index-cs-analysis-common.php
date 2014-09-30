@@ -332,7 +332,7 @@ while ($yx > 2009) {
 			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
 		}
 //		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg></a>\r\n";
-		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg><div style='position: relative; left: 2px; top: -38px; height: 10px; width: 10px;'><a href='$sites[$key]' style='text-decoration:none; font-size:18px; color:blue;' target='W_$URL_HASH'>»</a></div></div>\r\n";
+		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg><div style='position: relative; left: 2px; top: -38px; height: 10px; width: 10px;'><a href='$sites[$key]' class='CS_SITE_LINK' target='W_$URL_HASH'>»</a></div></div>\r\n";
 	}
 
 ////////////////////////////////////////////////////////////////////////
@@ -529,6 +529,7 @@ function type(d) {
 // Page footer
 ?>
 <!-- legend -->
+<div id="CS_FOOTER_NARROW">
 <table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
 		<tr>
 			<td class='rect_green' style='width:20px;'></td>
@@ -561,6 +562,8 @@ function type(d) {
         	</td>
         </tr>
 	</table>
+    </div>
+    <div id="CS_FOOTER_WIDE">
 	<table id='LEGEND_WIDE' cellspacing='5' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px;'>
 		<tr>
 			<td class='rect_green' style='width:20px;'></td>
@@ -600,5 +603,6 @@ function type(d) {
         	</td>
         </tr>
 	</table>
+</div>
 </body>
 </html>

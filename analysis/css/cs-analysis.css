@@ -70,7 +70,21 @@ body {
 	margin-top:    6px;
 	margin-right: 30px;
 }
-
+/* ################ */
+#CS_FOOTER_WIDE {
+	float:        left;
+	max-width:   720px;
+}
+#CS_FOOTER_NARROW {
+	float:        left;
+	width:       290px;
+}
+/* ################ */
+.CS_SITE_LINK {
+	text-decoration: none; 
+	font-size:       18px; 
+	color:          black;
+}
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 1024px), only screen and (max-device-width: 1024px) {
 	body {
@@ -149,6 +163,22 @@ body {
 	.chart {
 		padding:            0px;
 	}
+	/* ################ */
+	#LEGEND_WIDE {
+		display:    block;
+	}
+	#LEGEND_NARROW {
+		display:     none;
+	}
+	/* ################ */
+	#CS_FOOTER_WIDE {
+		float:        left;
+		max-width:   580px;
+	}
+	#CS_FOOTER_NARROW {
+		float:        left;
+		max-width:   580px;
+	}
 }
 
 /* ////////////////////////////////////// */
@@ -217,7 +247,7 @@ body {
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 320px), only screen and (max-device-width: 320px) {
 	body {
-		padding-left: 0px;
+		padding-left: 10px;
 	}
 	/* ################ */
 	#LEGEND_WIDE {
