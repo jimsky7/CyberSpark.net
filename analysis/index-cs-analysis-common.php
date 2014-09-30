@@ -332,7 +332,8 @@ while ($yx > 2009) {
 			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
 		}
 //		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg></a>\r\n";
-		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg><div style='position: relative; left: 2px; top: -38px; height: 10px; width: 10px;'><a href='$sites[$key]' class='CS_SITE_LINK' target='W_$URL_HASH'>»</a></div></div>\r\n";
+//		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg><div style='position: relative; left: 2px; top: -38px; height: 10px; width: 10px;'><a href='$sites[$key]' class='CS_SITE_LINK' target='W_$URL_HASH'>»</a></div></div>\r\n";
+		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg></div>\r\n";
 	}
 
 ////////////////////////////////////////////////////////////////////////
@@ -480,25 +481,39 @@ function csIntensityPlot(error,data,hash) {
         });
 		
 	// Append a chart title containing the HASH or URL
-	var titleText = urlFromHash[hash]+" { "+data.length+" samples }";
+	var urlText = urlFromHash[hash];
+	var titleText = urlText.replace('http://','')+" { "+data.length+" samples }";
 	// Rectangle behind text
 	chart[hash].append("rect")
-	    .attr("x", 2)             
+	    .attr("x", 12)             
 	    .attr("y", 2)
- 	    .attr("width", (urlFromHash[hash].length*6)+90)  /* use an estimated length */           
+ 	    .attr("width", (urlText.length*6)+60)  /* use an estimated length */           
 	    .attr("height", 17)
 		.attr("id", "RT_"+hash)
 	    .attr("fill", "white")
-	    .attr("fill-opacity", 0.80);
+	    .attr("fill-opacity", 0.85);
 	// Text (URL)
 	chart[hash].append("text")
-	    .attr("x", 10)             
+	    .attr("x", 14)             
 	    .attr("y", 15)
     	.attr("class", "title")
 		.attr("id", "TT_"+hash)
 	    .style("font-size", "12px") 
 	    .style("font-weight", "bold") 
-	    .text(titleText);
+	    .text(titleText.replace('http://',''));
+	// link
+	chart[hash].append("a")
+     	.attr("target", "_blank")
+    	.attr("xlink:href", urlText)
+ 		.append("rect")  
+    	.attr("x", 0)
+    	.attr("y", 0)
+    	.attr("height", 8)
+    	.attr("width",  8)
+    	.style("fill", "#e0e0e0")	/* 8020A0 */
+    	.attr("rx", 1)
+    	.attr("ry", 1);
+
 // >>> Debugging the code below
 // >>> Trying to figure width of text and then set the width of the rectangle behind it
 // Adjust the width of the rectangle
