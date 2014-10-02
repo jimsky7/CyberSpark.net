@@ -105,7 +105,7 @@ function sslScan($content, $args, $privateStore) {
 			$message .= INDENT."The 'ssl' filter requires PHP version 5.3.2 or later on the CyberSpark server.\n";
 			$message .= INDENT."The version being used is $cv\n";
 			$message .= INDENT."This is a CyberSpark configuration error, NOT an error on the monitored site or URL.\n";
-			$message .= INDENT.$stderrString."\n";
+			$message .= "\n".$stderrString."\n";
 		}
 		else {
 			try {
@@ -141,7 +141,7 @@ function sslScan($content, $args, $privateStore) {
 			catch (Exception $certx) {
 				$result = "Critical";
 				$message .= INDENT."The 'ssh' filter got snarled trying to use cURL. Exception:'".$certx->getMessage()."\n";
-				$message .= INDENT.$stderrString."\n";
+				$message .= "\n".$stderrString."\n";
 			}
 		}
 		//// If got the cert information, look for certain telltales
@@ -160,7 +160,7 @@ function sslScan($content, $args, $privateStore) {
 				$iProblem = ($iProblem>SSL_FILTER_EXCERPT_BACKSPACE)?($iProblem-SSL_FILTER_EXCERPT_BACKSPACE):0;
 				$message .= INDENT.INDENT."The word 'Problem' appears near '".substr($stderrString, $iProblem, SSL_FILTER_EXCERPT_LENGTH)."'\n";
 			}
-			$message .= INDENT.$stderrString."\n";
+			$message .= "\n".$stderrString."\n";
 		}
 		else if (stripos($stderrString,'subjectaltname does not match')>0) {
 			// cURL is reporting a problem directly - return everything it said.
@@ -168,7 +168,28 @@ function sslScan($content, $args, $privateStore) {
 			$result = "Critical";
 			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$message .= INDENT."The name in the certificate does not match the site domain.\n";
-			$message .= INDENT.$stderrString."\n";
+			try {
+				$i = stripos($stderrString, 'Server certificate:');
+				if ($i !== false) {
+					$j = stripos($stderrString, '*', $i);
+					if ($j !== false) {
+						$k = stripos($stderrString, '*', ($j+1));	// includes EOL
+						$message .= INDENT."Server certificate says:\n";
+						$message .= INDENT.substr($stderrString, $j, ($k-$j));
+						$message .= INDENT."You will find more detail in the report below.\n";
+					}
+					else {
+//						$message .= INDENT."No star $i:$j.\n";
+					}
+				}
+				else {
+//					$message .= INDENT."Could not find server certificate info.\n";
+				}
+			}
+			catch (Exception $scx) {
+				$message .= INDENT.'Exception while checking subjectaltname: '.$scx->getMessage()."\n";
+			}
+			$message .= "\n".$stderrString."\n";
 		}
 		else if (stripos($stderrString,'SSL peer certificate or SSH remote key was not OK')>0) {
 			// cURL is reporting a problem directly - return everything it said.
@@ -176,7 +197,7 @@ function sslScan($content, $args, $privateStore) {
 			$result = "Critical";
 			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$message .= INDENT."The difficulty might be with the root CA signature.\n";
-			$message .= INDENT.$stderrString."\n";
+			$message .= "\n".$stderrString."\n";
 		}
 		else if (stripos($stderrString,'SSL connection timeout')>0) {
 			// cURL timed out when attempting to connect.
@@ -184,7 +205,7 @@ function sslScan($content, $args, $privateStore) {
 			$result = "Critical";
 			$message .= INDENT."The HTTPS connection timed out, so there is no new (current) certificate info.\n";
 			$message .= INDENT."The previous cert information will be retained for comparison during the next attempt.\n";
-			$message .= INDENT.$stderrString."\n";
+			$message .= "\n".$stderrString."\n";
 		}
 		else if ((!SSL_FILTER_REQUIRE_EXPLICIT_OK) || (stripos($stderrString,'SSL certificate verify ok')>0)) {
 			// The cert is valid.
