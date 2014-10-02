@@ -152,7 +152,7 @@ function smartscanScan($content, $args, $privateStore) {
 				}
 				$message .= "Smart scan says <meta name='generator'> has changed to '$genContent'";
 				$message .= "Smart scan says <meta name='generator'> was previously '$s'";
-				$result = "Critical";
+				$result = "Warning";
 				$privateStore[$filterName][$url]['generator'] = $genContent;
 			}
 		}
@@ -160,6 +160,96 @@ function smartscanScan($content, $args, $privateStore) {
 			// New generator name
 			$privateStore[$filterName][$url]['generator'] = $genContent;
 			$message .= "Smart scan says <meta name='generator'> has appeared '$genContent'";
+			$result = "Warning";
+		}	
+	}
+
+	///////////////////////////////// 
+	// Check 'Open Graph' (og:) if any are present within this page
+	$ogContent = '';
+	$s = extractHTMLsubtag('meta', 'property', 'og:locale', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:locale='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:type', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:type='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:title', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:title='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:url', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:url='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:site_name', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:site_name='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:image', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:image='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:audio', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:audio='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:description', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:description='.$s.'|';
+	}
+	$s = extractHTMLsubtag('meta', 'property', 'og:video', 'content', $dom);
+	if ($s != null) {
+		$ogContent .= 'og:video='.$s.'|';
+	}
+	if (strlen($ogContent) > 0) {
+		if (isset($privateStore[$filterName][$url]['og'])) {
+			// Check against previous generator name
+			$s = $privateStore[$filterName][$url]['og'];
+			if (strcmp($s, $ogContent) != 0) {
+				// Changed
+				if ($result != "OK") {
+					// Some message was inserted above, so need extra space
+					$message .= "          ";
+				}
+				$message .= "Smart scan says Open Graph <meta name='og:'> items have changed to '$ogContent'";
+				$message .= "Smart scan says Open Graph <meta name='og:'> items were previously '$s'";
+				$result = "Warning";
+				$privateStore[$filterName][$url]['og'] = $genContent;
+			}
+		}
+		else {
+			// New og items
+			$privateStore[$filterName][$url]['og'] = $genContent;
+			$message .= "Smart scan says Open Graph <meta name='og:'> items have appeared '$ogContent'";
+			$result = "Warning";
+		}	
+	}
+
+	///////////////////////////////// 
+	// Check 'google-site-verification' if one is present within this page
+	$gsvContent = extractHTMLsubtag('meta', 'name', 'google-site-verification', 'content', $dom);
+	if ($gsvContent != null) {
+		if (isset($privateStore[$filterName][$url]['gsv'])) {
+			// Check against previous generator name
+			$s = $privateStore[$filterName][$url]['gsv'];
+			if (strcmp($s, $gsvContent) != 0) {
+				// Changed
+				if ($result != "OK") {
+					// Some message was inserted above, so need extra space
+					$message .= "          ";
+				}
+				$message .= "Smart scan says <meta name='google-site-verification'> has changed to '$gsvContent'";
+				$message .= "Smart scan says <meta name='google-site-verification'> was previously '$s'";
+				$result = "Warning";
+				$privateStore[$filterName][$url]['gsv'] = $genContent;
+			}
+		}
+		else {
+			// New generator name
+			$privateStore[$filterName][$url]['gsv'] = $genContent;
+			$message .= "Smart scan says <meta name='google-site-verification'> has appeared '$gsvContent'";
 			$result = "Warning";
 		}	
 	}
