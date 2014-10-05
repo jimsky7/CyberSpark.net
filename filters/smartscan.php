@@ -150,8 +150,8 @@ function smartscanScan($content, $args, $privateStore) {
 					// Some message was inserted above, so need extra space
 					$message .= "          ";
 				}
-				$message .= "Smart scan says <meta name='generator'> has changed to '$genContent'";
-				$message .= "Smart scan says <meta name='generator'> was previously '$s'";
+				$message .= INDENT."Smart scan says <meta name='generator'> has changed to '$genContent'\n";
+				$message .= INDENT."Smart scan says <meta name='generator'> was previously '$s'\n";
 				$result = "Warning";
 				$privateStore[$filterName][$url]['generator'] = $genContent;
 			}
@@ -159,7 +159,7 @@ function smartscanScan($content, $args, $privateStore) {
 		else {
 			// New generator name
 			$privateStore[$filterName][$url]['generator'] = $genContent;
-			$message .= "Smart scan says <meta name='generator'> has appeared '$genContent'";
+			$message .= INDENT."Smart scan says <meta name='generator'> has appeared '$genContent'\n";
 			$result = "Warning";
 		}	
 	}
@@ -205,7 +205,7 @@ function smartscanScan($content, $args, $privateStore) {
 	}
 	if (strlen($ogContent) > 0) {
 		if (isset($privateStore[$filterName][$url]['og'])) {
-			// Check against previous generator name
+			// Check against previous OG info
 			$s = $privateStore[$filterName][$url]['og'];
 			if (strcmp($s, $ogContent) != 0) {
 				// Changed
@@ -213,16 +213,16 @@ function smartscanScan($content, $args, $privateStore) {
 					// Some message was inserted above, so need extra space
 					$message .= "          ";
 				}
-				$message .= "Smart scan says Open Graph <meta name='og:'> items have changed to '$ogContent'";
-				$message .= "Smart scan says Open Graph <meta name='og:'> items were previously '$s'";
+				$message .= INDENT."Smart scan says Open Graph <meta name='og:'> items have changed to '$ogContent'\n";
+				$message .= INDENT."Smart scan says Open Graph <meta name='og:'> items were previously '$s'\n";
 				$result = "Warning";
-				$privateStore[$filterName][$url]['og'] = $genContent;
+				$privateStore[$filterName][$url]['og'] = $ogContent;
 			}
 		}
 		else {
 			// New og items
-			$privateStore[$filterName][$url]['og'] = $genContent;
-			$message .= "Smart scan says Open Graph <meta name='og:'> items have appeared '$ogContent'";
+			$privateStore[$filterName][$url]['og'] = $ogContent;
+			$message .= INDENT."Smart scan says Open Graph <meta name='og:'> items have appeared '$ogContent'\n";
 			$result = "Warning";
 		}	
 	}
@@ -240,16 +240,16 @@ function smartscanScan($content, $args, $privateStore) {
 					// Some message was inserted above, so need extra space
 					$message .= "          ";
 				}
-				$message .= "Smart scan says <meta name='google-site-verification'> has changed to '$gsvContent'";
-				$message .= "Smart scan says <meta name='google-site-verification'> was previously '$s'";
+				$message .= INDENT."Smart scan says <meta name='google-site-verification'> has changed to '$gsvContent'\n";
+				$message .= INDENT."Smart scan says <meta name='google-site-verification'> was previously '$s'\n";
 				$result = "Warning";
-				$privateStore[$filterName][$url]['gsv'] = $genContent;
+				$privateStore[$filterName][$url]['gsv'] = $gsvContent;
 			}
 		}
 		else {
 			// New generator name
-			$privateStore[$filterName][$url]['gsv'] = $genContent;
-			$message .= "Smart scan says <meta name='google-site-verification'> has appeared '$gsvContent'";
+			$privateStore[$filterName][$url]['gsv'] = $gsvContent;
+			$message .= INDENT."Smart scan says <meta name='google-site-verification'> has appeared '$gsvContent'\n";
 			$result = "Warning";
 		}	
 	}
