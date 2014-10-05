@@ -39,6 +39,7 @@ function scan($properties, $filters, &$store) {
 		$before = time();
 		
 		// Do an HTTP GET on this URL. It begins "http://" or "https://"
+		// (Note that we do not send any explicit AUTH information and SSL cert will not be checked.)
 		$httpResult = httpGet($url, $properties['useragent'], $properties['timeout']);
 		$elapsedTime = time() - $before;
 
@@ -120,6 +121,14 @@ function scan($properties, $filters, &$store) {
 			$httpCode = "";
 			if (isset($httpResult['code'])) {
 				$httpCode = "Error " . $httpResult['code'];
+			}
+			if (isset($httpResult['error']) && (strlen($httpResult['error']) > 0)) {
+				if ($httpResult['code'] < 200) {
+					$message .= "          (cURL says: '$httpResult[error]')";
+				}
+				else {
+					$message .= "          ($httpResult[error])";
+				}
 			}
 			$scanResults[$urlNumber] = $prefix . $httpCode . " $url  $message \n";
 			writeLog($scanResults[$urlNumber], $elapsedTime, strlen($httpResult['body']), "", $conditions, $url, $httpResult['code'], 0);
