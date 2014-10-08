@@ -220,7 +220,14 @@ function attachmentMail($to='', $from='', $replyTo='', $abuseTo='', $subject='',
 /////////////////////////////////////////////////////////
 function sendAlert($to, $scanResult, &$properties, $timeStamp) {
 	// Send alert for this one URL
-	$alertSubject = $properties['shortid'] . " Alert $timeStamp";
+	// Manufacture a subject line
+	// Add "AUDIT: " to subject if appropriate
+	if (isset($properties['audit']) && (strcasecmp($to, $properties['audit']) == 0)) {
+		$alertSubject = "$properties[shortid] AUDIT $timeStamp";
+	}
+	else {
+		$alertSubject = $properties['shortid'] . " Alert $timeStamp";
+	}
 	// 'seed' the message
 	$message = '';
 	if (isset($properties['messageseed'])) {
@@ -238,8 +245,18 @@ function sendMail($scanResults, &$properties) {
 	global $identity;
 	
 	$sendMessage = false;						// initial condition
+	// If VERBOSE (this is in the specific properties file) then always send mail report
 	if ($properties['verbose']) {
 		$sendMessage = true;
+	}
+	// If ALWAYS (this is in the conditions for a URL) then always send mail report
+// >>>	
+// >>> Need to verify how/where ALWAYS is being carried out (2014-10-05)
+	
+	// if AUDIT (in the properties) then always send an audit copy
+	//   audit=me@example.com
+	if (isset($properties['audit']) && (strlen($properties['audit'])>0)) {
+		$audit = $properties['audit'];
 	}
 	// 'seed' the message
 	$message = '';
@@ -247,6 +264,10 @@ function sendMail($scanResults, &$properties) {
 		$message .= $properties['messageseed'] . "\n";	
 	}
 	echoIfVerbose("sendMail() message seed: $properties[messageseed] \n");
+	if (isset($audit)) {
+		$message .= "An audit copy of this message is being sent to '$audit'. \n";
+		echoIfVerbose("sendMail() audit copy to: $audit \n");
+	}
 	// Get defaults
 	$to = $properties['to'];
 	$from = $properties['from'];
@@ -288,7 +309,25 @@ function sendMail($scanResults, &$properties) {
 			$urls = $properties['urls'];
 			echoIfVerbose("Sending alert(s) to: " . $urls[$iu]->emails . ": \n" . $scanResult . "\n");
 			sendAlert($urls[$iu]->emails, $scanResult, $properties, $timeStamp);
+// >>>
+			// Special audit copy?
+			if (isset($audit)) {
+				sendAlert($audit, "AUDIT copy: \n".$scanResult, $properties, $timeStamp);
+			}
+// >>>
+			// Special alerts related to HTTP error codes
+			foreach(array('301','302','307','500','501','502','504') as $code) {
+				if (isset($properties[$code]) && (strlen($properties[$code]) > 0)) {
+					if (stripos($scanResult, "Error $code") !== false) {
+						// 301=xyz@example.com
+						// 302=xyz@example.com 
+						// etc ... in properties file
+						sendAlert($properties[$code], "ADMIN notification for HTTP response $code: \n".$scanResult, $properties, $timeStamp);
+					}
+				}
+			}
 		}	 
+// >>>
 		// Add to big message in all cases
 		if (strlen($scanResult) > 1) {
 			$message .= $scanResult . "\n";
@@ -298,6 +337,20 @@ function sendMail($scanResults, &$properties) {
 	if ($sendMessage) {
 //		$subject .= " $dateComposed";
 		textMail($to, $from, $properties['replyto'], $properties['abuseto'], $subject, $message, $properties['smtpserver'], $properties['smtpport'], $properties['user'], $properties['password']);
+		if (isset($audit)) {
+			textMail($audit, $from, $properties['replyto'], $properties['abuseto'], 'AUDIT: '.$subject, $message, $properties['smtpserver'], $properties['smtpport'], $properties['user'], $properties['password']);
+		}
+		// Special alerts related to HTTP error codes
+		foreach(array('301','302','307','500','501','502','504') as $code) {
+			if (isset($properties[$code]) && (strlen($properties[$code]) > 0)) {
+				if (stripos($scanResult, "Error $code") !== false) {
+					// 301=xyz@example.com
+					// 302=xyz@example.com 
+					// etc ... in properties file
+					textMail($properties[$code], $from, $properties['replyto'], $properties['abuseto'], "HTTP $code: ".$subject, $message, $properties['smtpserver'], $properties['smtpport'], $properties['user'], $properties['password']);
+				}
+			}
+		}
 	}
 }
 

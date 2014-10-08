@@ -2,14 +2,13 @@
 	/**
 		CyberSpark.net monitoring-alerting system
 		FILTER: headers
-		Records the length of a page. Alerts if the
+		Records the length of HTTP headers Alerts if the
 		length changes since the last time it was observed.
-		Keeps a list of the lengths it sees and only reports
-		each one the first time it is seen.  This way pages
-		that vary by a few bytes and then return to usual size
-		do not get repeatedly flagged.
+		Keeps a list of the last few lengths it sees. 
+		This way if headers flip-flop by a few bytes periodically
+		they do not get repeatedly flagged.
 
-		NOTE: THIS IS EXACTLY THE SAME CODE AS 'checklength' - DUPLICATE FILE with different filter name
+		NOTE: This filter's action is derived from 'checklength'
 	**/
 	
 	/**
@@ -17,11 +16,14 @@
 	    on how to make one of these and integrate it into the CyberSpark daemons.
 	**/
 
-/** $args['httpresult']['headers'] should contain the headers for the page **/
+	/** 
+		$args['httpresult']['headers'] must contain the headers for the page 
+	**/
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
+
 
 //// ...Scan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -31,17 +33,74 @@ include_once "include/echolog.inc";
 //// $privateStore is an associative array of data which contains, if indexed properly,
 ////   persistent data related to the URL being scanned.
 function headersScan($content, $args, $privateStore) {
+
+	// Headers to ignore.
+	// Note: Don't put anything beginning "X-" in the array,
+	//   because it will be removed separately anyway.
+	// Note: These are case-sensitive because of the way the code is written, sorry.
+	$headersToIgnore = array(
+		'Date',
+		'Expires',
+		'Set-Cookie',
+		'Via',
+		'Age',
+		'Last-Modified',
+		'Set-Cookie',
+		'Content-Length',
+		'Etag',
+//	misc cache
+		'Cache-Control',
+//	Varnish
+//	WIX.com
+		'ETag'
+	);
+
 	$filterName = 'headers';
 	$result   = "OK";						// default result
 	$url = $args['url'];
 	$headers = $args['httpresult']['headers'];
 	$hs = '';
+	$message = "\n";
+	$lengthsLimit = 2;						// how many length revisions to retain
+		
+	// Remove headers we do not intend to check or retain
+	// The "Ignoring" message will only be seen by recipient of notification 
+	//   if some of the other headers have changed, which triggers notification.
+	try {
+		$ignored = false;
+		foreach ($headersToIgnore as $headerName) {
+			if (isset($headers[$headerName])) {
+				if (!$ignored) {
+					$message .= INDENT . "Ignoring the following headers: \n";
+					$ignored = true;
+				}
+				$message .= INDENT . INDENT . "$headerName: $headers[$headerName]\n";
+				unset($headers[$headerName]);
+			}
+		}
+		// Remove any header that begins "X-"
+		foreach ($headers as $headerName=>$value) {
+			if (strncasecmp($headerName, "X-", 2) == 0) {
+				if (!$ignored) {
+					$message .= INDENT . "Ignoring the following headers: \n";
+					$ignored = true;
+				}
+				$message .= INDENT . INDENT . "$headerName: $headers[$headerName]\n";
+				unset($headers[$headerName]);
+			}
+		}
+	}
+	catch (Exception $zvuso) {
+		$message .= INDENT . "Exception ". $zvuso->getMessage()." \n";
+	}
+	
+	// Concatenate (remaining) headers into a single string
 	foreach ($headers as $hk=>$hv) {
 		$hs .= $hk . $hv;
 	}
-	$contentLength = strlen($hs);
-	$message = "";
-	// $content is the URL being checked right now
+	$headersLength = strlen($hs);
+	// $hs is the concatenated headers (string) being checked right now
+	// $content is the page content (which is irrelevant for this filter)
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
@@ -49,27 +108,50 @@ function headersScan($content, $args, $privateStore) {
 	if (isset($privateStore[$filterName][$url]['header_lengths'])) {
 		// This URL has been seen before
 		$lengthsString = $privateStore[$filterName][$url]['header_lengths'];
-		$lengths = explode(",", $lengthsString);
+		if (($lengthsString != null) && (strlen($lengthsString) > 0)) {
+			$lengths = explode(",", $lengthsString);
+			// Retain only the most recent length values (ones on the end)
+			$i = count($lengths);
+			if ($i > $lengthsLimit) {
+				// Trim initial values, leaving trailing (more recent) values
+				for ($j=0; $j<($i-$lengthsLimit); $j++) {
+					unset($lengths[$j]);
+				}
+				// Build a new lengths string from the remaining values
+				$lengthsString = '';
+				foreach ($lengths as $oneLength) {
+					$lengthsString .= "$oneLength,";				
+				}
+				// Trim trailing ','
+				$lengthsString = trim($lengthsString, ',');
+				// Make a new lengths array
+				$lengths = explode(",", $lengthsString);
+			}
+		}
+		else {
+			$lengthsString = '';
+			$lengths = array('');
+		}
 		$lengthMatched = false;
 		foreach ($lengths as $oneLength) {
-			if ($contentLength == (int)$oneLength) {
-				// Current length matches a previous length
+			if ($headersLength == (int)$oneLength) {
+				// Current length matches one of the previous lengths
 				$lengthMatched = true;
 				break;
 			}
 		}
 		if (!$lengthMatched) {
 			// Changed
-			$message .= "HTTP headers changed. New length is " . $contentLength . "\n";
-			$message .= INDENT . "Previous lengths include [" . $lengthsString . "]\n";
+			$message .= INDENT ."HTTP headers changed. New length is " . $headersLength . "\n";
+			$message .= INDENT .INDENT . "Recent lengths for comparison [" . $lengthsString . "]\n";
 			// Show new headers
-			$message .= INDENT . "Headers are:\n";
+			$message .= INDENT . "Headers remaining for analysis:\n";
 			foreach ($headers as $hk=>$hv) {
 				$message .= INDENT . INDENT ."$hk: $hv\n";
 			}
 			// Show previous headers
 			if (isset($privateStore[$filterName][$url]['header_contents'])) {
-				$message .= INDENT . "Headers had been:\n";
+				$message .= INDENT . "Headers from the previous analysis:\n";
 				$hc = unserialize($privateStore[$filterName][$url]['header_contents']);
 				foreach ($hc as $hk=>$hv) {
 					$message .= INDENT . INDENT ."$hk: $hv\n";
@@ -77,9 +159,9 @@ function headersScan($content, $args, $privateStore) {
 			}
 			$result = "Warning";
 			// $lengthsString contains (comma separated) all of the lengths of this URL
-			// that have ever been seen by this filter. Note that it persists even if
+			// that have recently been seen by this filter. Note that it persists even if
 			// our parent daemon is shut down and restarted.
-			$lengthsString .= "," . (string)$contentLength;
+			$lengthsString .= "," . (string)$headersLength;
 		}
 		else {
 			// No change
@@ -87,11 +169,13 @@ function headersScan($content, $args, $privateStore) {
 	}
 	else {
 		// This URL has not been seen before
-		$lengthsString = (string)$contentLength;
+		$lengthsString = (string)$headersLength;
 	}
-	// Record the length of this URL
+	// Record the length of the headers for this URL
 	$privateStore[$filterName][$url]['header_lengths'] = $lengthsString;
 	// Save the headers in case we need to report out when they change
+	// Note that some actual headers may have been removed earlier, so they're
+	//   not recorded here, and they aren't checked next time around either.
 	$privateStore[$filterName][$url]['header_contents'] = serialize($headers);
 	return array($message, $result, $privateStore);
 }

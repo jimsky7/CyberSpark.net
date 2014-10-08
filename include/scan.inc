@@ -120,16 +120,27 @@ function scan($properties, $filters, &$store) {
 			}
 			$httpCode = "";
 			if (isset($httpResult['code'])) {
-				$httpCode = "Error " . $httpResult['code'];
-			}
-			if (isset($httpResult['error']) && (strlen($httpResult['error']) > 0)) {
+				$code = $httpResult['code'];
+				$httpCode = "Error $code";
+				// Check and process cURL responses
 				if ($httpResult['code'] < 200) {
-					$message .= "          (cURL says: '$httpResult[error]')";
+					$httpCode = "";
+					if (isset($httpResult['error']) && (strlen($httpResult['error']) > 0)) {
+						$message .= "          php5_curl says [$code] '$httpResult[error]'";
+					}
 				}
-				else {
-					$message .= "          ($httpResult[error])";
+				// Make a special note for HTTP 300 through 399
+				if (($code >= 300) && ($code <= 399)) {
+					if (isset($httpResult['headers']['Location'])) {
+						// Note: "Location" requires initial cap and must match what the server returns, so if
+						//   the server doesn't cap it, then this comparison didn't work.
+						$message .= "          (The redirect to '".$httpResult['headers']['Location']."' was not followed.)";
+					}
 				}
 			}
+	
+	
+	
 			$scanResults[$urlNumber] = $prefix . $httpCode . " $url  $message \n";
 			writeLog($scanResults[$urlNumber], $elapsedTime, strlen($httpResult['body']), "", $conditions, $url, $httpResult['code'], 0);
 		}
