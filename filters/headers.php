@@ -48,6 +48,7 @@ function headersScan($content, $args, $privateStore) {
 		'Set-Cookie',
 		'Content-Length',
 		'Etag',
+		'Transfer-Encoding',					// Sad, but can't use reliably
 //	misc cache
 		'Cache-Control',
 //	Varnish
@@ -61,7 +62,7 @@ function headersScan($content, $args, $privateStore) {
 	$headers = $args['httpresult']['headers'];
 	$hs = '';
 	$message = "\n";
-	$lengthsLimit = 2;						// how many length revisions to retain
+	$lengthsLimit = 3;						// how many length revisions to retain
 		
 	// Remove headers we do not intend to check or retain
 	// The "Ignoring" message will only be seen by recipient of notification 
