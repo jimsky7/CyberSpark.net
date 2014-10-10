@@ -39,18 +39,18 @@ function headersScan($content, $args, $privateStore) {
 	//   because it will be removed separately anyway.
 	// Note: These are case-sensitive because of the way the code is written, sorry.
 	$headersToIgnore = array(
-		'Date',
-		'Expires',
-		'Set-Cookie',
+		'Date',								
 		'Via',
 		'Age',
-		'Last-Modified',
-		'Set-Cookie',
-		'Content-Length',
+		'Last-Modified',						
+		'Set-Cookie',						// Varies by session
+		'Content-Length',					// Varies especially 'chunked' or not
 		'Etag',
 		'Transfer-Encoding',					// Sad, but can't use reliably
+		'Keep-Alive',						// Varies too much. Not so useful
 //	misc cache
 		'Cache-Control',
+		'Expires',
 //	Varnish
 //	WIX.com
 		'ETag'
