@@ -53,14 +53,14 @@ function gsbdailyScan($content, $args, $privateStore) {
 		try {
 			// Check the main URL first
 //		array_push($howToGetThere, $url);
-			list($r, $mess) = gsbCheckURL(&$args, $url, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
+			list($r, $mess) = gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
 			if ($r != "OK") {
 				$result = $r;
 			}
 			$message .= "$mess";
 			
 			// Go deeper
-			list($r, $mess) = gsbExploreLinks(&$args, $url, 0, $maxDepth, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
+			list($r, $mess) = gsbExploreLinks($args, $url, 0, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
 			
 			if ($r != "OK") {
 				$result = $r;
