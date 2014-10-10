@@ -21,6 +21,26 @@
 include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
 
+if (!defined('MAX_LENGTHS')) {
+	define  ('MAX_LENGTHS', 50);
+	function trimLengthsString($s, $limit) {
+		$lengths = explode(",", $lengthsString);
+		$c = count($lengths);
+		if ($c > $limit) {
+			$c = $c - $limit;
+			for ($i = 0; $i < $c; $i++) {
+				unset($lengths[$i]);
+			}
+			$s = '';
+			foreach ($lengths as $length) {
+				$s .= $s . ",$length";
+			}	
+			$s = trim(',', $s);
+		}	
+		return array($s, $lengths);	
+	}
+}
+
 //// lengthScan()
 //// This function is called when a URL is being scanned and when 'length' has been
 //// specified as a filter for the URL (on the line in the properties file).
@@ -41,8 +61,7 @@ function lengthScan($content, $args, $privateStore) {
 	// See whether length has changed since last time
 	if (isset($privateStore[$filterName][$url])) {
 		// This URL has been seen before
-		$lengthsString = $privateStore[$filterName][$url]['lengths'];
-		$lengths = explode(",", $lengthsString);
+		list($lengthsString, $lengths) = trimLengthsString($privateStore[$filterName][$url]['lengths'], MAX_LENGTHS);
 		$lengthMatched = false;
 		foreach ($lengths as $oneLength) {
 			if ($contentLength == (int)$oneLength) {
