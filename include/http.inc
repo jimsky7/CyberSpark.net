@@ -20,7 +20,7 @@ require_once('cyberspark.sysdefs.php');
 ////////////////////////////////////////////////////////////////////////////////////
 // Manufacture common headers for CyberSpark GET and POST
 // May alter $url in the process (NOTE: $url is called by reference)
-function setCommonHeaders(&$url) {
+function setCommonHeaders(&$url, $options=null) {
 	$headers = array();
 	// Need "Accept:" for compatibility and FOR CLOUDFLARE, otherwise get 403
 	$headers['Accept'] = 'text/html,text/plain';	
@@ -40,16 +40,22 @@ function setCommonHeaders(&$url) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Set cURL options that we want for both GET and POST
-function setCommonOptions(&$ch, $url, $auth, $headers, $timeout, $userAgent, $sslVerify=false) {
+function setCommonOptions(&$ch, $url, $auth, $headers, $timeout, $userAgent, $sslVerify=false, $options=null) {
 	curl_setopt($ch, CURLOPT_URL, $url);
 	if (($auth != null) && isset($auth['CS_HTTP_USER']) && isset($auth['CS_HTTP_PASS'])) {
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		curl_setopt($ch, CURLOPT_USERPWD, $auth['CS_HTTP_USER'].':'.$auth['CS_HTTP_PASS']);
 	}
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER,		1);	// return HTTP result rather than display it
-   	curl_setopt($ch, CURLOPT_HEADER, 			1); // Return all headers
-	curl_setopt($ch, CURLOPT_FORBID_REUSE,		1); // Connection: close
-	curl_setopt($ch, CURLOPT_FOLLOWLOCATION,    0);	// Do not follow any redirects, report them
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER,			1);		// return HTTP result rather than display it
+   	curl_setopt($ch, CURLOPT_HEADER, 				1); 	// Return all headers
+	curl_setopt($ch, CURLOPT_FORBID_REUSE,			1); 	// Connection: close
+	if (($options != null) && isset($options['maxredirects'])) {
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 	1);		// Follow this many redirects
+		curl_setopt($ch, CURLOPT_MAXREDIRS,    $options['maxredirects']);	// Limit number of redirects
+	}
+	else {
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION,		0);	// Do not follow any redirects, report them
+	}
 	// Misc headers
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers); 
 	// Timeout: There is a timeout if HTTP doesn't connect, and a separate timeout if the server is slow.
@@ -69,7 +75,7 @@ function setCommonOptions(&$ch, $url, $auth, $headers, $timeout, $userAgent, $ss
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Common result processing for both GET and POST
-function commonResult($ch, $curlResult) {
+function commonResult($ch, $curlResult, $options=null) {
 
 	$cen  = curl_errno($ch);
 	$cerr = curl_error($ch);
@@ -141,18 +147,18 @@ function getHeadersAndBody($s) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 // php5_curl GET
-function curlGet($url, $userAgent, $timeout, $auth=null, $sslVerify=false) {
+function curlGet($url, $userAgent, $timeout, $auth=null, $sslVerify=false, $options=null) {
 	//// Use PHP5 cURL class to get a URL
 	// See http://us1.php.net/manual/en/ref.curl.php
 	// Result is associative array containing 'code' 'headers''body' 'curl_info'
 	// Note that we also return the 'curl_info' which may be used (but is not as of 2014-10-02)
 	try {
-		$headers = setCommonHeaders($url);
+		$headers = setCommonHeaders($url, $options);
 		$ch = curl_init();
 		if ($ch !== false) {
-			setCommonOptions($ch, $url, $auth, $headers, $timeout, $userAgent, $sslVerify);
+			setCommonOptions($ch, $url, $auth, $headers, $timeout, $userAgent, $sslVerify, $options);
 			// Execute the GET
-			$result = commonResult($ch, curl_exec($ch));			
+			$result = commonResult($ch, curl_exec($ch), $options);			
 			// Close cURL
 			curl_close($ch);
 			// Done
@@ -169,11 +175,11 @@ function curlGet($url, $userAgent, $timeout, $auth=null, $sslVerify=false) {
 ////////////////////////////////////////////////////////////////////////////////////
 // php5_curl POST
 // With an explicit array of parameters
-function curlPost($url, $userAgent, $paramArray, $timeout, $auth=null, $sslVerify=false) {
+function curlPost($url, $userAgent, $paramArray, $timeout, $auth=null, $sslVerify=false, $options=null) {
 	//// Use PHP5 cURL class to get a URL
 	// See http://us1.php.net/manual/en/ref.curl.php
 	try {
-		$headers = setCommonHeaders($url);
+		$headers = setCommonHeaders($url, $options);
 			
 		// Assemble POST parameters into a long string 
 		// They will go into the body of the POST
@@ -187,12 +193,12 @@ function curlPost($url, $userAgent, $paramArray, $timeout, $auth=null, $sslVerif
 		
 		$ch = curl_init();
 		if ($ch !== false) {
-			setCommonOptions($ch, $url, $auth, $headers, $timeout, $userAgent, $sslVerify);
+			setCommonOptions($ch, $url, $auth, $headers, $timeout, $userAgent, $sslVerify, $options);
         	// Turn this into a POST
 			curl_setopt($ch, CURLOPT_POST, 				1);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, 		$postString); 
 			// Execute
-			$result = commonResult($ch, curl_exec($ch));			
+			$result = commonResult($ch, curl_exec($ch), $options);			
 			// Close cURL
 			curl_close($ch);
 			// Done
@@ -209,7 +215,7 @@ function curlPost($url, $userAgent, $paramArray, $timeout, $auth=null, $sslVerif
 ////////////////////////////////////////////////////////////////////////////////////
 // php5_curl POST
 // With params sucked from "?" in the URL (if any)
-function curlPostParamsFromURL($url, $userAgent, $timeout, $auth=null, $sslVerify=false) {
+function curlPostParamsFromURL($url, $userAgent, $timeout, $auth=null, $sslVerify=false, $options=null) {
 	//// Use PHP5 cURL class to get a URL
 	// See http://us1.php.net/manual/en/ref.curl.php
 
@@ -230,28 +236,28 @@ function curlPostParamsFromURL($url, $userAgent, $timeout, $auth=null, $sslVerif
 		$paramArray = array();
 	}
 	// Do a POST
-	return curlPost($url, $userAgent, $paramArray, $timeout, $auth, $sslVerify);
+	return curlPost($url, $userAgent, $paramArray, $timeout, $auth, $sslVerify, $options);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 //	Conform to pre-2014 function definitions
 //  Note that SSL verification is suppressed
-function httpGet($url, $userAgent, $timeout, $auth=null) {
-	return curlGet($url, $userAgent, $timeout, $auth, false);
+function httpGet($url, $userAgent, $timeout, $auth=null, $options=null) {
+	return curlGet($url, $userAgent, $timeout, $auth, false, $options);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////
 //	Conform to pre-2014 function definitions
 //  Note that SSL verification is suppressed
-function httpPost($url, $userAgent, $timeout, $auth=null) {
-	return curlPostParamsFromURL($url, $userAgent, $timeout, $auth, false);
+function httpPost($url, $userAgent, $timeout, $auth=null, $options=null) {
+	return curlPostParamsFromURL($url, $userAgent, $timeout, $auth, false, $options);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 //	Conform to pre-2014 function definitions
 //  Note that SSL verification is suppressed
-function httpPostParams($url, $userAgent, $paramArray, $timeout, $auth=null) {
-	return curlPost($url, $userAgent, $paramArray, $timeout, $auth, false);
+function httpPostParams($url, $userAgent, $paramArray, $timeout, $auth=null, $options=null) {
+	return curlPost($url, $userAgent, $paramArray, $timeout, $auth, false, $options);
 }
 ?>

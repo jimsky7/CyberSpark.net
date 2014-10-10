@@ -40,7 +40,12 @@ function scan($properties, $filters, &$store) {
 		
 		// Do an HTTP GET on this URL. It begins "http://" or "https://"
 		// (Note that we do not send any explicit AUTH information and SSL cert will not be checked.)
-		$httpResult = httpGet($url, $properties['useragent'], $properties['timeout']);
+		if (isset($properties['maxredirects'])) {
+			$httpResult = httpGet($url, $properties['useragent'], $properties['timeout'], null, array('maxredirects'=>$properties['maxredirects']));
+		}
+		else {
+			$httpResult = httpGet($url, $properties['useragent'], $properties['timeout'], null, null);
+		}
 		$elapsedTime = time() - $before;
 
 		echoIfVerbose("HTTP result code " . $httpResult['code'] . "\n");
