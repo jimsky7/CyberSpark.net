@@ -6,6 +6,8 @@
 		this includes sending 'destroy' to all filters
 	*/
 
+define ('NORMAL_EXIT', 0);
+
 ///////////////////////////////// 
 function doBeforeExit() {
 	global $storeFileName;
@@ -16,6 +18,12 @@ function doBeforeExit() {
 	global $filters;
 	global $properties;
 	
+	// For log transport
+	global $pipes;
+	global $ID;
+	global $logTransportProcess;
+	global $path;
+
 	// DO ANYTHING THAT HAS TO BE DONE BEFORE EXITING
 	
 	// Let filters get a last crack at their private stores
@@ -38,6 +46,54 @@ function doBeforeExit() {
 		echo "Warning: Unable to save data during shutdown.\n";
 	}
 	
+	// Terminate log-transport process
+	if ($logTransportProcess != null && $pipes != null) {
+		echo "Shutting down $ID log transport. \n";
+		try {
+			@fclose($pipes[0]);			// note MUST do this or proc_terminate() may fail
+			$LTpidFileName = $path . $ID . '-transport' . PID_EXT;
+			//// First, send SIGINT to the log transport.
+			//   Note that each transport is run using the PHP command line interpreter,
+			//   so it is "enclosed" by an 'sh' shell. What we're doing first is sending
+			//   the SIGINT to the PHP child, not to the 'sh' that surrounds it.
+			if (file_exists($LTpidFileName)) {
+				$pidNumber = file_get_contents($LTpidFileName, PID_FILESIZE_LIMIT);
+				shell_exec ("kill -INT $pidNumber");	// terminate as if CTRL-C
+			}
+			// Pass on any output that came through a pipe from the child process
+			if (isset($pipes[1])) {
+				try {
+					while (($line = fgets($pipes[1])) !== false) {
+						echo $line;
+					}
+				}
+				catch (Exception $x) {
+				}
+			}
+			@fclose($pipes[1]);			// note MUST do this or proc_terminate() may fail
+			@fclose($pipes[2]);			// note MUST do this or proc_terminate() may fail
+			// Terminate the 'sh' process we launched
+			//   Each of these has a child log transport process which has already been
+			//   terminated (see the 'kill' above) and we have flushed the output pipe and
+			//   echoed it to stdout as well.
+			proc_terminate($logTransportProcess, SIGTERM);
+			$i = 10;			// loop maximum of this many times
+			while ($i-- > 0) {
+				$status = proc_get_status($logTransportProcess);
+				if ($status['running']) {
+					usleep(SHUTDOWN_WAIT_TIME);	// wait if process has not stopped
+				}
+				else {
+					break;			// process has stopped. Don't need to wait any more.
+				}
+			}
+			// Formally close the process
+			proc_close($logTransportProcess);
+		}
+		catch (Exception $txp) {
+		}
+	}
+
 	// Delete any PID file
 	try {
 		@unlink($pidFileName);
@@ -72,11 +128,11 @@ function shutdownFunction($sig) {
 	
 	if ($sig === SIGINT || $sig === SIGTERM) {
 		writeLogAlert("Signal $sig received");
-		echo "\nShutting down $ID [signal=$sig], please wait for confirmation message...\n";
-		doBeforeExit();
-		echo "Shutdown confirmed.\n";
-		exit;
+		echo "\nShutting down $ID [signal=$sig], please wait for confirmation below.\n";
 	}
+	doBeforeExit();
+	echo "Shutdown confirmed.\n";
+	exit;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
