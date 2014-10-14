@@ -17,6 +17,7 @@ include_once "cyberspark.config.php";
 
 include_once "include/echolog.inc";
 include_once "include/functions.inc";
+include_once "include/filter_functions.inc";
 
 define('SMARTSCAN_MAX_ALERTS', 2);
 
@@ -30,6 +31,7 @@ function smartscanScan($content, $args, $privateStore) {
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
 	$message = "";
+	$lengthsString = '';
 
 	// Remove chars that don't make any difference and can get in the way
 	$content = str_replace(array("\r","\n","\t"), "", $content);
@@ -273,9 +275,8 @@ function smartscanScan($content, $args, $privateStore) {
 	// See whether length has changed since last time
 	if (isset($privateStore[$filterName][$url]['lengths'])) {
 		// This URL has some length(s) recorded from previous examination(s)
-		
-		$lengthsString = $privateStore[$filterName][$url]['lengths'];
-		$lengths = explode(",", $lengthsString);
+		list($lengthsString, $lengths) = limitLengths($privateStore[$filterName][$url]['lengths'], MAX_LENGTHS);
+
 		$lengthMatched = false;
 		foreach ($lengths as $oneLength) {
 			if ($contentLength == (int)$oneLength) {
