@@ -90,8 +90,8 @@ function dnsScan($content, $args, $privateStore) {
 		else {
 			///// When dns_get_record() comes back FALSE, it has failed to retrieve records.
 			$result = "DNS";
-			$message .= INDENT . "Could not retrieve DNS information for this domain.\n";
-			echoIfVerbose(       "Could not retrieve DNS information for this domain.\n");	
+			$message .= INDENT . "Could not retrieve DNS information for the domain ($domain).\n";
+			echoIfVerbose(       "Could not retrieve DNS information for the domain ($domain).\n");	
 		}
 	}
 	catch (Exception $dax) {
