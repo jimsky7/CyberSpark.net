@@ -46,8 +46,14 @@ function scan($properties, $filters, &$store) {
 		else {
 			$httpResult = httpGet($url, $properties['useragent'], $properties['timeout'], null, null);
 		}
-		$elapsedTime = time() - $before;
-
+		
+		// Calculate elapsed time
+		// Note that httpGet() also returns cURL info, which has much more detail,
+		//   such as latency, DNS lookup time, transfer time, if you wish to use.
+		//   It's in $httpResult['curl_info'] so take a look at documentation at PHP.NET
+//		$elapsedTime = time() - $before;							// type 'int'    (before 2014-10-14)
+		$elapsedTime = $httpResult['curl_info']['total_time'];		// type 'double' (as of  2014-10-14)
+		
 		echoIfVerbose("HTTP result code " . $httpResult['code'] . "\n");
 		$httpError = '';
 		if (isset($httpResult['error'])) {
@@ -136,10 +142,19 @@ function scan($properties, $filters, &$store) {
 				}
 				// Make a special note for HTTP 300 through 399
 				if (($code >= 300) && ($code <= 399)) {
+					// Convert "Location" and "location" so we detect even if lowercase
+					//   some malware doesn't capitalize. (2014-10-14 sky)
+					$location = null;
 					if (isset($httpResult['headers']['Location'])) {
+						$location = $httpResult['headers']['Location'];
+					}
+					if (isset($httpResult['headers']['location'])) {
+						$location = $httpResult['headers']['location'];
+					}
+					if ($location != null) {
 						// Note: "Location" requires initial cap and must match what the server returns, so if
 						//   the server doesn't cap it, then this comparison didn't work.
-						$message .= "          (The redirect to '".$httpResult['headers']['Location']."' was not followed.)";
+						$message .= "          (The redirect to '$location' was not followed. DO NOT CLICK!)";
 					}
 				}
 			}
