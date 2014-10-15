@@ -21,15 +21,16 @@ $outputFieldNames = array (0=>'milliseconds', 1=>'date', 2=>'host', 3=>'thread',
 	9=>'condition', 10=>'URL_ID', 11=>'result_code', 12=>'year', 13=>'month', 14=>'day',
 	15=>'hour', 16=>'minute', 17=>'second', 18=>'APIusage'
 );
-// Use TRUE or FALSE for each depending on whether you want a field quoted in the output
-$outputFieldQuote = array (0=>false, 1=>true, 2=>true, 3=>true,
-	4=>false, 5=>false, 6=>false, 7=>false, 8=>true,
-	9=>true, 10=>true, 11=>false, 12=>false, 13=>false, 14=>false,
-	15=>false, 16=>false, 17=>false, 18=>false
+// Use 's' 'i' 'd' depending on type of field corresponding to $outputFieldNames[]
+//   ('s' is string; 'i' is integer; 'd' is double)
+$outputFieldType = array ('milliseconds'=>'i', 'date'=>'s', 'host'=>'s', 'thread'=>'s',
+	'tick'=>'i', 'crashes'=>'i', 'http_ms'=>'d', 'length'=>'i', 'md5'=>'s',
+	'condition'=>'s', 'URL_ID'=>'s', 'result_code'=>'i', 'year'=>'i', 'month'=>'i', 'day'=>'i',
+	'hour'=>'i', 'minute'=>'i', 'second'=>'i', 'APIusage'=>'i'
 );
 $outputFieldTypes = '';
-foreach ($outputFieldQuote as $key=>$value) {
-	$outputFieldTypes .= ($value?'s':'i');
+foreach ($outputFieldNames as $key=>$value) {
+	$outputFieldTypes .= $outputFieldType[$value];
 }
 
 // Authentication (it's minimal, but it's something)
