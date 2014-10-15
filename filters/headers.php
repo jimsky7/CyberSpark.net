@@ -2,13 +2,7 @@
 	/**
 		CyberSpark.net monitoring-alerting system
 		FILTER: headers
-		Records the length of HTTP headers Alerts if the
-		length changes since the last time it was observed.
-		Keeps a list of the last few lengths it sees. 
-		This way if headers flip-flop by a few bytes periodically
-		they do not get repeatedly flagged.
-
-		NOTE: This filter's action is derived from 'checklength'
+		Analyzes HTTP headers.  Alerts if new headers or values appear.
 	**/
 	
 	/**
@@ -23,10 +17,11 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 include_once "include/echolog.inc";
+include_once "include/filter_functions.inc";
 
 
 //// ...Scan()
-//// This function is called when a URL is being scanned and when 'length' has been
+//// This function is called when a URL is being scanned and when 'headers' has been
 //// specified as a filter for the URL (on the line in the properties file).
 //// $content contains the result of the HTTP GET on the URL.
 //// $args holds arguments/parameters/properties from the daemon
@@ -43,15 +38,19 @@ function headersScan($content, $args, $privateStore) {
 		'Via',
 		'Age',
 		'Last-Modified',						
-		'Set-Cookie',						// Varies by session
-		'Content-Length',					// Varies especially 'chunked' or not
+		'Set-Cookie',
+		'Content-Length',
 		'Etag',
-		'Transfer-Encoding',					// Sad, but can't use reliably
-		'Keep-Alive',						// Varies too much. Not so useful
+//		'Transfer-Encoding',				// Sad, but can't use reliably
+//		'Keep-Alive',						// Varies too much. Not so useful
+//		'Connection',						// 'keep-alive' and so forth
 //	misc cache
 		'Cache-Control',
 		'Expires',
+		'Fastcgi-Cache',
 //	Varnish
+//  Cloudflare
+		'CF-RAY',
 //	WIX.com
 		'ETag'
 	);
@@ -60,22 +59,22 @@ function headersScan($content, $args, $privateStore) {
 	$result   = "OK";						// default result
 	$url = $args['url'];
 	$headers = $args['httpresult']['headers'];
-	$hs = '';
+//	$hs = '';
 	$message = "\n";
-	$lengthsLimit = 3;						// how many length revisions to retain
+	$ignored = false;
+	$ignoredHeaders = '';
 		
 	// Remove headers we do not intend to check or retain
 	// The "Ignoring" message will only be seen by recipient of notification 
 	//   if some of the other headers have changed, which triggers notification.
 	try {
-		$ignored = false;
 		foreach ($headersToIgnore as $headerName) {
 			if (isset($headers[$headerName])) {
 				if (!$ignored) {
-					$message .= INDENT . "Ignoring the following headers: \n";
+					$ignoredHeaders .= INDENT . "Ignoring the following headers: \n";
 					$ignored = true;
 				}
-				$message .= INDENT . INDENT . "$headerName: $headers[$headerName]\n";
+				$ignoredHeaders .= INDENT . INDENT . "$headerName: $headers[$headerName]\n";
 				unset($headers[$headerName]);
 			}
 		}
@@ -83,101 +82,83 @@ function headersScan($content, $args, $privateStore) {
 		foreach ($headers as $headerName=>$value) {
 			if (strncasecmp($headerName, "X-", 2) == 0) {
 				if (!$ignored) {
-					$message .= INDENT . "Ignoring the following headers: \n";
+					$ignoredHeaders .= INDENT . "Ignoring the following headers: \n";
 					$ignored = true;
 				}
-				$message .= INDENT . INDENT . "$headerName: $headers[$headerName]\n";
+				$ignoredHeaders .= INDENT . INDENT . "$headerName: $headers[$headerName]\n";
 				unset($headers[$headerName]);
 			}
 		}
 	}
-	catch (Exception $zvuso) {
-		$message .= INDENT . "Exception ". $zvuso->getMessage()." \n";
+	catch (Exception $hrmvx) {
+		$message .= INDENT . "Exception while removing headers ". $hrmvx->getMessage()." \n";
 	}
-	
-	// Concatenate (remaining) headers into a single string
-	foreach ($headers as $hk=>$hv) {
-		$hs .= $hk . $hv;
-	}
-	$headersLength = strlen($hs);
-	// $hs is the concatenated headers (string) being checked right now
-	// $content is the page content (which is irrelevant for this filter)
-	// $args are arguments/parameters/properties from the main PHP script
-	// $privateStore is my own private and persistent store, maintained by the main script, and
-	//   available only for use by this plugin filter.
-	// See whether length has changed since last time
-	if (isset($privateStore[$filterName][$url]['header_lengths'])) {
-		// This URL has been seen before
-		$lengthsString = $privateStore[$filterName][$url]['header_lengths'];
-		if (($lengthsString != null) && (strlen($lengthsString) > 0)) {
-			$lengths = explode(",", $lengthsString);
-			// Retain only the most recent length values (ones on the end)
-			$i = count($lengths);
-			if ($i > $lengthsLimit) {
-				// Trim initial values, leaving trailing (more recent) values
-				for ($j=0; $j<($i-$lengthsLimit); $j++) {
-					unset($lengths[$j]);
+		
+	// Unset data from previous version of this filter
+	unset($privateStore[$filterName][$url]['header_contents']);
+	unset($privateStore[$filterName][$url]['header_lengths']);
+	unset($privateStore[$filterName][$url]['header_details']);
+
+	$message .= INDENT ."Analyzing HTTP headers.\n";
+
+	// Insert ignored headers message
+	$analysis = '';
+	$analysis .= $ignoredHeaders;
+	if (count($headers)) {
+		// Analysis
+		$analysis .= INDENT . "Analysis of remaining headers: \n";
+		foreach ($headers as $hk=>$hv) {
+			// Add to message
+			$analysis .= INDENT . INDENT ."$hk: $hv\n";
+
+			// Has this value appeared before?
+			$pva = null;
+			if (isset($privateStore[$filterName][$url]['header_values'][$hk])) {
+				$pva = $privateStore[$filterName][$url]['header_values'][$hk];
+			}
+			$isNew = true;
+			if ($pva != null) {
+				foreach ($pva as $pk=>$pv) {
+					if (strcasecmp($pv, $hv) == 0) {
+						// This value of this header has been seen before
+						$analysis .= INDENT . INDENT . INDENT ."(Seen before)\n";
+						$isNew = false;
+						break;
+					}
 				}
-				// Build a new lengths string from the remaining values
-				$lengthsString = '';
-				foreach ($lengths as $oneLength) {
-					$lengthsString .= "$oneLength,";				
-				}
-				// Trim trailing ','
-				$lengthsString = trim($lengthsString, ',');
-				// Make a new lengths array
-				$lengths = explode(",", $lengthsString);
-			}
-		}
-		else {
-			$lengthsString = '';
-			$lengths = array('');
-		}
-		$lengthMatched = false;
-		foreach ($lengths as $oneLength) {
-			if ($headersLength == (int)$oneLength) {
-				// Current length matches one of the previous lengths
-				$lengthMatched = true;
-				break;
-			}
-		}
-		if (!$lengthMatched) {
-			// Changed
-			$message .= INDENT ."HTTP headers changed. New length is " . $headersLength . "\n";
-			$message .= INDENT .INDENT . "Recent lengths for comparison [" . $lengthsString . "]\n";
-			// Show new headers
-			$message .= INDENT . "Headers remaining for analysis:\n";
-			foreach ($headers as $hk=>$hv) {
-				$message .= INDENT . INDENT ."$hk: $hv\n";
-			}
-			// Show previous headers
-			if (isset($privateStore[$filterName][$url]['header_contents'])) {
-				$message .= INDENT . "Headers from the previous analysis:\n";
-				$hc = unserialize($privateStore[$filterName][$url]['header_contents']);
-				foreach ($hc as $hk=>$hv) {
-					$message .= INDENT . INDENT ."$hk: $hv\n";
+			} 
+			if ($isNew) {
+				// This value of this header is new
+				$result = "Warning";
+				$privateStore[$filterName][$url]['header_values'][$hk][] = $hv;
+				$analysis .= INDENT . INDENT . INDENT ."(A new value)";
+				if ($pva != null) {
+					$analysis .= " Previous values seen:\n";
+					foreach ($pva as $pk=>$pv) {
+						$analysis .= INDENT . INDENT . INDENT ."$pv\n";
+					}
+				} 
+				else {
+					$analysis .= "\n";
 				}
 			}
-			$result = "Warning";
-			// $lengthsString contains (comma separated) all of the lengths of this URL
-			// that have recently been seen by this filter. Note that it persists even if
-			// our parent daemon is shut down and restarted.
-			$lengthsString .= "," . (string)$headersLength;
+			else {
+				//	Turn this statement on if you wish to see header analysis every time.
+				//	You might consider this for debugging, but not for production.
+				//	$result = "Advice ";
+			}
 		}
-		else {
-			// No change
+		if ($result != 'OK') {
+			$message .= $analysis;
 		}
 	}
 	else {
-		// This URL has not been seen before
-		$lengthsString = (string)$headersLength;
+		// No change
+		$message .= INDENT . "No headers remain for analysis.\n";
 	}
-	// Record the length of the headers for this URL
-	$privateStore[$filterName][$url]['header_lengths'] = $lengthsString;
-	// Save the headers in case we need to report out when they change
-	// Note that some actual headers may have been removed earlier, so they're
-	//   not recorded here, and they aren't checked next time around either.
-	$privateStore[$filterName][$url]['header_contents'] = serialize($headers);
+
+
+
 	return array($message, $result, $privateStore);
 }
 
