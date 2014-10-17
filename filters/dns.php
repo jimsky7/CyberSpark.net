@@ -29,7 +29,7 @@ function dnsScan($content, $args, $privateStore) {
 
 	echoIfVerbose("The [dns] filter was invoked \n");
 	$domain = domainOnly($url);
-	$fqdn   = fqdnOnly($url);
+	$fqdn   = $domain;
 	echoIfVerbose("Checking $domain \n");
 	
 	// NOTE: if more than one url= directive uses the [dns] condition, it will really only report
@@ -52,7 +52,18 @@ function dnsScan($content, $args, $privateStore) {
 //	print_rIfVerbose($da);
 	
 		////// SOA
-		$da = dns_get_record($domain, DNS_SOA);
+		// Staring with FQDN, whittle down until an SOA
+		// can be retrieved.
+		$da = false;
+		while (($i = strpos($domain, '.')) !== false) {
+			$da = dns_get_record($domain, DNS_SOA);
+			if (count($da)) {
+				break;
+			}
+			$domain = substr($domain, $i+1);
+		}
+		// At this point $fqdn contains the fully qualified domain name (server name) and
+		//   $domain contains the shortened domain name for which we could obtain an SOA.
 		if (($da !== false) && isset($da[0])) {
 			$da0 = $da[0];
 			// Note: don't include ttl because it counts down dynamically - everything else can be used

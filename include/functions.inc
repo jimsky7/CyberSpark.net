@@ -84,20 +84,25 @@ function fqdnOnly($url) {
 function domainOnly($url) {
 	$result = str_replace(" ", "", $url);
 	try {
+		// Remove 'protocol://'
 		$i = strpos($result, '://');
-		if ($i > 0) {
+		if ($i !== false) {
 			$result = substr($result, $i+3);
-			// Truncate to remove everything after slash
-			$slashPos = stripos($result, "/");
-			if ($slashPos !== false) {
-				$result = substr($result, 0, $slashPos);
-			}
-			// Find next-to-last dot
-			$dotArray = explode(".", $result);
-			$ct = count($dotArray);
-			if ($ct > 2) {
-				$result = $dotArray[$ct-2] . "." . $dotArray[$ct-1];
-			}
+		}
+		// Truncate to remove everything after remaining slash
+		$i = stripos($result, "/");
+		if ($i !== false) {
+			$result = substr($result, 0, $i);
+		}
+		// Remove 'name:password@' from front
+		$i = strpos($result, '@');
+		if ($i !== false) {
+			$result = substr($result, $i+1);
+		}
+		// Remove ':port' from end
+		$i = strpos($result, ':');
+		if ($i !== false) {
+			$result = substr($result, 0, $i);
 		}
 	}
 	catch (Exception $x) {
