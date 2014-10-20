@@ -69,7 +69,7 @@ function sslScan($content, $args, $privateStore) {
 
 	echoIfVerbose("The [SSL] filter was invoked \n");
 	$domain = domainOnly($url);
-	$fqdn   = fqdnOnly($url);
+	$fqdn   = $domain;
 	echoIfVerbose("Checking $domain \n");
 	
 	// NOTE: if more than one url= directive uses the [dns] condition, it will really only report
@@ -121,7 +121,7 @@ function sslScan($content, $args, $privateStore) {
 					curl_setopt($ch, CURLOPT_NOBODY,     1);
 					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-					curl_setopt($ch, CURLOPT_SSLVERSION,     3);
+//					curl_setopt($ch, CURLOPT_SSLVERSION,     3);
 					// Reminder you can do this if you need specific additional CA certs
 					// curl_setopt ($ch, CURLOPT_CAINFO, "pathto/cacert.pem");
 					//
@@ -187,31 +187,32 @@ function sslScan($content, $args, $privateStore) {
 				$needErrString = false;
 			}
 		}
-		//// If got the cert information, look for certain telltales
-		$iFailed = stripos($stderrString,'failed');
-		$iProblem = stripos($stderrString,'problem');
-		if ($iFailed>0 || $iProblem>0) {
-			// cURL is reporting a problem directly - return everything it said.
-			// This does NOT include any cert, so we don't update the store.
-			$result = "Critical";
-			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
-			if ($iFailed !== false) {
-				$iFailed = ($iFailed>SSL_FILTER_EXCERPT_BACKSPACE)?($iFailed-SSL_FILTER_EXCERPT_BACKSPACE):0;
-				$message .= INDENT.INDENT."The word 'Failed' appears near '".substr($stderrString, $iFailed, SSL_FILTER_EXCERPT_LENGTH)."'\n";
+		//// If got the cert information, look for certain telltales.
+		//   If errors, insert notification here.
+		$reported = false;
+		foreach (array('failure', 'failed', 'problem') as $failureType) {
+			$i = stripos($stderrString,$failureType);
+			if ($i !== false) {
+				if (!$reported) {
+					// cURL is reporting a problem directly - return everything it said.
+					// This does NOT include any cert, so we don't update the store.
+					$result = "Critical";
+					$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
+					$reported = true;
+				}
+				$i = ($i>SSL_FILTER_EXCERPT_BACKSPACE)?($i-SSL_FILTER_EXCERPT_BACKSPACE):0;
+				$message .= INDENT.INDENT."The word '$failureType' appears near '".substr($stderrString, $i, SSL_FILTER_EXCERPT_LENGTH)."'\n";
 			}
-			if ($iProblem !== false) {
-				$iProblem = ($iProblem>SSL_FILTER_EXCERPT_BACKSPACE)?($iProblem-SSL_FILTER_EXCERPT_BACKSPACE):0;
-				$message .= INDENT.INDENT."The word 'Problem' appears near '".substr($stderrString, $iProblem, SSL_FILTER_EXCERPT_LENGTH)."'\n";
-			}
-			$message .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-			$message .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-			$message .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-			$message .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
-			$needErrString = false;
 		}
-		else if (stripos($stderrString,'subjectaltname does not match')>0) {
-			// cURL is reporting a problem directly - return everything it said.
-			// This does NOT include any cert, so we don't update the store.
+		//// Insert other information
+		$message .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
+		$message .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
+		$message .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+		$message .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
+		$needErrString = false;
+		if (stripos($stderrString,'subjectaltname does not match')>0) {
+			//// cURL is reporting a problem directly - return everything it said.
+			//   This does NOT include any cert, so we don't update the store.
 			$result = "Critical";
 			$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$message .= INDENT."The name in the certificate does not match the site domain.\n\n";
@@ -219,30 +220,6 @@ function sslScan($content, $args, $privateStore) {
 			$message .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
 			$message .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
 			$message .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
-/*********
-			try {
-				$i = stripos($stderrString, 'Server certificate:');
-				if ($i !== false) {
-					$j = stripos($stderrString, '*', $i);
-					if ($j !== false) {
-						$k = stripos($stderrString, '*', ($j+1));	// includes EOL
-						$message .= INDENT."Server certificate says:\n";
-						$message .= INDENT.substr($stderrString, $j, ($k-$j));
-						$message .= INDENT."You will find more detail in the report below.\n";
-						$needErrString = true;
-					}
-					else {
-//						$message .= INDENT."No star $i:$j.\n";
-					}
-				}
-				else {
-//					$message .= INDENT."Could not find server certificate info.\n";
-				}
-			}
-			catch (Exception $scx) {
-				$message .= INDENT.'Exception while checking subjectaltname: '.$scx->getMessage()."\n";
-			}
-*********/
 		}
 		else if (stripos($stderrString,'SSL peer certificate or SSH remote key was not OK')>0) {
 			// cURL is reporting a problem directly - return everything it said.
@@ -277,7 +254,8 @@ function sslScan($content, $args, $privateStore) {
 				if (strcmp($certs, $privateStore[$filterName][$domain]['SSL_BASELINE_CERT']) != 0) {
 					// This cert does not match the BASELINE cert!
 					$result = "Critical";
-					$message .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! This is either a serious error or they've updated the cert. Check it carefully!\n\n";
+					$message .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! \n";
+					$message .= INDENT."This is either a serious error or they've updated the cert. Check it carefully!\n\n";
 					$message .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
 					$message .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
 					$message .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
@@ -289,7 +267,8 @@ function sslScan($content, $args, $privateStore) {
 			else {
 				// First time we've seen this server, so record a BASELINE version of the cert
 				$result = "Critical";
-				$message .= INDENT."First time we've seen this certificate. Examine the interaction carefully. Things may be just fine. Here is a transcript of the interaction with the HTTPS server.\n\n";
+				$message .= INDENT."First time we've seen this certificate. Examine the interaction carefully. Things may be just fine. \n";
+				$message .= INDENT."Here is a transcript of the interaction with the HTTPS server.\n\n";
 				$message .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
 				$message .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
 				$message .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
@@ -307,7 +286,9 @@ function sslScan($content, $args, $privateStore) {
 			// This is a kind of ambiguous situation and many times we see this on a
 			// cert that verifies just fine using other methods.
 			$result = "Critical";
-			$message .= INDENT."Something is odd here. The certificate is neither 'valid' nor 'failed' - - Examine the details carefully under 'CURRENT' below. These are transcripts of the interactions with the HTTPS server.\n\n";
+			$message .= INDENT."Something is odd here. The certificate is neither 'valid' nor 'failed' - - \n";
+			$message .= INDENT."Examine the details carefully under 'CURRENT' below. \n";
+			$message .= INDENT."These are transcripts of the interactions with the HTTPS server.\n\n";
 			$message .= INDENT."PREVIOUS:\n".$privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT']."\n\n";
 			$message .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
 			$message .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
