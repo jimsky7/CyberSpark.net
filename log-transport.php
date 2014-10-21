@@ -122,6 +122,7 @@ while (($maxLines==0) || ($i<$maxLines)) {
 		fseek($f, $fpos);
 		
 		while(true) {
+			$fpre = $fpos;
 			$s = fgets($f);
 	
     		if (feof($f) || ($s===false)) {
@@ -152,6 +153,12 @@ while (($maxLines==0) || ($i<$maxLines)) {
 					curl_setopt($ch, CURLOPT_HTTPHEADER, 		array('Content-Length: '.strlen($ueData)));
 					$curlResult = curl_exec($ch);
 					if ($curlResult === FALSE) {
+						// Error trying to POST
+						// Reset file position so the log entry will be retried later.
+						// Then bail out of the read process for a while.
+						$sleepTime = $longSleep;
+						$fpos = $fpre;
+						break;
 					}
 					curl_close($ch);
 				}
