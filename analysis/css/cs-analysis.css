@@ -7,12 +7,12 @@ body {
 }
 /* ################ */
 .CS_CHART {
-	width:            290px;		/* wish for 350px, but this works on iPhone */
+	width:            290px;		/* you can wish for 350px, but this works on iPhone */
 	background-color: white;
 	margin-right:      40px;
 }
 .CS_CHART_NARROW {
-	width:            290px;		/* wish for 350px, but this works on iPhone */
+	width:            290px;		/* you can wish for 350px, but this works on iPhone */
 	background-color: white;
 	margin-right:      40px;
 }
@@ -90,6 +90,17 @@ body {
 	body {
 		padding-left: 10px;
 	}
+/* ################ */
+.CS_CHART {
+	width:            290px;		/* you can wish for 350px, but this works on iPhone */
+	background-color: white;
+	margin-right:      35px;
+}
+.CS_CHART_NARROW {
+	width:            290px;		/* you can wish for 350px, but this works on iPhone */
+	background-color: white;
+	margin-right:      35px;
+}
 }
 
 /* ////////////////////////////////////// */
