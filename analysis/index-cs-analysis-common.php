@@ -315,6 +315,7 @@ while ($yx > 2009) {
 		$requestURI = substr($requestURI, 0, $i);
 	}
 	$getHashURL = 'http://'.$_SERVER['SERVER_NAME'].$requestURI.'/'.CS_URL_FROM_HASH;
+	echo "<div id='CS_CHARTS_WRAP' style='display:table;'>\n";	
 	foreach ($URL_HASHES as $key=>$URL_HASH) {
 		$getHashFullURL = $getHashURL."?URL_HASH=$URL_HASH";
 		// http://example.com/analysis/cs-log-get-url-from-hash.php?URL_HASH=383f65f95363c204221bd6b4cc4d6701
@@ -335,6 +336,7 @@ while ($yx > 2009) {
 //		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg><div style='position: relative; left: 2px; top: -38px; height: 10px; width: 10px;'><a href='$sites[$key]' class='CS_SITE_LINK' target='W_$URL_HASH'>»</a></div></div>\r\n";
 		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg></div>\r\n";
 	}
+	echo "</div>\n";		// #CS_TABLE_WRAP
 
 ////////////////////////////////////////////////////////////////////////
 // Write arrays for hashes themselves, URLs from hashes, data URLs to fetch data
@@ -377,6 +379,16 @@ var CHART_YELLOW = 2;		/* above this turne yellow */
 var CHART_GREEN = 0;			
 
 <?php
+define ('CHART_MAX', 6);		/* clip any values larger than this */
+define ('CHART_ALERT', 300);	/* this value of http_ms (or higher) signals an alert */
+define ('CHART_TIMEOUT', 59);	/* this value of http_ms (or higher) signals timeout  */
+define ('CHART_MAGENTA', CHART_TIMEOUT); /* value of http_ms for timeout warning */
+define ('CHART_RED', CHART_MAX);	/* this is the value of http_ms that means 'off the charts' */
+define ('CHART_ORANGE', 4);		/* above this turns orange */
+define ('CHART_YELLOW', 2);		/* above this turne yellow */
+define ('CHART_GREEN',  0);		
+
+
 ////////////////////////////////////////////////////////////////////////
 // Begin actual javascript to create the charts
 // The real work is done in 'd3.tsv' which reads a file and builds an SVG object
@@ -545,26 +557,16 @@ function type(d) {
 ?>
 <!-- legend -->
 <div id="CS_FOOTER_NARROW">
-<table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
+<table id='LEGEND_NARROW' cellspacing='0' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
 		<tr>
-			<td class='rect_green' style='width:20px;'></td>
-			<td>&lt;=2 sec
-			</td>
-			<td class='rect_yellow' style='width:20px;'></td>
-			<td>3 or 4
-			</td>
-			<td class='rect_orange' style='width:20px;'></td>
-			<td>5 or 6
-			</td	>
-			<td class='rect_red' style='width:20px;'></td>
-			<td>&gt;6 sec
-			</td>
-			<td class='rect_blue' style='width:20px;'></td>
-			<td>Err
-			</td>
-			<td class='rect_magenta' style='width:20px;'></td>
-			<td>Timeout
-			</td>
+			<td class='rect_green'   style='height:20px; width:55px; color:White;'>&nbsp;&nbsp;seconds</td>
+			<td class='rect_yellow'  style='height:20px; width:40px; color:black;'>&nbsp;&nbsp;<?php echo CHART_YELLOW; ?> +</td>
+			<td class='rect_orange'  style='height:20px; width:40px; color:White;'>&nbsp;&nbsp;<?php echo CHART_ORANGE; ?> +</td>
+			<td class='rect_red'     style='height:20px; width:40px; color:White;'>&nbsp;&nbsp;<?php echo CHART_RED; ?> +</td>
+			<td                      style='height:20px; width:15px;'></td>
+			<td class='rect_blue'    style='height:20px; width:45px; color:White;'>&nbsp;Error</td>
+			<td                      style='height:20px; width:5px;'></td>
+			<td class='rect_magenta' style='height:20px; width:55px; color:White;'>&nbsp;Timeout</td>
 		</tr>
          <tr>
         	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
@@ -578,29 +580,57 @@ function type(d) {
         </tr>
 	</table>
     </div>
-    <div id="CS_FOOTER_WIDE">
-	<table id='LEGEND_WIDE' cellspacing='5' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px;'>
+    <div id="CS_FOOTER_WIDE" style="float:left; width:100%;">
+	<hr/>
+    <table id='LEGEND_WIDE' cellspacing='0' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px; margin-bottom:4px;'>
 		<tr>
-			<td class='rect_green' style='width:20px;'></td>
-			<td>Under 2 seconds
-			</td>
-			<td class='rect_yellow' style='width:20px;'></td>
-			<td>3 or 4 seconds
-			</td>
-			<td class='rect_orange' style='width:20px;'></td>
-			<td>5 or 6 seconds
-			</td>
-			<td class='rect_red' style='width:20px;'></td>
-			<td>Over 6 seconds
-			</td>
-			<td class='rect_blue' style='width:20px;'></td>
-			<td>HTTP error
-			</td>
-			<td class='rect_magenta' style='width:20px;'></td>
-			<td>Timeout
+			<td colspan='8' style='height:1px;'>&nbsp;
 			</td>
 		</tr>
-         <tr>
+		<tr>
+			<td class='rect_green'   style='height:20px; width:60px;'></td>
+			<td class='rect_yellow'  style='height:20px; width:60px;'></td>
+			<td class='rect_orange'  style='height:20px; width:60px;'></td>
+			<td class='rect_red'     style='height:20px; width:60px;'></td>
+			<td                      style='height:20px; width:5px;'></td>
+			<td class='rect_blue'    style='height:20px; padding-left:5px;'></td>
+			<td                      style='height:20px; width:5px;'></td>
+			<td class='rect_magenta' style='height:20px;'></td>
+		</tr>
+		<tr>
+			<td style='height:4px; '>&nbsp;seconds</td>
+ 			<td style='height:4px; border-left:thin; border-left-color:grey; border-left-style:solid;'>&nbsp;
+ 			</td>
+			<td style='height:4px; border-left:thin; border-left-color:grey; border-left-style:solid;'>&nbsp;
+			</td>
+			<td style='height:4px; border-left:thin; border-left-color:grey; border-left-style:solid;'>&nbsp;
+			</td>
+			<td>
+			</td>
+			<td style=''>&nbsp;&nbsp;HTTP error
+			</td>
+			<td>
+			</td>
+			<td style=''>&nbsp;&nbsp;Timeout
+			</td>
+		</tr>
+		<tr>
+			<td colspan='8' style=''>
+				<table cellspacing='0' cellpadding='0' border='0'>
+					<tr>
+						<td style='height:20px; width:58px; font-size:10px;'>0</td>
+						<td style='height:20px; width:60px; font-size:10px;'><?php echo CHART_YELLOW; ?></td>
+						<td style='height:20px; width:60px; font-size:10px;'><?php echo CHART_ORANGE; ?></td>
+						<td style='height:20px; width:60px; font-size:10px;'><?php echo CHART_RED; ?></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td colspan='8' style='height:4px;'>&nbsp;
+			</td>
+		</tr>
+        <tr>
         	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
         	Click (or tap) a chart to view the associated URL.<br/>
         	Resize or maximize and the charts will float to fill the window.

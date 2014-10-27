@@ -73,7 +73,8 @@ body {
 /* ################ */
 #CS_FOOTER_WIDE {
 	float:        left;
-	max-width:   720px;
+/*	max-width:   720px;	*/
+	max-width:   633px;
 }
 #CS_FOOTER_NARROW {
 	float:        left;
@@ -118,12 +119,14 @@ body {
 		padding-left:10px;
 	}
 	/* ################ */
+/*
 	#LEGEND_WIDE {
 		display:     none;
 	}
 	#LEGEND_NARROW {
 		display:    block;
 	}
+*/
 	#ENCLOSE_HEADER {
 		height:     104px;
 	}
