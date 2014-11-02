@@ -42,14 +42,14 @@ if (!isset($CLASS_STYLE)) {
 // Determine whether date is "NOW" or a specific calendar date
 $calendar=false;
 if (strcasecmp($_SERVER['REQUEST_METHOD'], 'POST')==0) {
-	echo '<!-- POST -->';
+//	echo '<!-- POST -->';
 	if (isset($_POST['SUBMIT_CALENDAR'])) {
-		echo '<!-- SUBMIT_CALENDAR '.$_POST['SUBMIT_CALENDAR'].' -->';
+//		echo '<!-- SUBMIT_CALENDAR '.$_POST['SUBMIT_CALENDAR'].' -->';
 		$calendar = true;
 	}
 	$direction = 0;
 	if (isset($_POST['DIRECTION'])) {
-		echo '<!-- DIRECTION '.$_POST['DIRECTION'].' -->';
+//		echo '<!-- DIRECTION '.$_POST['DIRECTION'].' -->';
 		if (strcasecmp($_POST['DIRECTION'], 'minus')==0) {
 			$direction = -1;
 			$calendar = true;
@@ -60,11 +60,11 @@ if (strcasecmp($_SERVER['REQUEST_METHOD'], 'POST')==0) {
 		}
 	}
 	if (isset($_POST['SUBMIT_NOW'])) {
-		echo '<!-- SUBMIT_NOW -->';
+//		echo '<!-- SUBMIT_NOW -->';
 	}
 }
 if (strcasecmp($_SERVER['REQUEST_METHOD'], 'GET')==0) {
-	echo '<!-- GET -->';
+//	echo '<!-- GET -->';
 	if (($getYEAR = ifGetOrPost('YEAR')) != null && ($getMONTH = ifGetOrPost('MONTH')) != null && ($getDAY = ifGetOrPost('DAY')) != null) {
 //		$_SESSION['YEAR'] = (int)$getYEAR;		// converts string to integer, avoid SQL injections
 //		$_SESSION['MONTH']= (int)$getMONTH;		// converts string to integer, avoid SQL injections
@@ -76,7 +76,7 @@ if (!$calendar) {
 	$_SESSION['MONTH'] = date('m');
 	$_SESSION['DAY']   = date('j');
 	$_SESSION['YEAR']  = date('Y');
-echo "<!-- DATE DEFAULTED TO 'now': $_SESSION[MONTH]-$_SESSION[DAY]-$_SESSION[YEAR] $_SERVER[REQUEST_METHOD]-->";
+//	echo "<!-- DATE DEFAULTED TO 'now': $_SESSION[MONTH]-$_SESSION[DAY]-$_SESSION[YEAR] $_SERVER[REQUEST_METHOD]-->";
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -94,23 +94,23 @@ $startTimestamp =  0;
 $endTimestamp   =  0;
 
 if ($calendar) {
-echo '<!-- calendaring -->';
+//	echo '<!-- calendaring -->';
 	$s = ifGetOrPost('MONTH');
 	if ($s != null) {
-echo '<!-- 1 -->';
+//		echo '<!-- 1 -->';
 		if (strlen($s) < 2) {
 			$s = '0'.$s;			// add leading zero
 		}
-echo '<!-- 2 -->';
+//		echo '<!-- 2 -->';
 		$_SESSION['MONTH'] = $s;
 	}
 	else {
-echo '<!-- 3 -->';
+//		echo '<!-- 3 -->';
 		if (!isset($_SESSION['MONTH'])) {
 			$_SESSION['MONTH'] = '01';
 		}
 	}
-	echo "<!-- MONTH:$_SESSION[MONTH] -->";
+//	echo "<!-- MONTH:$_SESSION[MONTH] -->";
 	if (($s = ifGetOrPost('DAY')) != null) {
 		if (strlen($s) < 2) {
 			$s = '0'.$s;			// add leading zero
@@ -125,7 +125,7 @@ echo '<!-- 3 -->';
 			$_SESSION['DAY'] = '01';
 		}
 	}
-	echo "<!-- DAY:$_SESSION[DAY] -->";
+//	echo "<!-- DAY:$_SESSION[DAY] -->";
 	if (($s = ifGetOrPost('YEAR')) != null) {
 		$_SESSION['YEAR'] = $s;
 	}
@@ -134,7 +134,7 @@ echo '<!-- 3 -->';
 			$_SESSION['YEAR'] = date('Y');
 		}
 	}
-	echo "<!-- YEAR:$_SESSION[YEAR] -->";
+//	echo "<!-- YEAR:$_SESSION[YEAR] -->";
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -581,7 +581,6 @@ function type(d) {
 	</table>
     </div>
     <div id="CS_FOOTER_WIDE" style="float:left; width:100%;">
-	<hr/>
     <table id='LEGEND_WIDE' cellspacing='0' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px; margin-bottom:4px;'>
 		<tr>
 			<td colspan='8' style='height:1px;'>&nbsp;
