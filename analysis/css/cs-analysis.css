@@ -30,6 +30,7 @@ body {
 /* ################ */
 #CS_TITLES {
 	max-width:  760px;
+	height:      30px;
 }
 .CS_TITLE {
 	font-size:   22px;
@@ -38,13 +39,19 @@ body {
 	font-size:   12px;
 	margin-top: -16px;
 	float:      right;
-	margin-right:20px;
+	margin-right:10px;
 }
 .CS_SUBTITLE_NARROW {
 	display:     none;
 	font-size:   12px;
 	margin-top: -16px;
 	float:      right;
+}
+.CS_CHARTS_BUBBLES {
+	float:      right;
+	width:       24px;
+	margin-right: 0px;
+	margin-left: 10px;
 }
 /* ################ */
 #CS_START_END {
@@ -86,22 +93,23 @@ body {
 	font-size:       18px; 
 	color:          black;
 }
+
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 1024px), only screen and (max-device-width: 1024px) {
 	body {
 		padding-left: 10px;
 	}
-/* ################ */
-.CS_CHART {
-	width:            290px;		/* you can wish for 350px, but this works on iPhone */
-	background-color: white;
-	margin-right:      35px;
-}
-.CS_CHART_NARROW {
-	width:            290px;		/* you can wish for 350px, but this works on iPhone */
-	background-color: white;
-	margin-right:      35px;
-}
+	/* ################ */
+	.CS_CHART {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
+	}
+	.CS_CHART_NARROW {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
+	}
 }
 
 /* ////////////////////////////////////// */
@@ -111,12 +119,31 @@ body {
 		padding-left:        10px;
 		background-color: #F4EED3;
 	}
+	#CS_LOGO {
+		width:      260px;
+		height:      50px;
+	}
+	/* ################ */
+	.CS_CHART {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
+	}
+	.CS_CHART_NARROW {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
+	}
 }
 
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 767px), only screen and (max-device-width: 767px) {
 	body {
 		padding-left:10px;
+	}
+	#CS_LOGO {
+		width:      260px;
+		height:      50px;
 	}
 	/* ################ */
 /*
@@ -128,10 +155,11 @@ body {
 	}
 */
 	#ENCLOSE_HEADER {
-		height:     104px;
+		height:     64px; /* 104px */
 	}
 	#ENCLOSE_HEADER_RIGHT {
 		float:       none;
+		max-width:   none !important;		/* on smaller screens */
 		margin-top:   5px;
 		margin-right: 0px;
 	}
@@ -152,10 +180,11 @@ body {
 		display:    block;
 	}
 	#ENCLOSE_HEADER {
-		height:     104px;
+		height:     64px; /* 104px */
 	}
 	#ENCLOSE_HEADER_RIGHT {
 		float:       none;
+		max-width:  350px;		/* on smaller screens */
 		margin-top:   5px;
 		margin-right: 0px;
 	}
@@ -177,6 +206,10 @@ body {
 	.chart {
 		padding:            0px;
 	}
+	.CS_TRIANGLE {
+		height:      20px;
+		width:       20px;
+	}	
 	/* ################ */
 	#LEGEND_WIDE {
 		display:    block;
@@ -249,7 +282,7 @@ body {
 	}
 	/* ################ */
 	#ENCLOSE_HEADER {
-		height:      74px;
+		height:      104px;
 	}
 	#ENCLOSE_HEADER_RIGHT {
 		float:       none;

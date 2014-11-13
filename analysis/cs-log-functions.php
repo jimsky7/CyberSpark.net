@@ -17,4 +17,13 @@ if (!function_exists('ifGetOrPost')) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////
+// Sometimes cURL error symbolics are not defined, so be sure we have them.
+if (!defined('CURLE_OPERATION_TIMEDOUT')) {
+	define ('CURLE_OPERATION_TIMEDOUT', 28);
+}
+if (!defined('CURLE_RECV_ERROR')) {
+	define ('CURLE_RECV_ERROR', 56);
+}
+
 /* Do not close the php */

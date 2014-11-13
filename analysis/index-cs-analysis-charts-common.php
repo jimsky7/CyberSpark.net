@@ -1,21 +1,16 @@
 <?php
+////////////////////////////////////////////////////////////////////////
+// EVERYTHING AFTER THIS IS COMMON
+
+// Note: This code is usually invoked via POST, with a bunch of input variables.
+//   However, it may be invoked via GET with year, month, and day only:
+//     https://viz.cyberspark.net/analysis/index.php?YEAR=2014&MONTH=6&DAY=5
+//   The parameter names must be uppercase.
 
 ////////////////////////////////////////////////////////////////////////
-// Start at http://cyberspark.net/
-//   The code is at github. Find the link on the CyberSpark site.
-// Using http://D3js.org for visualization
-//	 Tutorials at http://bost.ocks.org/mike/bar/3/
-
-////////////////////////////////////////////////////////////////////////
-//	Single frame SVG chart
-$TITLE			= '';
-$URL_HASHES		= array(
-					'b3eaf4bce2b85708a6c930a5d527340d'  // cyberspark.net
-			);
-
-require('cs-log-pw.php');
-require('cs-log-config.php');
-require('cs-log-functions.php');
+include('cs-log-pw.php');
+include('cs-log-config.php');
+require ('cs-log-functions.php');
 
 ////////////////////////////////////////////////////////////////////////
 // Check/set any missing layout values
@@ -45,14 +40,6 @@ if (!isset($CLASS_STYLE)) {
 	$CLASS_STYLE   = 'CS_CHART_NARROW';		// CS_CHART_NARROW or CS_CHART_WIDE
 }
 
-if (isset($_GET['URL_HASH'])) {
-	$URL_HASHES = array($_GET['URL_HASH']);
-}
-if (isset($_GET['hash'])) {
-	$URL_HASHES = array($_GET['hash']);
-}
-
-
 ////////////////////////////////////////////////////////////////////////
 // Common setup; check date requested (GET/POST); define variables
 include ('index-cs-analysis-setupdates.php');
@@ -62,6 +49,7 @@ include ('index-cs-analysis-setupdates.php');
 
 ?>
 <html>
+	<!-- 2014-11-10a -->
 <head>
 	<!-- D3js version 3.4.8 is being used -->
 	<script src="/d3/d3.min.js" charset="utf-8"></script>
@@ -97,6 +85,9 @@ include ('index-cs-analysis-setupdates.php');
 	</script>
 </head>
 <body<?php if (!$calendar) { ?> onload="cs_onload()" <?php } ?>>
+    <div id="ENCLOSE_HEADER"> 
+    <div id="ENCLOSE_HEADER_LEFT"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" id="CS_LOGO" alt="CyberSpark web site"/></a>&nbsp;<a href='index.php'><img src="images/cyberspark-arrow-up-32x32.gif" width="32" height="32" alt="Analysis home page"/></a></div><!-- ENCLOSE_HEADER_LEFT -->
+    <div id="ENCLOSE_HEADER_RIGHT">
 <?php 
 	// Remove GET parameters (may not be any)
 	$myURI = $_SERVER['REQUEST_URI'];
@@ -104,7 +95,82 @@ include ('index-cs-analysis-setupdates.php');
 	if ($i > 0) {
 		$myURI = substr($myURI, 0, $i);
 	}
-?>    
+?><form id="CS_FORM" action="<?php echo $myURI; ?>" method="post">
+    <select id="MONTH" name="MONTH" class="CS_SELECTOR'>
+    	<option value="01" <?php if($_SESSION['MONTH']=='01') { echo 'selected'; } ?>>Jan</option>
+    	<option value="02" <?php if($_SESSION['MONTH']=='02') { echo 'selected'; } ?>>Feb</option>
+    	<option value="03" <?php if($_SESSION['MONTH']=='03') { echo 'selected'; } ?>>Mar</option>
+    	<option value="04" <?php if($_SESSION['MONTH']=='04') { echo 'selected'; } ?>>Apr</option>
+    	<option value="05" <?php if($_SESSION['MONTH']=='05') { echo 'selected'; } ?>>May</option>
+    	<option value="06" <?php if($_SESSION['MONTH']=='06') { echo 'selected'; } ?>>Jun</option>
+    	<option value="07" <?php if($_SESSION['MONTH']=='07') { echo 'selected'; } ?>>Jul</option>
+    	<option value="08" <?php if($_SESSION['MONTH']=='08') { echo 'selected'; } ?>>Aug</option>
+    	<option value="09" <?php if($_SESSION['MONTH']=='09') { echo 'selected'; } ?>>Sep</option>
+    	<option value="10" <?php if($_SESSION['MONTH']=='10') { echo 'selected'; } ?>>Oct</option>
+    	<option value="11" <?php if($_SESSION['MONTH']=='11') { echo 'selected'; } ?>>Nov</option>
+    	<option value="12" <?php if($_SESSION['MONTH']=='12') { echo 'selected'; } ?>>Dec</option>
+    </select>
+    <input id="DAY" name="DAY" type="text" size="2" <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?>  class="CS_SELECTOR" />
+    <select id="YEAR" name="YEAR"  class="CS_SELECTOR">
+<?php
+$yx = (int)date('Y');
+$ys = $yx;
+if (isset($_SESSION['YEAR'])) {
+	$ys = (int)$_SESSION['YEAR'];
+}
+while ($yx > 2009) {
+    echo "<option value='$yx'";
+    if ($yx==$ys) {
+    	echo " selected";
+    }
+    echo ">$yx</option>\r\n";
+	$yx--;
+}
+?>
+	</select><input id='DIRECTION' name='DIRECTION' type='hidden' value='none' /><input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go' />&nbsp;<input id='SUBMIT_MINUS' name='SUBMIT_MINUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-lf-32x32.gif' value='minus' onclick='var e=document.getElementById("DIRECTION"); e.value="minus";' alt='Earlier time period' title='Earlier time period' /><input id='SUBMIT_PLUS' name='SUBMIT_PLUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-rt-32x32.gif' value='plus' onclick='var e=document.getElementById("DIRECTION"); e.value="plus";' alt='Later time period' title='Later time period' /><div style='display:inline;' id='CS_CONTROL_PANEL_VERTICAL_SEPARATOR'> </div><input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' alt='Real-time charts' title='Real-time charts' />
+</form>    
+	</div><!-- ENCLOSE_HEADER_RIGHT -->
+	</div><!-- ENCLOSE_HEADER -->
+    
+   	<div id="CS_TITLES">
+    <div class="CS_TITLE"><? echo $TITLE; ?></div>
+<?php
+	/**** Determine whether a 'bubbles' counterpart exists for this page.
+	
+		1) Check my filename (PATH) for the word 'charts'
+		2) If I am a 'charts' then substitute 'bubbles' for 'charts' and check
+			whether a file by that name exists
+		3) If the FILE exists, then change my URI to use 'bubbles' rather than 'charts'
+		4) Insert a link to the 'bubbles' version of this page
+		
+	****/
+	$path = __FILE__;
+	$chartsDIV = '';
+	$i = stripos($path, 'charts');	// check my name for 'charts'
+	if ($i !== false) {
+		$includedFiles = get_included_files();	// Note that our parent must be top level file
+		$fn = str_replace('charts', 'bubbles', $includedFiles[0]);
+		if (file_exists($fn)) {
+			/**** A 'bubbles' version of this page exists ****/
+			$chartsURI = $_SERVER['REQUEST_URI'];
+			$chartsURI = str_replace('charts', 'bubbles', $chartsURI);
+    		$chartsDIV .= "<div class=\"CS_CHARTS_BUBBLES\"><a href=\"$chartsURI\"><img src=\"images/bubbles-charts-icon.png\" /></a></div>\r\n";
+		}
+	}
+?>
+<?php if (!$calendar) { ?>
+    <div class="CS_SUBTITLE">&nbsp;&nbsp;(Page reloads every few minutes)<?php echo $chartsDIV; ?>
+    </div>
+    <div class="CS_SUBTITLE_NARROW">&nbsp;&nbsp;(Page will reload)<?php echo $chartsDIV; ?>
+    </div>
+<?php } else {?>
+    <div class="CS_SUBTITLE">&nbsp;&nbsp;(Archived data)<?php echo $chartsDIV; ?>
+	</div>
+    <div class="CS_SUBTITLE_NARROW">&nbsp;&nbsp;(Archived data)<?php echo $chartsDIV; ?>
+	</div>
+<?php } ?>
+     </div>
+    <hr/>
     <div id="CS_START_END" style="width:<?php echo $WIDTH_CHART; ?>px">
     	<div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
     	<div style="float:right;"><?php echo $endDate; ?>&nbsp;&nbsp;&darr;</div>
@@ -112,7 +178,7 @@ include ('index-cs-analysis-setupdates.php');
 
 <?php
 ////////////////////////////////////////////////////////////////////////
-// Write the SVG object for one chart [2014-10-29]
+// Write the SVG objects for the charts
 
 	$thisSite = $_SERVER['SERVER_NAME'];
 //	echo "<!-- SERVER_NAME: $thisSite -->\r\n";
@@ -178,19 +244,20 @@ var getDataURL = [<?php
 var data;
 var CHART_MAX = 6;			/* clip any values larger than this */
 var CHART_ALERT = 300;		/* this value of http_ms (or higher) signals an alert */
-var CHART_TIMEOUT = 59;		/* this value of http_ms (or higher) signals timeout  */
+var CHART_TIMEOUT = 30;		/* this value of http_ms (or higher) signals timeout  */
 var CHART_MAGENTA = CHART_TIMEOUT; /* value of http_ms for timeout warning */
 var CHART_RED = CHART_MAX;	/* this is the value of http_ms that means 'off the charts' */
 var CHART_ORANGE = 4;		/* above this turns orange */
 var CHART_YELLOW = 2;		/* above this turne yellow */
-var CHART_GREEN = 0;			
+var CHART_GREEN = 0;	
+
 var CURLE_OPERATION_TIMEDOUT = <?php echo CURLE_OPERATION_TIMEDOUT; ?>;
 var CURLE_RECV_ERROR         = <?php echo CURLE_RECV_ERROR;         ?>;		
 
 <?php
 define ('CHART_MAX', 6);		/* clip any values larger than this */
 define ('CHART_ALERT', 300);	/* this value of http_ms (or higher) signals an alert */
-define ('CHART_TIMEOUT', 59);	/* this value of http_ms (or higher) signals timeout  */
+define ('CHART_TIMEOUT', 30);	/* this value of http_ms (or higher) signals timeout  */
 define ('CHART_MAGENTA', CHART_TIMEOUT); /* value of http_ms for timeout warning */
 define ('CHART_RED', CHART_MAX);	/* this is the value of http_ms that means 'off the charts' */
 define ('CHART_ORANGE', 4);		/* above this turns orange */
@@ -206,8 +273,8 @@ var width  = <?php echo $WIDTH_CHART; ?>; /* default */
 var height = <?php echo $HEIGHT_CHART; ?>;
 
 var divTooltip = d3.select("body").append("div")   
-    .attr("class",    "tooltip")
-	.attr("id",       "DIV_TT")              
+    .attr("class", "tooltip")
+	.attr("id", "DIV_TT")              
 	.style("opacity", 0);
 
 var ix=0;
@@ -349,21 +416,20 @@ function type(d) {
 	if (d.result_code==CURLE_OPERATION_TIMEDOUT || d.result_code==CURLE_RECV_ERROR) {
 		d.http_ms = CHART_TIMEOUT;
 	}
-/* Note: if you return null, this data point will be ignored */
+	/* Note: if you return null, this data point will be ignored */
 	return d;
 }
 		
 	</script>
 <?php
+
 ////////////////////////////////////////////////////////////////////////
 // Page footer
 
 ////////////////////////////////////////////////////////////////////////
-$skipTips = true;
-$skipHR   = true;
-$skipCC   = true;
 include ('index-cs-analysis-footer.php');
 
 ?>
+
 </body>
 </html>

@@ -218,7 +218,11 @@ try {
 					if ($previousValue) {
 						echo ',';
 					}
-					echo "{\"name\": \"$url\", \"size\": $http_ms, \"URL_HASH\": \"$URL_HASH\"} $EOL";
+					// HTTP error values get stuffed into (in place of) http_ms
+					if ($result_code >= 300) {
+						$http_ms = $result_code;
+					}
+					echo "{\"name\": \"$url\", \"size\": $http_ms, \"URL_HASH\": \"$URL_HASH\", \"date\": \"$date\", \"result_code\": \"$result_code\"} $EOL";
 					$previousValue = true;
 				}
 			}
