@@ -94,7 +94,7 @@ function gsbdailyScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function gsbdailyInit($content, $args, $privateStore) {
-	$filterName = "v";
+	$filterName = "gsbdaily";
 	$result   = "OK";						// default result
 	$url = $args['url'];
 	$contentLength = strlen($content);
