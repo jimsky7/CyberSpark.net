@@ -230,7 +230,7 @@ function breadcrumbsString($howToGetThere, $finalURL="") {
 }
 
 ///////////////////////////////// 
-function gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, &$howToGetThere) {
+function gsbCheckURL($args, $url, &$numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, &$howToGetThere) {
 	
 	$result = "OK";
 	$message = "";
@@ -305,7 +305,7 @@ function keepAliveURL($numberOfChecks, $url) {
 }
 
 ///////////////////////////////// 
-function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere) {
+function gsbExploreLinks($args, $url, $depth, $maxDepth, &$numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere) {
 	
 	$result = "OK";
 	$message = "";
