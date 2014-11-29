@@ -23,7 +23,7 @@ function basicScan($content, $args, $privateStore) {
 	$url = $args['url'];
 	$message = '';
 	$contentLength = strlen($content);
-	$elapsedTime = $args['elapsedtime'];
+	$elapsedTime = roundTime($args['elapsedtime']);	// rounding precision is defined in cyberspark.sysdefs.php
 	$httpResult  = $args['httpresult'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script

@@ -17,12 +17,12 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 // User-Agent and other identity to be presented by CyberSpark when sniffing using HTTP.
-define('CYBERSPARK_VERSION', '4.20140731=PHP+SSL+analysis');
+define('CYBERSPARK_VERSION', '4.20141121');
 if (!defined('DEFAULT_IDENTITY')) {
-	define('DEFAULT_IDENTITY', "CyberSpark Version ".CYBERSPARK_VERSION." http://cyberspark.net/agent;");
+	define('DEFAULT_IDENTITY', 'CyberSpark Version '.CYBERSPARK_VERSION.' http://cyberspark.net/agent');
 }
 if (!defined('DEFAULT_USERAGENT')) {
-	define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version ".CYBERSPARK_VERSION." http://cyberspark.net/agent;) Ubuntu/14.04");
+	define('DEFAULT_USERAGENT', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:33.0) '.DEFAULT_IDENTITY.' Ubuntu/14.04');
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -88,6 +88,14 @@ define('SHUTDOWN_WAIT_TIME', 500000);		// time to wait during shutdown (microsec
 define('FAILURE_ALERT_MAX', 5);				// how many alerts cybersparkd should send on process failure
 define('KEEPALIVE_LOOP_SLEEP_TIME', 90);	// in seconds (best if equal to HEARTBEAT_LATE or shorter)
 define('RESTART_ON_FAILURE', true);			// if true, then cybersparkd will restart failed processes
+
+/////////////////////////////////////////////////////////////////////////////////
+// rounding of server response time seconds in reports
+if (!defined('ROUND_TO_SECONDS'))      { define ('ROUND_TO_SECONDS',      0);         }
+if (!defined('ROUND_TO_HUNDREDTHS'))   { define ('ROUND_TO_HUNDREDTHS',   2);         }
+if (!defined('ROUND_TO_MILLISECONDS')) { define ('ROUND_TO_MILLISECONDS', 3);         }
+if (!defined('ROUND_TO_MICROSECONDS')) { define ('ROUND_TO_MICROSECONDS', 6);         }
+if (!defined('ROUNDTIME'))             { define ('ROUNDTIME', ROUND_TO_MILLISECONDS); }
 
 // cyberspark.php items
 // NO CR AFTER THE CLOSING OF PHP, PLEASE. IMPORTANT!

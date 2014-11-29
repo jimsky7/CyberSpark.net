@@ -138,4 +138,67 @@ function lowercaseFQDN($url) {
 	return $result;	
 }
 
+///////////////////////////////// 
+if (!defined('ROUND_TO_MILLISECONDS')) { define ('ROUND_TO_MILLISECONDS', 3);         }	// usually definded in cyberspark.sysdefs.php
+if (!defined('ROUNDTIME'))             { define ('ROUNDTIME', ROUND_TO_MILLISECONDS); } 	// usually definded in cyberspark.sysdefs.php
+
+function roundTime($time, $roundtime=ROUNDTIME) {
+	return round($roundTime);
+}
+
+///////////////////////////////// 
+// hostname()
+// Given a URL, find the hostname
+function hostname($url) {
+	$result = str_replace(" ", "", $url);
+	try {
+		// Remove 'protocol://'
+		$i = strpos($result, '://');
+		if ($i !== false) {
+			$result = substr($result, $i+3);
+		}
+		// Truncate to remove everything after remaining slash
+		$i = stripos($result, "/");
+		if ($i !== false) {
+			$result = substr($result, 0, $i);
+		}
+		// Remove 'name:password@' from front
+		$i = strpos($result, '@');
+		if ($i !== false) {
+			$result = substr($result, $i+1);
+		}
+		// Remove ':port' from end
+		$i = strpos($result, ':');
+		if ($i !== false) {
+			$result = substr($result, 0, $i);
+		}
+	}
+	catch (Exception $x) {
+	}
+	return $result;
+}
+
+///////////////////////////////// 
+// getIPforHost()
+// Given a URL, find the IP address of the host
+function getIPforHost($url) {
+	$s = hostname($url);	
+	$dnsInfo = dns_get_record($s, DNS_A);
+	if ($dnsInfo === false) {
+		$dnsInfo = dns_get_record($s, DNS_AAAA);
+	}
+	if ($dnsInfo !== false && count($dnsInfo) > 0) {
+		// Use only the first record returned
+		$dnsInfo = $dnsInfo[0];	
+		// Return the IP associated with the hostname
+		if ($dnsInfo['type'] == 'A' || $dnsInfo['type'] == 'AAAA') { 
+			if (isset($dnsInfo['ip'])) {
+				return $dnsInfo['ip'];
+			}
+		}
+	}
+	// Return null on failure
+	return null;		
+}
+
 ?>
