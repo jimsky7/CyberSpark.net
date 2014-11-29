@@ -137,7 +137,7 @@ function scan($properties, $filters, &$store) {
 				if ($httpResult['code'] < 200) {
 					$httpCode = "";
 					if (isset($httpResult['error']) && (strlen($httpResult['error']) > 0)) {
-						$message .= "          php5_curl says [$code] '$httpResult[error]'";
+						$message .= "          php5-curl says [$code] '$httpResult[error]'";
 					}
 				}
 				// Make a special note for HTTP 300 through 399
