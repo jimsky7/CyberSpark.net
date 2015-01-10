@@ -34,6 +34,9 @@ if (!isset($BUBBLE_CHART_HEIGHT)) {
 		$BUBBLE_CHART_HEIGHT    	= 555;
 	}
 }
+if (!isset($BUBBLE_TOUCH_DIAMETER)) {
+	$BUBBLE_TOUCH_DIAMETER 	  		=  15;
+}
 if (!isset($span)) {
 	$span 			= 'P1D';
 }
@@ -298,7 +301,7 @@ var fill_alert  = fill_blue;
 	}
 ?>
 d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
-<?php  /* Each node (bubble) */ ?>
+<?php  /* For each node (make a bubble) */ ?>
   var node = svg.selectAll(".node")
       .data(bubble.nodes(crawl(tree))
       .filter(function(d) { return !d.children; }))
@@ -323,7 +326,7 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 			); 
 		});
 
-<?php  /* The solid circle */ ?>
+<?php  /* The large solid bubble */ ?>
   node.append("circle")
 		.attr("r", function(d) { return (Math.max(MIN_RADIUS,d.r)); })
 		.style("stroke", function(d) { 
@@ -355,26 +358,6 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 			);
 		});
 
-  node.append("a")
-     	.attr("target", "CS_CHART_IFRAME")
-    	.attr("xlink:href", function(d) { 
-			return ("index-cs-analysis-frame.php?<?php echo $MDY; ?>URL_HASH="+d.URL_HASH); 
-		})
-    	.on("click", function(d) { chartHash=d.URL_HASH; return true; })
-		.append("circle")
-    	.attr("r",         3)
-    	.style("stroke",   function(d) { return fill_white; })
-    	.attr("cx",        0)
-    	.attr("cy",       15)
-    	.style("fill",    function(d) { 
-			return (
-				(d.result_code==CURLE_OPERATION_TIMEDOUT)?"#e0e0e0":
-				(d.result_code==CURLE_RECV_ERROR        )?"#e0e0e0":
-				(d.http_ms<=CHART_MIN)?"#202020":
-				"#e0e0e0"
-			); 
-		})
-		.style("opacity", 0.9);
 <?php  /* Text in the center of the circle */ ?>
   node.append("text")
       .attr("dy",            ".3em")
@@ -427,6 +410,28 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 				fill_white
 			); 
 		});
+
+<?php  /* Small "touchpoint" circle in the center of each bubble */ ?>
+  node.append("a")
+     	.attr("target", "CS_CHART_IFRAME")
+    	.attr("xlink:href", function(d) { 
+			return ("index-cs-analysis-frame.php?<?php echo $MDY; ?>URL_HASH="+d.URL_HASH); 
+		})
+    	.on("click", function(d) { chartHash=d.URL_HASH; return true; })
+		.append("circle")
+    	.attr("r",         3)
+    	.style("stroke",   function(d) { return fill_white; })
+    	.attr("cx",        0)
+    	.attr("cy",       <?php echo $BUBBLE_TOUCH_DIAMETER; ?>)
+    	.style("fill",    function(d) { 
+			return (
+				(d.result_code==CURLE_OPERATION_TIMEDOUT)?"#e0e0e0":
+				(d.result_code==CURLE_RECV_ERROR        )?"#e0e0e0":
+				(d.http_ms<=CHART_MIN)?"#202020":
+				"#e0e0e0"
+			); 
+		})
+		.style("opacity", 0.9);
 		
 });
 
