@@ -66,13 +66,14 @@ function getASNinfo($url) {
 
 ///////////////////////////////// 
 function asnScan($content, $args, $privateStore) {
-	$filterName = "asn";
-	$result     = "OK";						// default result
+	$filterName = 'asn';
+	$result     = 'OK';						// default result
 	$url        = $args['url'];
-	$message    = "";
+	$message    = '';
 
-	if (isNotifyHour($args['notify']) && !$privateStore[$filterName][$url]['asn_ran_today']) {
-$result = 'Info';	// Always notify (during testing)
+	if (isset($args['notify']) && isset($privateStore[$filterName][$url]['asn_ran_today'])
+		&& isNotifyHour($args['notify']) && !$privateStore[$filterName][$url]['asn_ran_today']) {
+		$result = 'OK';
 		$asnInfo = getASNinfo($url);
 		if ($asnInfo != null) {
 			// Warnings needed?
@@ -81,13 +82,19 @@ $result = 'Info';	// Always notify (during testing)
 				$message .= "ASN information changed! \n";
 			}
 			if (strcasecmp($privateStore[$filterName][$url]['operator'], $asnInfo['operator']) != 0) {
-				$result = 'Critical';
+				$result   = 'Critical';
 				$message .= "ASN information changed! \n";
 			}
+			$host = hostname($url);
 			// Document the current values in the message
-			$message .= INDENT."ASN $asnInfo[asn] operated by '$asnInfo[operator]'\n";
-			$message .= INDENT."IP is $asnInfo[ip]) \n";
-			$message .= INDENT."API latency: $asnInfo[latency]\n";
+			$message .= INDENT . "FQDN $host\n";
+			$message .= INDENT . "ASN $asnInfo[asn] operated by '$asnInfo[operator]'\n";
+			$message .= INDENT . "IP is $asnInfo[ip]) \n";
+			$message .= INDENT . "API latency: $asnInfo[latency]\n";
+			// While debugging...
+			echoIfVerbose(" ASN information for $url \n");
+			echoIfVerbose(" ASN: $asnInfo[asn] IP: $asnInfo[ip] Latency: $asnInfo[latency] \n");
+			echoIfVerbose(" Operator: $asnInfo[operator] \n");
 			// Save current values for next time
 			$privateStore[$filterName][$url]['asn']      = $asnInfo['asn'];
 			$privateStore[$filterName][$url]['ip']       = $asnInfo['ip'];
@@ -95,12 +102,17 @@ $result = 'Info';	// Always notify (during testing)
 			$privateStore[$filterName][$url]['latency']  = $asnInfo['latency'];
 		}
 		else {
-			$message .= "Could not retrieve ASN info for '$url'\n";
+			$message .= "Could not retrieve ASN info for '$host'\n";
+			echoIfVerbose(" Could not retrieve ASN info for '$host' \n");
 		}
 	}
 	else {
 		// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
 		$privateStore[$filterName][$url]['asn_ran_today'] = false;
+		echoIfVerbose(" The asn filter only runs once  day and this is not that time. \n");
+		if (isset($privateStore[$filterName][$url]['asn'])) {
+			$message .= " ASN: $privateStore[$filterName][$url][asn] Operator: $privateStore[$filterName][$url][operator]";
+		}
 	}
 	
 	return array($message, $result, $privateStore);
