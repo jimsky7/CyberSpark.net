@@ -62,6 +62,18 @@ if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
 define('GSB_SERVER', 'http://0.0.0.0:4040');		// NO ending "/" please!
 
 /////////////////////////////////////////////////////////////////////////////////
+// If you have arranged access to an ASN locator service, put the full URL below
+//   This must be compatible with team-cymru API
+//	 See the ASN filter source file for more information.
+define('ASN_SERVER', "https://0.0.0.0/cgi-bin/whois.cgi");
+
+/////////////////////////////////////////////////////////////////////////////////
+// If you have arranged access to GEO IP locator service, put the full URL below
+//   This must be compatible with FREEGEOIP API
+//   See the GEO filter source file for more information
+define('GEO_SERVER', "http://0.0.0.0:8080/json/");
+
+/////////////////////////////////////////////////////////////////////////////////
 // Paths
 // Set a path to the APP directory
 define('APP_PATH', '/usr/local/cyberspark/');			// MUST HAVE AN ENDING "/" to work

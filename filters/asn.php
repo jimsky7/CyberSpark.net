@@ -3,6 +3,7 @@
 		CyberSpark.net monitoring-alerting system
 		FILTER: asn
 		Checks this page against Team Cymru ASN API.
+			http://www.team-cymru.org/Services/ip-to-asn.html
 	**/
 
 	/**
@@ -35,8 +36,19 @@ function getASNinfo($url) {
 	}
 	$paramArray['submit_paste'] = 'Submit';
 
-	$APIurl    = 'https://asn.cymru.com/cgi-bin/whois.cgi';
-	$userAgent = 'http://CyberSpark.net/agent';
+	///////////////////////////////// 
+	if (defined('ASN_SERVER')) {
+		$APIurl    = ASN_SERVER;
+	}
+	else {
+		$APIurl    = 'https://asn.cymru.com/cgi-bin/whois.cgi';
+	}
+	if (defined('DEFAULT_IDENTITY') && defined ('DEFAULT_USERAGENT')) {
+		$userAgent = DEFAULT_USERAGENT . ' ' . DEFAULT_IDENTITY;
+	}
+	else {
+		$userAgent = 'http://CyberSpark.net/agent info@cyberspark.net';
+	}
 	$timeout   = 300;
 	
 	$r = curlPost($APIurl, $userAgent, $paramArray, $timeout, $auth=null, $sslVerify=false, $options=null);
