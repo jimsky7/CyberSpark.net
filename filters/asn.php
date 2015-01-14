@@ -83,26 +83,34 @@ function asnScan($content, $args, $privateStore) {
 	$url        = $args['url'];
 	$message    = '';
 
-	if (isset($args['notify']) && isset($privateStore[$filterName][$url]['asn_ran_today'])
-		&& isNotifyHour($args['notify']) && !$privateStore[$filterName][$url]['asn_ran_today']) {
+	if (isset($args['notify']) && isset($privateStore[$filterName][$url][$filterName.'_ran_today'])
+		&& isNotifyHour($args['notify']) && !$privateStore[$filterName][$url][$filterName.'_ran_today']) {
 		$result = 'OK';
 		$asnInfo = getASNinfo($url);
+		$host = hostname($url);
 		if ($asnInfo != null) {
+			$message .= "\n";
 			// Warnings needed?
-			if ($privateStore[$filterName][$url]['asn'] != $asnInfo['asn']) {
-				$result = 'Critical';
-				$message .= "ASN information changed! \n";
+			if (isset($privateStore[$filterName][$url]['ip'])) {
+				if ($privateStore[$filterName][$url]['asn'] != $asnInfo['asn']) {
+					$result = 'Critical';
+					$message .= "ASN information changed! \n";
+				}
+				else if (strcasecmp($privateStore[$filterName][$url]['operator'], $asnInfo['operator']) != 0) {
+					$result   = 'Critical';
+					$message .= "ASN information changed! \n";
+				}
 			}
-			if (strcasecmp($privateStore[$filterName][$url]['operator'], $asnInfo['operator']) != 0) {
-				$result   = 'Critical';
-				$message .= "ASN information changed! \n";
+			else {
+				$result = 'Warning';
+				$message .= "ASN information is available for the first time. (This is good.)\n";
 			}
-			$host = hostname($url);
 			// Document the current values in the message
 			$message .= INDENT . "FQDN $host\n";
 			$message .= INDENT . "ASN $asnInfo[asn] operated by '$asnInfo[operator]'\n";
-			$message .= INDENT . "IP is $asnInfo[ip]) \n";
+			$message .= INDENT . "IP is $asnInfo[ip]\n";
 			$message .= INDENT . "API latency: $asnInfo[latency]\n";
+			$message .= INDENT . "Data is from Team Cymru http://www.team-cymru.org/Services/ip-to-asn.html\n";
 			// While debugging...
 			echoIfVerbose(" ASN information for $url \n");
 			echoIfVerbose(" ASN: $asnInfo[asn] IP: $asnInfo[ip] Latency: $asnInfo[latency] \n");
@@ -122,9 +130,14 @@ function asnScan($content, $args, $privateStore) {
 		// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
 		$privateStore[$filterName][$url]['asn_ran_today'] = false;
 		echoIfVerbose(" The asn filter only runs once  day and this is not that time. \n");
+		// Add some ASN information even though the result is "OK" and the filter isn't really running
 		if (isset($privateStore[$filterName][$url]['asn'])) {
-			$message .= " ASN: $privateStore[$filterName][$url][asn] Operator: $privateStore[$filterName][$url][operator]";
+			$message .= " ASN: ".$privateStore[$filterName][$url]['asn'];
 		}
+		if (isset($privateStore[$filterName][$url]['operator'])) {
+			$message .= " Operator: ".$privateStore[$filterName][$url]['operator'];
+		}
+		$message .= " (thx to Team-Cymru ASN API)";
 	}
 	
 	return array($message, $result, $privateStore);

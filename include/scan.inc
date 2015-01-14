@@ -51,9 +51,10 @@ function scan($properties, $filters, &$store) {
 		// Note that httpGet() also returns cURL info, which has much more detail,
 		//   such as latency, DNS lookup time, transfer time, if you wish to use.
 		//   It's in $httpResult['curl_info'] so take a look at documentation at PHP.NET
-//		$elapsedTime = time() - $before;							// type 'int'    (before 2014-10-14)
-		$elapsedTime = $httpResult['curl_info']['total_time'];		// type 'double' (as of  2014-10-14)
-		
+		$elapsedTime = time() - $before;									// type 'int'    (before 2014-10-14)
+		if (isset($httpResult['curl_info']['total_time'])) {
+			$elapsedTime = $httpResult['curl_info']['total_time'];		// type 'double' (as of  2014-10-14)
+		}
 		echoIfVerbose("HTTP result code " . $httpResult['code'] . "\n");
 		$httpError = '';
 		if (isset($httpResult['error'])) {
@@ -120,7 +121,7 @@ function scan($properties, $filters, &$store) {
 						$message .= "  " . $mess . "\n";
 						// If filter said anything other than "OK" then there's
 						//   an overall failure for this URL.
-						$isOK = $isOK && ($result == "OK");		// (both terms must be true)
+						$isOK = $isOK && ($result == 'OK');		// (both terms must be true)						
 					}
 				}
 				$rankIndex++;
@@ -135,9 +136,28 @@ function scan($properties, $filters, &$store) {
 				$httpCode = "Error $code";
 				// Check and process cURL responses
 				if ($httpResult['code'] < 200) {
+					// Under 200 is a cURL response
 					$httpCode = "";
 					if (isset($httpResult['error']) && (strlen($httpResult['error']) > 0)) {
-						$message .= "          php5-curl says [$code] '$httpResult[error]'";
+						$message .= "          php5-curl says [$code] '$httpResult[error]'\n";
+						// If available, add ASN information
+						// This only happens if the URL was previously successfully retrieved
+						//   and ASN information was saved.
+						if (isset($store['asn'][$url]['asn'])) {
+							$message .= "          ASN: ".$store['asn'][$url]['asn']."\n";
+						}
+						if (isset($store['asn'][$url]['asn'])) {
+							$message .= "          Operator: ".$store['asn'][$url]['operator']."\n";
+						}
+						// If available, add geolocation information
+						// This only happens if the URL was previously successfully retrieved
+						//   and geolocation information was saved.
+						if (isset($store['geo'][$url]['city'])) {
+							$message .= "          City: ".$store['geo'][$url]['city']."\n";
+						}
+						if (isset($store['geo'][$url]['country_name'])) {
+							$message .= "          Country: ".$store['geo'][$url]['country_name']."\n";
+						}
 					}
 				}
 				// Make a special note for HTTP 300 through 399
@@ -157,9 +177,28 @@ function scan($properties, $filters, &$store) {
 						$message .= "          (The redirect to '$location' was not followed. DO NOT CLICK!)";
 					}
 				}
+				// 500-series errors are backoffice failures, including CLoudflare errors
+				if (($code >= 500) && ($code <= 599)) {
+					// If available, add ASN information
+					// This only happens if the URL was previously successfully retrieved
+					//   and ASN information was saved.
+					if (isset($store['asn'][$url]['asn'])) {
+						$message .= "          ASN: ".$store['asn'][$url]['asn']."\n";
+					}
+					if (isset($store['asn'][$url]['asn'])) {
+						$message .= "          Operator: ".$store['asn'][$url]['operator']."\n";
+					}
+					// If available, add geolocation information
+					// This only happens if the URL was previously successfully retrieved
+					//   and geolocation information was saved.
+					if (isset($store['geo'][$url]['city'])) {
+						$message .= "          City: ".$store['geo'][$url]['city']."\n";
+					}
+					if (isset($store['geo'][$url]['country_name'])) {
+						$message .= "          Country: ".$store['geo'][$url]['country_name']."\n";
+					}
+				}
 			}
-	
-	
 	
 			$scanResults[$urlNumber] = $prefix . $httpCode . " $url  $message \n";
 			writeLog($scanResults[$urlNumber], $elapsedTime, strlen($httpResult['body']), "", $conditions, $url, $httpResult['code'], 0);

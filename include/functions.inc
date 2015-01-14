@@ -142,7 +142,7 @@ function lowercaseFQDN($url) {
 if (!defined('ROUND_TO_MILLISECONDS')) { define ('ROUND_TO_MILLISECONDS', 3);         }	// usually definded in cyberspark.sysdefs.php
 if (!defined('ROUNDTIME'))             { define ('ROUNDTIME', ROUND_TO_MILLISECONDS); } 	// usually definded in cyberspark.sysdefs.php
 
-function roundTime($time, $roundtime=ROUNDTIME) {
+function roundTime($time, $roundTime=ROUNDTIME) {
 	return round($roundTime);
 }
 

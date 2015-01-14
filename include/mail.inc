@@ -288,7 +288,7 @@ function sendMail($scanResults, &$properties) {
 			$message .= "This is a daily administrative message sent even if everything is OK.\n\n";		
 			$subject = $properties['shortid'] . " OK $timeStamp";
 			$sendMessage = true;
-			echoIfVerbose("Sending administrative check-in message to: " . $to . ": " . $scanResults . "\n");
+			echoIfVerbose("Sending administrative check-in message to: " . $to . "\n");
 			if ($properties['time'] <= 60) {
 				// Avoid notifying more than once a day
 				$properties['notifiedtoday'] = true;
