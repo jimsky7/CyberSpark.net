@@ -14,7 +14,7 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
-include_once "include/echolog.inc";
+include_once "include/echolog.php";
 
 // IMPORTANT NOTE:
 // Some functions required for this filter are in gsb.php and

@@ -15,9 +15,9 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
-include_once "include/echolog.inc";
-include_once "include/functions.inc";
-include_once "include/filter_functions.inc";
+include_once "include/echolog.php";
+include_once "include/functions.php";
+include_once "include/filter_functions.php";
 
 define('SMARTSCAN_MAX_ALERTS', 2);
 

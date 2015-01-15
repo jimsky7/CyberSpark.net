@@ -17,8 +17,8 @@
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
-include_once "include/filter_functions.inc";
+include_once "include/echolog.php";
+include_once "include/filter_functions.php";
 
 function checklengthScan($content, $args, $privateStore) {
 	$filterName = 'checklength';

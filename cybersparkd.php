@@ -38,8 +38,8 @@ include_once "cyberspark.config.php";
 include_once "cyberspark.sysdefs.php";
 
 // Other supporting code
-include_once "include/args.inc";
-include_once "include/mail.inc";
+include_once "include/args.php";
+include_once "include/mail.php";
 declare(ticks = 1);					// allows shutdown functions to work
 
 ///////////////////////////////// 

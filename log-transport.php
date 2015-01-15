@@ -7,12 +7,9 @@
 	Note: Requires php5-curl (not the PEAR HTTP client)
 ****/
 
-// require_once 'HTTP/Client.php';
-// require_once 'HTTP/Request.php';
-// require_once 'include/http.inc';				// HTTP functions
 require_once 'log-transport-config.php';		// same directory as this script
 require_once 'log-transport-pw.php';			// same directory as this script
-require_once 'include/args.inc';
+require_once 'include/args.php';
 require_once 'cyberspark.sysdefs.php';
 
 declare(ticks = 1);					// allows shutdown functions to work

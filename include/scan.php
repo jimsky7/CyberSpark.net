@@ -4,7 +4,7 @@
 		perform one round of scanning (all URLs once)
 	*/
 
-include_once "include/classdefs.inc";
+include_once "include/classdefs.php";
 include_once "cyberspark.sysdefs.php";
 
 ///////////////////////////////////////////////////////////////////////////////////

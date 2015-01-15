@@ -14,9 +14,9 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 include_once "cyberspark.sysdefs.php";
-include_once "include/echolog.inc";
-include_once "include/http.inc";
-include_once "include/functions.inc";
+include_once "include/echolog.php";
+include_once "include/http.php";
+include_once "include/functions.php";
 
 ///////////////////////////////// 
 // getGeoInfo() » Use FREEGEOIP software we have installed on our own server
@@ -81,19 +81,15 @@ function geoScan($content, $args, $privateStore) {
 		if (($geoInfo != null) && isset($geoInfo['ip'])) {
 			$message .= "\n";
 			// Warnings needed?
-			if (isset($privateStore[$filterName][$url]['ip'])) {
-				if ($privateStore[$filterName][$url]['ip'] != $geoInfo['ip']) {
+			if (isset($privateStore[$filterName][$url]['ip']) && isset($privateStore[$filterName][$url]['metro_code'])) {
+				if ($privateStore[$filterName][$url]['metro_code'] != $geoInfo['metro_code']) {
 					$result = 'Critical';
-					$message .= "Geolocation information changed! \n";
-				}
-				else if (strcasecmp($privateStore[$filterName][$url]['metro_code'], $geoInfo['metro_code']) != 0) {
-					$result   = 'Critical';
-					$message .= "Geolocation information changed! \n";
+					$message .= INDENT . "Geolocation information changed! \n";
 				}
 			}
 			else {
 				$result = 'Warning';
-				$message .= "Geolocation information is available for the first time. (This is good.)\n";
+				$message .= INDENT . "Geolocation information is available for the first time. (This is good.)\n";
 			}
 			// Document the current values in the message
 			$message .= INDENT . "FQDN: $host\n";

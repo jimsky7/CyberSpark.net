@@ -14,9 +14,9 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 include_once "cyberspark.sysdefs.php";
-include_once "include/echolog.inc";
-include_once "include/http.inc";
-include_once "include/functions.inc";
+include_once "include/echolog.php";
+include_once "include/http.php";
+include_once "include/functions.php";
 
 ///////////////////////////////// 
 // getASNinfo()
@@ -94,16 +94,16 @@ function asnScan($content, $args, $privateStore) {
 			if (isset($privateStore[$filterName][$url]['ip'])) {
 				if ($privateStore[$filterName][$url]['asn'] != $asnInfo['asn']) {
 					$result = 'Critical';
-					$message .= "ASN information changed! \n";
+					$message .= INDENT . "ASN information changed! \n";
 				}
 				else if (strcasecmp($privateStore[$filterName][$url]['operator'], $asnInfo['operator']) != 0) {
 					$result   = 'Critical';
-					$message .= "ASN information changed! \n";
+					$message .= INDENT . "ASN information changed! \n";
 				}
 			}
 			else {
 				$result = 'Warning';
-				$message .= "ASN information is available for the first time. (This is good.)\n";
+				$message .= INDENT . "ASN information is available for the first time. (This is good.)\n";
 			}
 			// Document the current values in the message
 			$message .= INDENT . "FQDN $host\n";
@@ -133,11 +133,11 @@ function asnScan($content, $args, $privateStore) {
 		// Add some ASN information even though the result is "OK" and the filter isn't really running
 		if (isset($privateStore[$filterName][$url]['asn'])) {
 			$message .= " ASN: ".$privateStore[$filterName][$url]['asn'];
+			if (isset($privateStore[$filterName][$url]['operator'])) {
+				$message .= " Operator: ".$privateStore[$filterName][$url]['operator'];
+			}
+			$message .= " (thx to Team-Cymru ASN API)";
 		}
-		if (isset($privateStore[$filterName][$url]['operator'])) {
-			$message .= " Operator: ".$privateStore[$filterName][$url]['operator'];
-		}
-		$message .= " (thx to Team-Cymru ASN API)";
 	}
 	
 	return array($message, $result, $privateStore);

@@ -9,8 +9,8 @@ require_once 'Mail.php';
 require_once 'Mail/mime.php';
 
 // CyberSpark stuff
-require_once 'include/echolog.inc';
-include_once "include/functions.inc";
+require_once 'include/echolog.php';
+include_once "include/functions.php";
 
 /////////////////////////////////////////////////////////
 function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $message='', $smtpServer, $smtpPort, $user, $password) {

@@ -13,9 +13,9 @@ include_once "cyberspark.config.php";
 include_once "cyberspark.sysdefs.php";
 
 declare(ticks = 1);					// allows shutdown functions to work
-include_once "include/shutdown.inc";
-include_once "include/startup.inc";
-include_once "include/functions.inc";
+include_once "include/shutdown.php";
+include_once "include/startup.php";
+include_once "include/functions.php";
 
 ///////////////////////////////////////////////////////////////////////////////////
 // 
@@ -54,10 +54,10 @@ $gsbServer = GSB_SERVER;			// from config
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Filter-related stuff
-// Filters are *.inc files within the filters/ subdirectory that contain code to
+// Filters are *.php files within the filters/ subdirectory that contain code to
 //   be applied to the URLs we examine.  See filters/basic.php for internal
 //   documentation about how to write and "call" filters.
-include "include/classdefs.inc";
+include "include/classdefs.php";
 $filters = array();					// this array is numerically ordered/indexed
 									// and contains all filter information.
 	
@@ -78,14 +78,14 @@ $abuseTo	= EMAIL_ABUSETO;				// default from config
 	
 ///////////////////////////////////////////////////////////////////////////////////
 // include supporting code
-include_once "include/store.inc";
-include_once "include/args.inc";
-include_once "include/properties.inc";
-include_once "include/mail.inc";
-include_once "include/http.inc";
-include_once "include/scan.inc";
-include_once "include/filters.inc";
-include_once "include/echolog.inc";
+include_once "include/store.php";
+include_once "include/args.php";
+include_once "include/properties.php";
+include_once "include/mail.php";
+include_once "include/http.php";
+include_once "include/scan.php";
+include_once "include/filters.php";
+include_once "include/echolog.php";
 	
 ///////////////////////////////////////////////////////////////////////////////////
 // initialization
@@ -116,7 +116,7 @@ $logTransportProcess = null;
 // Note that if this process becomes 'unresponsive' the shutdown will not be
 //   performed. Specifically, this could leave a log-transport running.
 function shutdownFunctionWrapper($sig) {
-	return shutdownFunction($sig);		// in includes/shutdown.inc
+	return shutdownFunction($sig);		// in includes/shutdown.php
 }
 ///////////////////////////////////////////////////////////////////////////////////
 // Register the shutdown function

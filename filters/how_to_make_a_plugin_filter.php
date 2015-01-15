@@ -58,18 +58,13 @@ Create a function with the same name as the file (but not the ".php" extension).
 //      passed in again as the argument "$store" ... the code must respect this store
 //      and index it appropriately so as not to mess with data belonging to other
 //      plugin filters.
-
-// CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
-
 */
 ?>
 <?php 
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
+include_once "include/echolog.php";
 
 define ('FILTER_NAME', 'how_to_make_a_plugin_filter');
 

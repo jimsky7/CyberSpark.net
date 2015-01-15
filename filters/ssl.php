@@ -29,8 +29,8 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
-include_once "include/echolog.inc";
-include_once "include/functions.inc";
+include_once "include/echolog.php";
+include_once "include/functions.php";
 
 /////////////////////////////////////////////////////////////////////////////////
 // If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to true, the 'ssl' filter looks for a definitive
