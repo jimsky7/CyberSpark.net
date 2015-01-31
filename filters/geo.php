@@ -68,12 +68,38 @@ function getGeoInfo($url) {
 ///////////////////////////////// 
 function geoScan($content, $args, $privateStore) {
 	$filterName = 'geo';
+	$attributeName = 'ip';
 	$result     = 'OK';						// default result
 	$url        = $args['url'];
 	$message    = '';
 
-	if (isset($args['notify']) && isset($privateStore[$filterName][$url][$filterName.'_ran_today'])
-		&& isNotifyHour($args['notify']) && !$privateStore[$filterName][$url][$filterName.'_ran_today']) {
+	// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
+	$privateStore[$url][$filterName.'_ran_today'] = false;
+	echoIfVerbose(" The $filterName filter only runs once  day and this is not that time. \n");
+	// Add some GEO information even though the result is "OK" and the filter isn't really running
+	if (isset($privateStore[$url][$attributeName])) {
+		$message .= ' IP: '.$privateStore[$url][$attributeName];
+		if (isset($privateStore[$url]['city'])) {
+			$message .= ' City: '.$privateStore[$url]['city'];
+		}
+		if (isset($privateStore[$url]['metro_code'])) {
+			$message .= ' Metro code: '.$privateStore[$url]['metro_code'];
+		}
+		$message .= " (thx to FREEGEOIP)";
+	}
+	
+	return array($message, $result, $privateStore);
+}
+
+///////////////////////////////// 
+function geoNotify($content, $args, $privateStore) {
+	$filterName = 'geo';
+	$attributeName = 'ip';
+	$result     = 'OK';						// default result
+	$url        = $args['url'];
+	$message    = '';
+
+	if (isset($args['notify']) && isset($privateStore[$url][$filterName.'_ran_today']) && isNotifyHour($args['notify']) && !$privateStore[$url][$filterName.'_ran_today']) {
 		$result = 'OK';
 		$geoInfo = getGeoInfo($url);
 		$host = hostname($url);
@@ -81,8 +107,8 @@ function geoScan($content, $args, $privateStore) {
 		if (($geoInfo != null) && isset($geoInfo['ip'])) {
 			$message .= "\n";
 			// Warnings needed?
-			if (isset($privateStore[$filterName][$url]['ip']) && isset($privateStore[$filterName][$url]['metro_code'])) {
-				if ($privateStore[$filterName][$url]['metro_code'] != $geoInfo['metro_code']) {
+			if (isset($privateStore[$url][$attributeName]) && isset($privateStore[$url]['metro_code'])) {
+				if ($privateStore[$url]['metro_code'] != $geoInfo['metro_code']) {
 					$result = 'Critical';
 					$message .= INDENT . "Geolocation information changed! \n";
 				}
@@ -101,7 +127,7 @@ function geoScan($content, $args, $privateStore) {
 			$message .= INDENT . "Data is from FREEGEOIP https://github.com/fiorix/freegeoip/\n";
 			// Save current values for next time
 			foreach ($geoInfo as $key => $value) {
-				$privateStore[$filterName][$url][$key] = $value;
+				$privateStore[$url][$key] = $value;
 			}
 			echoIfVerbose($message);
 		}
@@ -110,29 +136,13 @@ function geoScan($content, $args, $privateStore) {
 			echoIfVerbose(" Could not retrieve ".strtoupper($filterName)." info for '$host' \n");
 		}
 	}
-	else {
-		// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
-		$privateStore[$filterName][$url][$filterName.'_ran_today'] = false;
-		echoIfVerbose(" The $filterName filter only runs once  day and this is not that time. \n");
-		// Add some GEO information even though the result is "OK" and the filter isn't really running
-		if (isset($privateStore[$filterName][$url]['ip'])) {
-			$message .= ' IP: '.$privateStore[$filterName][$url]['ip'];
-			if (isset($privateStore[$filterName][$url]['city'])) {
-				$message .= ' City: '.$privateStore[$filterName][$url]['city'];
-			}
-			if (isset($privateStore[$filterName][$url]['metro_code'])) {
-				$message .= ' Metro code: '.$privateStore[$filterName][$url]['metro_code'];
-			}
-			$message .= " (thx to FREEGEOIP)";
-		}
-	}
 	
 	return array($message, $result, $privateStore);
 }
 
 ///////////////////////////////// 
 function geoInit($content, $args, $privateStore) {
-	$filterName = "geo";
+	$filterName = 'geo';
 	$result   = "OK";						// default result
 	$url = $args['url'];
 //	$contentLength = strlen($content);
@@ -148,7 +158,7 @@ function geoInit($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function geoDestroy($content, $args, $privateStore) {
-	$filterName = "geo";
+	$filterName = 'geo';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
@@ -161,9 +171,13 @@ function geoDestroy($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function geo($args) {
-	$filterName = "geo";
+	$filterName = 'geo';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
+		return false;
+	}
+ 	if (!registerFilterHook($filterName, 'notify', $filterName.'Notify', 10)) {
+		echo "The filter '$filterName' was unable to add a 'Notify' hook. \n";	
 		return false;
 	}
 	if (!registerFilterHook($filterName, 'init', $filterName.'Init', 10)) {
