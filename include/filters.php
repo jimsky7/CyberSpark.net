@@ -89,6 +89,9 @@ function registerFilterHook($filterName, $filterType, $filterFunction, $rank) {
 		if ($filterType == 'scan') {
 			$filters[$slot]->scan = $filterFunction;		
 		}
+		elseif ($filterType == 'notify') {
+			$filters[$slot]->notify = $filterFunction;		
+		}
 		elseif ($filterType == 'init') {
 			$filters[$slot]->init = $filterFunction;		
 		}

@@ -102,7 +102,12 @@ function scan($properties, $filters, &$store) {
 					$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
 					try {
 						// Run 'basic' filter
-						list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+						if (isNotifyHour($filterArgs['notify']) && ($filters[$rankIndex]->notify != null)) {
+							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->notify, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+						}
+						else {
+							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+						}
 						if (isset($st)) {
 							// Save this filter's private store
 							$store[$filters[$rankIndex]->name] = $st;
@@ -143,20 +148,32 @@ function scan($properties, $filters, &$store) {
 						// If available, add ASN information
 						// This only happens if the URL was previously successfully retrieved
 						//   and ASN information was saved.
-						if (isset($store['asn'][$url]['asn'])) {
-							$message .= "          ASN: ".$store['asn'][$url]['asn']."\n";
+						if (isset($store['asn'])) {
+							$privateStore = $store['asn'];
+							if (isset($privateStore[$url]['asn'])) {
+								$message .= "          ASN: ".$privateStore[$url]['asn']."\n";
+							}
+							if (isset($privateStore[$url]['asn'])) {
+								$message .= "          Operator: ".$privateStore[$url]['operator']."\n";
+							}
 						}
-						if (isset($store['asn'][$url]['asn'])) {
-							$message .= "          Operator: ".$store['asn'][$url]['operator']."\n";
+						else {
+							$message .= "          No ASN information is available.\n";
 						}
 						// If available, add geolocation information
 						// This only happens if the URL was previously successfully retrieved
 						//   and geolocation information was saved.
-						if (isset($store['geo'][$url]['city'])) {
-							$message .= "          City: ".$store['geo'][$url]['city']."\n";
+						if (isset($store['geo'])) {
+							$privateStore = $store['geo'];
+							if (isset($privateStore[$url]['city'])) {
+								$message .= "          City: ".$privateStore[$url]['city']."\n";
+							}
+							if (isset($privateStore[$url]['country_name'])) {
+								$message .= "          Country: ".$privateStore[$url]['country_name']."\n";	
+							}
 						}
-						if (isset($store['geo'][$url]['country_name'])) {
-							$message .= "          Country: ".$store['geo'][$url]['country_name']."\n";
+						else {
+							$message .= "          No GEO information is available.\n";
 						}
 					}
 				}
@@ -182,20 +199,32 @@ function scan($properties, $filters, &$store) {
 					// If available, add ASN information
 					// This only happens if the URL was previously successfully retrieved
 					//   and ASN information was saved.
-					if (isset($store['asn'][$url]['asn'])) {
-						$message .= "          ASN: ".$store['asn'][$url]['asn']."\n";
+					if (isset($store['asn'])) {
+						$privateStore = $store['asn'];
+						if (isset($privateStore[$url]['asn'])) {
+							$message .= "          ASN: ".$privateStore[$url]['asn']."\n";
+						}
+						if (isset($privateStore[$url]['asn'])) {
+							$message .= "          Operator: ".$privateStore[$url]['operator']."\n";
+						}
 					}
-					if (isset($store['asn'][$url]['asn'])) {
-						$message .= "          Operator: ".$store['asn'][$url]['operator']."\n";
+					else {
+						$message .= "          No ASN information is available.\n";
 					}
 					// If available, add geolocation information
 					// This only happens if the URL was previously successfully retrieved
 					//   and geolocation information was saved.
-					if (isset($store['geo'][$url]['city'])) {
-						$message .= "          City: ".$store['geo'][$url]['city']."\n";
+					if (isset($store['geo'])) {
+						$privateStore = $store['geo'];
+						if (isset($privateStore[$url]['city'])) {
+							$message .= "          City: ".$privateStore[$url]['city']."\n";
+						}
+						if (isset($privateStore[$url]['country_name'])) {
+							$message .= "          Country: ".$privateStore[$url]['country_name']."\n";	
+						}
 					}
-					if (isset($store['geo'][$url]['country_name'])) {
-						$message .= "          Country: ".$store['geo'][$url]['country_name']."\n";
+					else {
+						$message .= "          No GEO information is available.\n";
 					}
 				}
 			}
@@ -228,7 +257,12 @@ function scan($properties, $filters, &$store) {
 						$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
 						
 						try {
-							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+							if (isNotifyHour($filterArgs['notify']) && ($filters[$rankIndex]->notify != null)) {
+								list($mess, $result, $st) = call_user_func($filters[$rankIndex]->notify, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+							}
+							else {
+								list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+							}
 							if (isset($st)) {
 								// Save this filter's private store
 								$store[$filters[$rankIndex]->name] = $st;

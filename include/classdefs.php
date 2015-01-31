@@ -8,10 +8,11 @@
 	class filter
 	{
 		public $rank = 0;
-		public $name = null;
-		public $scan  = null;
-		public $init  = null;
-		public $destroy = null;
+		public $name = null;		// name of the filter
+		public $scan  = null;		// function to call for regular scan
+		public $notify = null;		// ...for daily 'notify' scan
+		public $init  = null;		// ...to initialize the filter
+		public $destroy = null;		// ...when filter is being destroyed
 	}
 
 	class url
