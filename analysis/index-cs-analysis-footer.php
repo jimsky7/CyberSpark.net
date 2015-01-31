@@ -4,25 +4,31 @@
 // Page footer
 
 ?>
-<!-- common footer 2014-11-12 -->
+<!-- common footer begins -->
 <?php if (!isset($skipHR) || !$skipHR) { ?><hr/><?php } ?>
 <div id="CS_FOOTER_NARROW">
 <table id='LEGEND_NARROW' cellspacing='0' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
 		<tr>
 			<td class="rect_green"   style="height:20px; width:55px; color:White;">&nbsp;&nbsp;seconds</td>
-			<td class="rect_yellow"  style="height:20px; width:40px; color:black;">&nbsp;&nbsp;<?php echo CHART_YELLOW; ?> +</td>
-			<td class="rect_orange"  style="height:20px; width:40px; color:White;">&nbsp;&nbsp;<?php echo CHART_ORANGE; ?> +</td>
-			<td class="rect_red"     style="height:20px; width:40px; color:White;">&nbsp;&nbsp;<?php echo CHART_RED; ?> +</td>
-			<td                      style="height:20px; width:15px;"></td>
-			<td class="rect_blue"    style="height:20px; width:45px; color:White;">&nbsp;Error</td>
+			<td class="rect_yellow"  style="height:20px; width:35px; color:black;">&nbsp;&nbsp;<?php echo CHART_YELLOW; ?> +</td>
+			<td class="rect_orange"  style="height:20px; width:35px; color:White;">&nbsp;&nbsp;<?php echo CHART_ORANGE; ?> +</td>
+			<td class="rect_red"     style="height:20px; width:35px; color:White;">&nbsp;&nbsp;<?php echo CHART_RED; ?> +</td>
+			<td                      style="height:20px; width:10px;"></td>
+			<td class="rect_blue"    style="height:20px; width:45px; color:White;">&nbsp;HTTP</td>
 			<td                      style="height:20px; width:5px;"></td>
-			<td class="rect_magenta" style="height:20px; width:55px; color:White;">&nbsp;Timeout</td>
+			<td class="rect_magenta" style="height:20px; width:50px; color:White;">&nbsp;Timeout</td>
+			<td                      style="height:20px; width:5px;"></td>
+			<td class="rect_cyan"    style="height:20px; width:40px; color:black;">&nbsp;Fail</td>
 		</tr>
 <?php if (!isset($skipTips) || !$skipTips) { ?>
         <tr>
-        	<td colspan="12" style="padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;">Mouseover (or tap) the colored bars in a chart to see details.<br/>
-        	Click (or tap) a chart to view the associated URL.<br/>
-        	Resize or maximize and the charts will float to fill the window.
+        	<td colspan="12" style="padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;">            <b>Charts:</b><br/>
+            &mdash;Mouseover (or tap) the colored bars to see details.<br/>
+        	&mdash;Click (or tap) grey box at corner of a chart to view the associated URL.<br/>
+       	    &mdash;Resize or maximize and the charts will float to fill the window.<br/>
+         	<b>Bubbles:</b><br/>
+            &mdash;Mouseover a bubble's name to see detail.<br/>
+            &mdash;Click (or tap) the center dot in a bubble to see its chart.<br/>
         	</td>
         </tr>
 <?php } ?>
@@ -49,6 +55,8 @@
 			<td class="rect_blue"    style="height:20px; padding-left:5px;"></td>
 			<td                      style="height:20px; width:5px;"></td>
 			<td class="rect_magenta" style="height:20px;"></td>
+			<td                      style="height:20px; width:5px;"></td>
+			<td class="rect_cyan"    style="height:20px;"></td>
 		</tr>
 		<tr>
 			<td style="height:4px;">&nbsp;seconds</td>
@@ -65,6 +73,10 @@
 			<td>
 			</td>
 			<td style="">&nbsp;&nbsp;Timeout
+			</td>
+			<td>
+			</td>
+			<td style="">&nbsp;&nbsp;Connection failed or refused
 			</td>
 		</tr>
 		<tr>
@@ -85,9 +97,13 @@
 		</tr>
 <?php if (!isset($skipTips) || !$skipTips) { ?>
         <tr>
-        	<td colspan="12" style="padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;">Mouseover (or tap) the colored bars in a chart to see details.<br/>
-        	Click (or tap) a chart to view the associated URL.<br/>
-        	Resize or maximize and the charts will float to fill the window.
+        	<td colspan="12" style="padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;">            <b>Charts:</b><br/>
+            &mdash;Mouseover (or tap) the colored bars to see details.<br/>
+        	&mdash;Click (or tap) grey box at corner of a chart to view the associated URL.<br/>
+        	&mdash;Resize or maximize and the charts will float to fill the window.<br/>
+        	<b>Bubbles:</b><br/>
+            &mdash;Mouseover a bubble's name to see detail.<br/>
+            &mdash;Click (or tap) the center dot in a bubble to see its chart.<br/>
         	</td>
         </tr>
 <?php } ?>
@@ -106,4 +122,4 @@
 <?php } ?>
 	</table>
 </div>
-<?php
+<!-- common footer ends -->

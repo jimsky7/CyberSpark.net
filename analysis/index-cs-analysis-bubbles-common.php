@@ -257,7 +257,8 @@ var svg = d3.select("body").append("svg")
 <?php
 define ('CHART_MAX', 6);		/* clip any values larger than this */
 define ('CHART_ALERT', 300);	/* this value of http_ms (or higher) signals an alert */
-define ('CHART_TIMEOUT', 59);	/* this value of http_ms (or higher) signals timeout  */
+define ('CHART_TIMEOUT', 30);	/* this value of http_ms (or higher) signals timeout  */
+define ('CHART_CURL', 31);	    /* this value of http_ms signals cURL error */
 define ('CHART_MAGENTA', CHART_TIMEOUT); /* value of http_ms for timeout warning */
 define ('CHART_RED', CHART_MAX);	/* this is the value of http_ms that means 'off the charts' */
 define ('CHART_ORANGE', 4);		/* above this turns orange */
@@ -269,6 +270,7 @@ define ('MIN_RADIUS', 15);		/* minimum bubble radius */
 var CHART_MAX     = <?php echo CHART_MAX; ?>;			/* clip any values larger than this */
 var CHART_ALERT   = <?php echo CHART_ALERT; ?>;		/* this value of http_ms (or higher) signals an alert */
 var CHART_TIMEOUT = <?php echo CHART_TIMEOUT; ?>;		/* this value of http_ms (or higher) signals timeout  */
+var CHART_CURL    = <?php echo CHART_CURL; ?>;     /* this value indicates a cURL "server failure" error */
 var CHART_MAGENTA = CHART_TIMEOUT; /* value of http_ms for timeout warning */
 var CHART_RED = CHART_MAX;	/* this is the value of http_ms that means 'off the charts' */
 var CHART_ORANGE  = <?php echo CHART_ORANGE; ?>;		/* above this turns orange */
@@ -288,6 +290,7 @@ var fill_green  = "green";
 var fill_white  = "white";
 var fill_black  = "black";
 var fill_blue   = "blue";
+var fill_cyan   = "cyan";
 var fill_alert  = fill_blue;			
 
 <?php
@@ -318,10 +321,16 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 			cn = cn.replace("http://",   ""); 
 			cn = cn.replace("https://",  ""); 
 			cn = cn.replace("www.",      ""); 
+			cn = cn.replace(/\/$/, "");
 			return (
-				(d.result_code==CURLE_OPERATION_TIMEDOUT)?(cn + " » TIMEOUT \n(" + d.date + ")"):
-				(d.result_code==CURLE_RECV_ERROR        )?(cn + " » REJECTED \n(" + d.date + ")"):
+
+<?php if (defined('CHART_CURL')) {               ?>					(d.http_ms==CHART_CURL)?(cn + " » CONNECT FAILED or REFUSED \n(" + d.date + ")"):
+<?php } ?>
 				(d.http_ms>CHART_ALERT                  )?(cn + " » HTTP " + d.http_ms + "\n(" + d.date + ")"):
+<?php if (defined('CURLE_OPERATION_TIMEDOUT')) { ?>				(d.result_code==CURLE_OPERATION_TIMEDOUT)?(cn + " » TIMEOUT \n(" + d.date + ")"):
+<?php } ?>
+<?php if (defined('CURLE_RECV_ERROR')) {         ?>				(d.result_code==CURLE_RECV_ERROR        )?(cn + " » RCV ERROR \n(" + d.date + ")"):
+<?php } ?>
 				(cn + " » " + df(dv) + " s \n(" + d.date + ")")
 			); 
 		});
@@ -347,6 +356,7 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 			return (
 				(d.result_code==CURLE_OPERATION_TIMEDOUT)?fill_timeout:
 				(d.result_code==CURLE_RECV_ERROR        )?fill_timeout:
+				(d.http_ms==CHART_CURL     )?fill_cyan:
 				(d.http_ms>CHART_ALERT     )?fill_alert:
 				(d.http_ms>CHART_TIMEOUT   )?fill_timeout:
 				(d.http_ms>CHART_MAGENTA   )?fill_magenta:	
@@ -369,9 +379,10 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
       			.attr("dy",            "2.6em")
       			.style("text-anchor",  "middle")
       			.style("font-size",    "12px")
-      			.text(function(d) { 
+     			.text(function(d) { 
 					return ( 
 						(d.http_ms > CHART_ALERT  )?("[ " + d.http_ms + " ]"):
+						(d.http_ms==CHART_CURL    )?("[FAILED]"):
 						(d.http_ms > CHART_TIMEOUT)?("[TIMEOUT]"):
 						""
 					); 
@@ -380,6 +391,7 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 					return (
 						(d.result_code==CURLE_OPERATION_TIMEDOUT)?fill_white:
 						(d.result_code==CURLE_RECV_ERROR        )?fill_white:
+						(d.http_ms==CHART_CURL     )?fill_black:
 						(d.http_ms>CHART_ALERT     )?fill_white:
 						(d.http_ms>CHART_TIMEOUT   )?fill_white:
 						(d.http_ms>CHART_MAGENTA   )?fill_white:	
@@ -395,11 +407,13 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 			cn = cn.replace("http://",   ""); 
 			cn = cn.replace("https://",  ""); 
 			cn = cn.replace("www.",      ""); 
+			cn = cn.replace(/\/$/, "");
 			return (cn.substring(0, (d.r/4))); })
       .attr("fill", function(d) { 
 			return (
 				(d.result_code==CURLE_OPERATION_TIMEDOUT)?fill_white:
 				(d.result_code==CURLE_RECV_ERROR        )?fill_white:
+				(d.http_ms==CHART_CURL     )?fill_black:
 				(d.http_ms>CHART_ALERT     )?fill_white:
 				(d.http_ms>CHART_TIMEOUT   )?fill_white:
 				(d.http_ms>CHART_MAGENTA   )?fill_white:	
@@ -446,13 +460,17 @@ function crawl(tree) {
 		value: (
 			(node.result_code==CURLE_OPERATION_TIMEDOUT)?CHART_MAX:
 			(node.result_code==CURLE_RECV_ERROR        )?CHART_MAX:
+			(node.result_code<100)?CHART_MAX:
 			(node.size>CHART_ALERT  )?CHART_MAX:
 			(node.size>CHART_TIMEOUT)?CHART_MAX:
 			(node.size<CHART_MIN    )?CHART_MIN:
 			node.size
 			), 
 		/* Cyberspark names */
-		http_ms: node.size,
+		http_ms: (
+			(node.result_code<100)?CHART_CURL:
+			node.size
+			),
 		date: node.date,
 		url: node.name,
 		URL_HASH: node.URL_HASH,
@@ -508,9 +526,9 @@ var getDataURL = [<?php
 ?>];
 </script>
 
+</div> <?php // #CS_CHARTS_WRAP 
+?>
 <?php
-echo "</div>\n";		// #CS_CHARTS_WRAP (?)
-
 ////////////////////////////////////////////////////////////////////////
 include ('index-cs-analysis-footer.php');
  ?>
