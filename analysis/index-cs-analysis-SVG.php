@@ -161,7 +161,7 @@ function csIntensityPlot(error,data,hash) {
 		
 	// Append a chart title containing the HASH or URL
 	var urlText = urlFromHash[hash];
-	var titleText = urlText.replace('http://','')+" { "+data.length+" samples }";
+	var titleText = urlText.replace('//www.','//').replace('http://','').replace('https://','').replace(/\/$/,'')+" { "+data.length+" samples }";
 	// Rectangle behind text
 	chart[hash].append("rect")
 	    .attr("x",            12)             
@@ -179,7 +179,7 @@ function csIntensityPlot(error,data,hash) {
 		.attr("id",           "TT_"+hash)
 	    .style("font-size",   "12px") 
 	    .style("font-weight", "bold") 
-	    .text(titleText.replace('http://',''));
+	    .text(titleText.replace('//www.','//').replace('http://','').replace('https://','').replace(/\/$/,''));
 	// link
 	chart[hash].append("a")
      	.attr("target",     "_blank")
