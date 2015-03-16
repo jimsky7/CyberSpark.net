@@ -27,7 +27,7 @@
         	&mdash;Click (or tap) grey box at corner of a chart to view the associated URL.<br/>
        	    &mdash;Resize or maximize and the charts will float to fill the window.<br/>
          	<b>Bubbles:</b><br/>
-            &mdash;Mouseover a bubble's name to see detail.<br/>
+            &mdash;Mouseover (or tap) a bubble's name to see detail.<br/>
             &mdash;Click (or tap) the center dot in a bubble to see its chart.<br/>
         	</td>
         </tr>
@@ -102,7 +102,7 @@
         	&mdash;Click (or tap) grey box at corner of a chart to view the associated URL.<br/>
         	&mdash;Resize or maximize and the charts will float to fill the window.<br/>
         	<b>Bubbles:</b><br/>
-            &mdash;Mouseover a bubble's name to see detail.<br/>
+            &mdash;Mouseover (or tap) a bubble's name to see detail.<br/>
             &mdash;Click (or tap) the center dot in a bubble to see its chart.<br/>
         	</td>
         </tr>
