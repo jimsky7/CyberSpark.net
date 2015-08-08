@@ -33,7 +33,7 @@
 	/repair
 	/repair=n
 	  Removes whatever is in /cyberspark/removeme.txt wherever it may be found in
-	  any PHP file in the directory or subdirectories.  Note that the extention on
+	  any PHP file in the directory or subdirectories.  Note that the extension on
 	  the file containing the content TO REMOVE is "txt" and that only files with
 	  the extention "php" will actually be changed.
 	  If "n" (a number) is present the site is spidered only to this maximum depth.
@@ -91,22 +91,25 @@ $exclude    = array();		// strings that cause file/directory to be ignored
 $wordpress  = array('w3tc','cache');	// directories or files PRESENCE to ignore for WordPress
 $myName     = '';
 $checkSignatures = array (
+// Some specific injections that we've seen recently
+	'PCT4BA6ODSE_'    =>'[ALERT:PHP-compromised-by-JOK3R <span style="color:red;">This file is compromised</span>]',
+	'$qV="stop_'      =>'[ALERT:PHP-compromised-by-JOK3R <span style="color:red;">This file is compromised</span>]',
+	'geb7'            =>'[ALERT:javascript (geb7) <span style="color:red;">Probably compromised</span>]',
+	'qbaa6fb797447'   =>'[ALERT:javascript (qbaa6fb797447) <span style="color:red;">Probably compromised</span>]',
+	'alisoe'          =>'[ALERT:javascript injection (alisoe) <span style="color:red;">Probably compromised</span>]',
+	'lisisa'          =>'[ALERT:javascript injection (lisisa) <span style="color:red;">Probably compromised</span>]',
+	'12thplayer'      =>'[ALERT:javascript injection (12thplayer) <span style="color:red;">This file is compromised</span>]',
+	'pentestmonkey'   =>'[ALERT:PHP-reverse-shell? (pentestmonkey) <span style="color:red;">This file is compromised</span>]',
+	'_0xdc8d'         =>'[ALERT:javascript injection (_0xdc8d) <span style="color:red;">Probably compromised</span>]',
+	'exploit-db.com'  =>'[ALERT:PHP-reverse-shell? (exploit-db.com) <span style="color:red;">This file is compromised</span>]',
+	'$__name'         =>'[ALERT:javascript ($__name) <span style="color:red;">Probably compromised</span>]',
+// Some suspects
 	'eval('=>'[PHP/javascript]',
 	'gzinflate('=>'[PHP]',
 	'base64_decode'=>'[PHP]',
 	'\'base\'.(32*2).\'_'=>'[PHP]',
 	'document.write'=>'[javascript]',
 	'unescape'=>'[javascript]',
-// Some specific injections that we've seen recently
-	'geb7'            =>'[ALERT:javascript (geb7) <span style="color:red;">Probably compromised</span>]',
-	'qbaa6fb797447'   =>'[ALERT:javascript (qbaa6fb797447) <span style="color:red;">Probably compromised</span>]',
-	'alisoe'          =>'[ALERT:javascript injection (alisoe) <span style="color:red;">Probably compromised</span>]',
-	'lisisa'          =>'[ALERT:javascript injection (lisisa) <span style="color:red;">Probably compromised</span>]',
-	'12thplayer'      =>'[ALERT:javascript injection (12thplayer) <span style="color:red;">Probably compromised</span>]',
-	'pentestmonkey'   =>'[ALERT:PHP-reverse-shell? (pentestmonkey) <span style="color:red;">Probably compromised</span>]',
-	'_0xdc8d'         =>'[ALERT:javascript injection (_0xdc8d) <span style="color:red;">Probably compromised</span>]',
-	'exploit-db.com'  =>'[ALERT:PHP-reverse-shell? (exploit-db.com) <span style="color:red;">Probably compromised</span>]',
-	'$__name'         =>'[ALERT:javascript ($__name) <span style="color:red;">Probably compromised</span>]',
 );
 
 // Always exclude self from checking for malstrings
