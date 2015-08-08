@@ -53,7 +53,7 @@ include ('index-cs-analysis-setupdates.php');
 
 ?>
 <html>
-	<!-- 2014-11-10a -->
+	<!-- 2015-08-07 or later -->
 <head>
 	<!-- D3js version 3.4.8 is being used -->
 	<script src="/d3/d3.min.js" charset="utf-8"></script>
@@ -73,6 +73,7 @@ include ('index-cs-analysis-setupdates.php');
     <script type="text/javascript">
 		var timer = 0;
 		var counter=0;
+		var chartsWaiting = true;   /* Means charts not yet rendered */
 		var timeWhenVisible =  <?php echo TIME_WHEN_VISIBLE; ?>;	/* a minute is 60000 */
 		var timeWhenHidden  =  <?php echo TIME_WHEN_HIDDEN; ?>;	/* a minute is 60000 */
 		var chartHash       =  '';
@@ -119,6 +120,14 @@ include ('index-cs-analysis-setupdates.php');
 			}
 			else {
 				window.location.href = URI;
+			}
+		}
+		/* GIF spinner indicates waiting for charts data */
+		var hs = setInterval( function() { hideSpinner() } , 500);
+		function hideSpinner() {
+			if (!chartsWaiting) {
+				var spinner = document.getElementById("CS_CHARTS_WRAP");
+    			spinner.style.backgroundImage = "";
 			}
 		}
 	</script>
@@ -233,7 +242,7 @@ while ($yx > 2009) {
 		$requestURI = substr($requestURI, 0, $i);
 	}
 	$getHashURL = 'http://'.$_SERVER['SERVER_NAME'].$requestURI.'/'.CS_URL_FROM_HASH;
-	echo "<div id='CS_CHARTS_WRAP' style='display:table;'>\n";	
+	echo "<div id='CS_CHARTS_WRAP' style='display:table; background-image:url(\"images/ajax-loader-large-transparent.gif\"); background-repeat:none; width:32px; height:32px;' >\n";	
 ?>
 
 <script>
@@ -294,6 +303,8 @@ var fill_cyan   = "cyan";
 var fill_alert  = fill_blue;			
 
 <?php
+	/* One HASH is added to the URL for each chart/bubble */
+	/* A single request will be sent to retrieve all of the data for all of the charts */
 	$s = '?';
 	foreach ($URL_HASHES as $hash) {
 		$s .= $hash.'&';
@@ -304,13 +315,22 @@ var fill_alert  = fill_blue;
 	}
 ?>
 d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
-<?php  /* For each node (make a bubble) */ ?>
+
+<?php 
+
+    /* For each node, render a bubble */
+	 
+	/* note that 'chartsWaiting' gets set FALSE as when any bubble at all is rendered. This is OK 
+	     because all data come back in one single request, so if we are rendering one node, then 
+		 we have data enough to render all nodes.
+    */ 
+?>
   var node = svg.selectAll(".node")
       .data(bubble.nodes(crawl(tree))
       .filter(function(d) { return !d.children; }))
     .enter().append("g")
       .attr("class", "node")
-      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+      .attr("transform", function(d) { chartsWaiting=false; return "translate(" + d.x + "," + d.y + ")"; });
 
 <?php  /* Tooltip */ ?>
   node.append("title")
@@ -322,6 +342,7 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 			cn = cn.replace("https://",  ""); 
 			cn = cn.replace("www.",      ""); 
 			cn = cn.replace(/\/$/, "");
+  	
 			return (
 
 <?php if (defined('CHART_CURL')) {               ?>					(d.http_ms==CHART_CURL)?(cn + " » CONNECT FAILED or REFUSED \n(" + d.date + ")"):
@@ -447,6 +468,8 @@ d3.json("cs-log-get-bubbles.json<?php echo $s; ?>", function(error, tree) {
 		})
 		.style("opacity", 0.9);
 		
+<?php /* Charts have all been drawn. Force the spinner to disappear now. */ ?>
+  /* chartsWaiting = 0; */
 });
 
 // Returns a flattened hierarchy containing all leaf nodes under the root.

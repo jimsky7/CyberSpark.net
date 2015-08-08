@@ -92,8 +92,10 @@ for (ix=0; ix<hashes.length; ix++) {
 	// Write d3.tsv() calls to create all charts (SVG objects)
 	// Note: reason we write them explicitly is that the 'hashes[$key]' is bound at callback time and
 	//	has to be a constant in each case.
+	// Note: Setting JS variable 'chartsWaiting' FALSE means the spinner will get hidden as soon as any data is
+	//  returned for rendering.
 	foreach ($sites as $key=>$value) {
-		echo "d3.tsv(getDataURL[$key], type, function (error,data) { return csIntensityPlot(error,data,hashes[$key]); });\r\n";
+		echo "d3.tsv(getDataURL[$key], type, function (error,data) { chartsWaiting=false; return csIntensityPlot(error,data,hashes[$key]); });\r\n";
 	}
 
 ////////////////////////////////////////////////////////////////////////

@@ -50,7 +50,7 @@ include ('index-cs-analysis-setupdates.php');
 
 ?>
 <html>
-	<!-- 2014-11-10a -->
+	<!-- 2015-08-07 or later -->
 <head>
 	<!-- D3js version 3.4.8 is being used -->
 	<script src="/d3/d3.min.js" charset="utf-8"></script>
@@ -70,6 +70,7 @@ include ('index-cs-analysis-setupdates.php');
     <script type="text/javascript">
 		var timer = 0;
 		var counter=0;
+		var chartsWaiting = true;   /* Means charts not yet rendered */
 		var timeWhenVisible =  <?php echo TIME_WHEN_VISIBLE; ?>;	/* a minute is 60000 */
 		var timeWhenHidden  =  <?php echo TIME_WHEN_HIDDEN; ?>;	/* a minute is 60000 */
 		function cs_onload() {
@@ -82,6 +83,14 @@ include ('index-cs-analysis-setupdates.php');
 		}
 		function cs_reload() { 
 			window.location.href = "<?php echo $_SERVER['REQUEST_URI']; ?>";
+		}
+		/* GIF spinner indicates waiting for charts data */
+		var hs = setInterval( function() { hideSpinner() } , 500);
+		function hideSpinner() {
+			if (!chartsWaiting) {
+				var spinner = document.getElementById("CS_CHARTS_WRAP");
+    			spinner.style.backgroundImage = "";
+			}
 		}
 	</script>
 </head>
@@ -189,7 +198,7 @@ while ($yx > 2009) {
 		$requestURI = substr($requestURI, 0, $i);
 	}
 	$getHashURL = 'http://'.$_SERVER['SERVER_NAME'].$requestURI.'/'.CS_URL_FROM_HASH;
-	echo "<div id='CS_CHARTS_WRAP' style='display:table;'>\n";	
+	echo "<div id='CS_CHARTS_WRAP' style='display:table; background-image:url(\"images/ajax-loader-large-transparent.gif\"); background-repeat:no-repeat; background-position: 0px 0px; ' >\n";	
 
 	foreach ($URL_HASHES as $key=>$URL_HASH) {
 		$getHashFullURL = $getHashURL."?URL_HASH=$URL_HASH";
