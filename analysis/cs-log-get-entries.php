@@ -238,6 +238,9 @@ if ($result) {
 			}
 			$paddedStart = true;							// done padding, or padding was not needed
 	
+			// Truncate http_ms to thousandths of a second (that's enough, and javascript will handle it faster))
+			$http_ms = round($http_ms, 3);
+			
 			switch ($format) {
 				case 'csv': {
 					echo "$milliseconds,$URL_HASH,$http_ms,$result_code,\"$date\",$year,$month,$day,$hour,$minute,$second\r\n";

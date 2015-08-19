@@ -17,7 +17,8 @@
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
+include_once "include/echolog.php";
+include_once "include/filter_functions.php";
 
 function checklengthScan($content, $args, $privateStore) {
 	$filterName = 'checklength';
@@ -25,6 +26,8 @@ function checklengthScan($content, $args, $privateStore) {
 	$url = $args['url'];
 	$contentLength = strlen($content);
 	$message = "";
+	$lengthsString = '';
+
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -32,9 +35,8 @@ function checklengthScan($content, $args, $privateStore) {
 	// See whether length has changed since last time
 	if (isset($privateStore[$filterName][$url])) {
 		// This URL has been seen before
+		list($lengthsString, $lengths) = limitLengths($privateStore[$filterName][$url]['lengths'], MAX_LENGTHS);
 		
-		$lengthsString = $privateStore[$filterName][$url]['lengths'];
-		$lengths = explode(",", $lengthsString);
 		$lengthMatched = false;
 		foreach ($lengths as $oneLength) {
 			if ($contentLength == (int)$oneLength) {
@@ -42,8 +44,7 @@ function checklengthScan($content, $args, $privateStore) {
 				$lengthMatched = true;
 				break;
 			}
-		}
-		
+		}		
 		
 		if (!$lengthMatched) {
 			// Changed

@@ -19,7 +19,8 @@
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
+include_once "include/echolog.php";
+include_once "include/filter_functions.php";
 
 //// lengthScan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -29,11 +30,13 @@ include_once "include/echolog.inc";
 //// $privateStore is an associative array of data which contains, if indexed properly,
 ////   persistent data related to the URL being scanned.
 function lengthScan($content, $args, $privateStore) {
-	$filterName = "length";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName    = 'length';
+	$result        = 'OK';
+	$url           = $args['url'];
 	$contentLength = strlen($content);
-	$message = "";
+	$message       = '';
+	$lengthsString = '';
+	
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -41,8 +44,7 @@ function lengthScan($content, $args, $privateStore) {
 	// See whether length has changed since last time
 	if (isset($privateStore[$filterName][$url])) {
 		// This URL has been seen before
-		$lengthsString = $privateStore[$filterName][$url]['lengths'];
-		$lengths = explode(",", $lengthsString);
+		list($lengthsString, $lengths) = limitLengths($privateStore[$filterName][$url]['lengths'], MAX_LENGTHS);
 		$lengthMatched = false;
 		foreach ($lengths as $oneLength) {
 			if ($contentLength == (int)$oneLength) {
@@ -51,7 +53,10 @@ function lengthScan($content, $args, $privateStore) {
 				break;
 			}
 		}
-		if (!$lengthMatched) {
+		if ($lengthMatched) {
+			// No change
+		}
+		else {
 			// Changed
 			$message .= "Length changed to " . $contentLength . "\n";
 			$message .= INDENT . "Previous lengths include [" . $lengthsString . "]";
@@ -61,15 +66,12 @@ function lengthScan($content, $args, $privateStore) {
 			// our parent daemon is shut down and restarted.
 			$lengthsString .= "," . (string)$contentLength;
 		}
-		else {
-			// No change
-		}
 	}
 	else {
 		// This URL has not been seen before
 		$lengthsString = (string)$contentLength;
 	}
-	// Record the length of this URL
+	// Record previous lengths plus the (possibly new) length of this URL
 	$privateStore[$filterName][$url]['lengths'] = $lengthsString;
 	return array($message, $result, $privateStore);
 	

@@ -22,31 +22,34 @@ if (!isset($WIDTH_TT)) {
 if (!isset($HEIGHT_TT)) {
 	$HEIGHT_TT		= TOOL_TIP_HEIGHT;
 }
+if (!isset($WIDTH_CHART)) {
+	$WIDTH_CHART	= CHART_NARROW;
+}
 if (!isset($HEIGHT_CHART)) {
 	$HEIGHT_CHART	= CHART_HEIGHT;
 }
-if (!isset($WIDTH_CHART)) {
-	$WIDTH_CHART 	= CHART_NARROW;
-}
 if (!isset($span)) {
-	$span 			= 'P2D';
+	$span 			= 'P1D';
 }
 if (!isset($TITLE)) {
 	$TITLE			= 'Untitled &mdash;';
+}
+if (!isset($CLASS_STYLE)) {
+	$CLASS_STYLE   = 'CS_CHART_NARROW';		// CS_CHART_NARROW or CS_CHART_WIDE
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Determine whether date is "NOW" or a specific calendar date
 $calendar=false;
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-	echo '<!-- POST -->';
+if (strcasecmp($_SERVER['REQUEST_METHOD'], 'POST')==0) {
+//	echo '<!-- POST -->';
 	if (isset($_POST['SUBMIT_CALENDAR'])) {
-		echo '<!-- SUBMIT_CALENDAR '.$_POST['SUBMIT_CALENDAR'].' -->';
+//		echo '<!-- SUBMIT_CALENDAR '.$_POST['SUBMIT_CALENDAR'].' -->';
 		$calendar = true;
 	}
 	$direction = 0;
 	if (isset($_POST['DIRECTION'])) {
-		echo '<!-- DIRECTION '.$_POST['DIRECTION'].' -->';
+//		echo '<!-- DIRECTION '.$_POST['DIRECTION'].' -->';
 		if (strcasecmp($_POST['DIRECTION'], 'minus')==0) {
 			$direction = -1;
 			$calendar = true;
@@ -57,11 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		}
 	}
 	if (isset($_POST['SUBMIT_NOW'])) {
-		echo '<!-- SUBMIT_NOW -->';
+//		echo '<!-- SUBMIT_NOW -->';
 	}
 }
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-	echo '<!-- GET -->';
+if (strcasecmp($_SERVER['REQUEST_METHOD'], 'GET')==0) {
+//	echo '<!-- GET -->';
 	if (($getYEAR = ifGetOrPost('YEAR')) != null && ($getMONTH = ifGetOrPost('MONTH')) != null && ($getDAY = ifGetOrPost('DAY')) != null) {
 //		$_SESSION['YEAR'] = (int)$getYEAR;		// converts string to integer, avoid SQL injections
 //		$_SESSION['MONTH']= (int)$getMONTH;		// converts string to integer, avoid SQL injections
@@ -73,7 +76,7 @@ if (!$calendar) {
 	$_SESSION['MONTH'] = date('m');
 	$_SESSION['DAY']   = date('j');
 	$_SESSION['YEAR']  = date('Y');
-echo "<!-- DEFAULTS $_SESSION[MONTH]-$_SESSION[DAY]-$_SESSION[YEAR] -->";
+//	echo "<!-- DATE DEFAULTED TO 'now': $_SESSION[MONTH]-$_SESSION[DAY]-$_SESSION[YEAR] $_SERVER[REQUEST_METHOD]-->";
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -91,23 +94,23 @@ $startTimestamp =  0;
 $endTimestamp   =  0;
 
 if ($calendar) {
-echo '<!-- calendaring -->';
+//	echo '<!-- calendaring -->';
 	$s = ifGetOrPost('MONTH');
 	if ($s != null) {
-echo '<!-- 1 -->';
+//		echo '<!-- 1 -->';
 		if (strlen($s) < 2) {
 			$s = '0'.$s;			// add leading zero
 		}
-echo '<!-- 2 -->';
+//		echo '<!-- 2 -->';
 		$_SESSION['MONTH'] = $s;
 	}
 	else {
-echo '<!-- 3 -->';
+//		echo '<!-- 3 -->';
 		if (!isset($_SESSION['MONTH'])) {
 			$_SESSION['MONTH'] = '01';
 		}
 	}
-	echo "<!-- MONTH:$_SESSION[MONTH] -->";
+//	echo "<!-- MONTH:$_SESSION[MONTH] -->";
 	if (($s = ifGetOrPost('DAY')) != null) {
 		if (strlen($s) < 2) {
 			$s = '0'.$s;			// add leading zero
@@ -122,7 +125,7 @@ echo '<!-- 3 -->';
 			$_SESSION['DAY'] = '01';
 		}
 	}
-	echo "<!-- DAY:$_SESSION[DAY] -->";
+//	echo "<!-- DAY:$_SESSION[DAY] -->";
 	if (($s = ifGetOrPost('YEAR')) != null) {
 		$_SESSION['YEAR'] = $s;
 	}
@@ -131,7 +134,7 @@ echo '<!-- 3 -->';
 			$_SESSION['YEAR'] = date('Y');
 		}
 	}
-	echo "<!-- YEAR:$_SESSION[YEAR] -->";
+//	echo "<!-- YEAR:$_SESSION[YEAR] -->";
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -206,12 +209,12 @@ function cs_http_get($url) {
 	<!-- D3js version 3.4.8 is being used -->
 	<script src="/d3/d3.min.js" charset="utf-8"></script>
     <meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width; initial-scale=1.0; minimum-scale=1.0; user-scalable=yes;">
 <?php
 	if (!$calendar) {
 ?>
    	<!-- refresh page every 60 minutes even if JS fails -->
 	<meta http-equiv="refresh" content="3600; url=<?php echo $_SERVER['REQUEST_URI']; ?>">
-	<meta name="viewport" content="width=device-width; initial-scale=1.0; minimum-scale=1.0; user-scalable=yes;">
 <?php
 	} /* not calendar */
 ?>
@@ -279,14 +282,23 @@ while ($yx > 2009) {
 	$yx--;
 }
 ?>
-	</select><input id='DIRECTION' name='DIRECTION' type='hidden' value='none' /><input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go' />&nbsp;<input id='SUBMIT_MINUS' name='SUBMIT_MINUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-lf-32x32.gif' value='minus' onclick='var e=document.getElementById("DIRECTION"); e.value="minus";'/><input id='SUBMIT_PLUS' name='SUBMIT_PLUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-rt-32x32.gif' value='plus' onclick='var e=document.getElementById("DIRECTION"); e.value="plus";'/><div style='display:inline;' id='CS_CONTROL_PANEL_VERTICAL_SEPARATOR'>&nbsp;&nbsp;||&nbsp;&nbsp;</div><input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' />
+	</select><input id='DIRECTION' name='DIRECTION' type='hidden' value='none' /><input id='SUBMIT_CALENDAR' name='SUBMIT_CALENDAR' type='submit' value='Go' />&nbsp;<input id='SUBMIT_MINUS' name='SUBMIT_MINUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-lf-32x32.gif' value='minus' onclick='var e=document.getElementById("DIRECTION"); e.value="minus";' alt='Earlier time period' title='Earlier time period' /><input id='SUBMIT_PLUS' name='SUBMIT_PLUS' type='image' class='CS_TRIANGLE' src='images/cyberspark-triangle-rt-32x32.gif' value='plus' onclick='var e=document.getElementById("DIRECTION"); e.value="plus";' alt='Later time period' title='Later time period' /><div style='display:inline;' id='CS_CONTROL_PANEL_VERTICAL_SEPARATOR'> </div><input id='SUBMIT_NOW'      name='SUBMIT_NOW'      type='submit' value='Now' alt='Real-time charts' title='Real-time charts' />
 </form>    
 	</div><!-- ENCLOSE_HEADER_RIGHT -->
 	</div><!-- ENCLOSE_HEADER -->
     
-    <hr/><span class="CS_TITLE"><? echo $TITLE; ?></span><?php if (!$calendar) { ?><br/><span class="CS_SUBTITLE">This page reloads every few minutes</span><?php } ?>
-    </p><hr/>
-    <div id="CS_START_END">
+   	<div id="CS_TITLES">
+    <div class="CS_TITLE"><? echo $TITLE; ?></div>
+<?php if (!$calendar) { ?>
+    <div class="CS_SUBTITLE">&nbsp;&nbsp;(Page reloads every few minutes)</div>
+    <div class="CS_SUBTITLE_NARROW">&nbsp;&nbsp;(Page will reload)</div>
+<?php } else {?>
+    <div class="CS_SUBTITLE">&nbsp;&nbsp;(Archived data)</div>
+    <div class="CS_SUBTITLE_NARROW">&nbsp;&nbsp;(Archived data)</div>
+<?php } ?>
+    </div>
+    <hr/>
+    <div id="CS_START_END" style="width:<?php echo $WIDTH_CHART; ?>px">
     	<div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
     	<div style="float:right;"><?php echo $endDate; ?>&nbsp;&nbsp;&darr;</div>
     </div>
@@ -303,6 +315,7 @@ while ($yx > 2009) {
 		$requestURI = substr($requestURI, 0, $i);
 	}
 	$getHashURL = 'http://'.$_SERVER['SERVER_NAME'].$requestURI.'/'.CS_URL_FROM_HASH;
+	echo "<div id='CS_CHARTS_WRAP' style='display:table;'>\n";	
 	foreach ($URL_HASHES as $key=>$URL_HASH) {
 		$getHashFullURL = $getHashURL."?URL_HASH=$URL_HASH";
 		// http://example.com/analysis/cs-log-get-url-from-hash.php?URL_HASH=383f65f95363c204221bd6b4cc4d6701
@@ -319,14 +332,16 @@ while ($yx > 2009) {
 		else {
 			$getDataURL[$key]	= CS_URL_GET."?format=tsv&URL_HASH=$URL_HASH&pad=true&span=$span";
 		}
-		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart CS_CHART' id='H_$URL_HASH' <?php /* width='$WIDTH_CHART' */ ?> ></svg></a>\r\n";
+//		echo "<a href='$sites[$key]' style='text-decoration:none; font-size:12pt;' target='W_$URL_HASH'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg></a>\r\n";
+//		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg><div style='position: relative; left: 2px; top: -38px; height: 10px; width: 10px;'><a href='$sites[$key]' class='CS_SITE_LINK' target='W_$URL_HASH'>»</a></div></div>\r\n";
+		echo "<div style='display:inline; float:left;'><svg class='chart ".(isset($CLASS_STYLE)?$CLASS_STYLE:'CS_CHART')."' id='H_$URL_HASH'></svg></div>\r\n";
 	}
+	echo "</div>\n";		// #CS_TABLE_WRAP
 
 ////////////////////////////////////////////////////////////////////////
 // Write arrays for hashes themselves, URLs from hashes, data URLs to fetch data
 
 ?>
-    
     <script type="text/javascript">
 var hashes = [<?php
 	$i = 0;
@@ -364,6 +379,16 @@ var CHART_YELLOW = 2;		/* above this turne yellow */
 var CHART_GREEN = 0;			
 
 <?php
+define ('CHART_MAX', 6);		/* clip any values larger than this */
+define ('CHART_ALERT', 300);	/* this value of http_ms (or higher) signals an alert */
+define ('CHART_TIMEOUT', 59);	/* this value of http_ms (or higher) signals timeout  */
+define ('CHART_MAGENTA', CHART_TIMEOUT); /* value of http_ms for timeout warning */
+define ('CHART_RED', CHART_MAX);	/* this is the value of http_ms that means 'off the charts' */
+define ('CHART_ORANGE', 4);		/* above this turns orange */
+define ('CHART_YELLOW', 2);		/* above this turne yellow */
+define ('CHART_GREEN',  0);		
+
+
 ////////////////////////////////////////////////////////////////////////
 // Begin actual javascript to create the charts
 // The real work is done in 'd3.tsv' which reads a file and builds an SVG object
@@ -468,25 +493,39 @@ function csIntensityPlot(error,data,hash) {
         });
 		
 	// Append a chart title containing the HASH or URL
-	var titleText = urlFromHash[hash]+" { "+data.length+" samples }";
+	var urlText = urlFromHash[hash];
+	var titleText = urlText.replace('http://','')+" { "+data.length+" samples }";
 	// Rectangle behind text
 	chart[hash].append("rect")
-	    .attr("x", 2)             
+	    .attr("x", 12)             
 	    .attr("y", 2)
- 	    .attr("width", (urlFromHash[hash].length*6)+90)  /* use an estimated length */           
+ 	    .attr("width", (urlText.length*6)+60)  /* use an estimated length */           
 	    .attr("height", 17)
 		.attr("id", "RT_"+hash)
 	    .attr("fill", "white")
-	    .attr("fill-opacity", 0.80);
+	    .attr("fill-opacity", 0.85);
 	// Text (URL)
 	chart[hash].append("text")
-	    .attr("x", 10)             
+	    .attr("x", 14)             
 	    .attr("y", 15)
     	.attr("class", "title")
 		.attr("id", "TT_"+hash)
 	    .style("font-size", "12px") 
 	    .style("font-weight", "bold") 
-	    .text(titleText);
+	    .text(titleText.replace('http://',''));
+	// link
+	chart[hash].append("a")
+     	.attr("target", "_blank")
+    	.attr("xlink:href", urlText)
+ 		.append("rect")  
+    	.attr("x", 0)
+    	.attr("y", 0)
+    	.attr("height", 8)
+    	.attr("width",  8)
+    	.style("fill", "#e0e0e0")	/* 8020A0 */
+    	.attr("rx", 1)
+    	.attr("ry", 1);
+
 // >>> Debugging the code below
 // >>> Trying to figure width of text and then set the width of the rectangle behind it
 // Adjust the width of the rectangle
@@ -516,28 +555,18 @@ function type(d) {
 ////////////////////////////////////////////////////////////////////////
 // Page footer
 ?>
-<hr/>
 <!-- legend -->
-<table id='LEGEND_NARROW' cellspacing='5' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
+<div id="CS_FOOTER_NARROW">
+<table id='LEGEND_NARROW' cellspacing='0' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
 		<tr>
-			<td class='rect_green' style='width:20px;'></td>
-			<td>&lt;=2 sec
-			</td>
-			<td class='rect_yellow' style='width:20px;'></td>
-			<td>3 or 4
-			</td>
-			<td class='rect_orange' style='width:20px;'></td>
-			<td>5 or 6
-			</td	>
-			<td class='rect_red' style='width:20px;'></td>
-			<td>&gt;6 sec
-			</td>
-			<td class='rect_blue' style='width:20px;'></td>
-			<td>Err
-			</td>
-			<td class='rect_magenta' style='width:20px;'></td>
-			<td>Timeout
-			</td>
+			<td class='rect_green'   style='height:20px; width:55px; color:White;'>&nbsp;&nbsp;seconds</td>
+			<td class='rect_yellow'  style='height:20px; width:40px; color:black;'>&nbsp;&nbsp;<?php echo CHART_YELLOW; ?> +</td>
+			<td class='rect_orange'  style='height:20px; width:40px; color:White;'>&nbsp;&nbsp;<?php echo CHART_ORANGE; ?> +</td>
+			<td class='rect_red'     style='height:20px; width:40px; color:White;'>&nbsp;&nbsp;<?php echo CHART_RED; ?> +</td>
+			<td                      style='height:20px; width:15px;'></td>
+			<td class='rect_blue'    style='height:20px; width:45px; color:White;'>&nbsp;Error</td>
+			<td                      style='height:20px; width:5px;'></td>
+			<td class='rect_magenta' style='height:20px; width:55px; color:White;'>&nbsp;Timeout</td>
 		</tr>
          <tr>
         	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
@@ -550,28 +579,57 @@ function type(d) {
         	</td>
         </tr>
 	</table>
-	<table id='LEGEND_WIDE' cellspacing='5' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px;'>
+    </div>
+    <div id="CS_FOOTER_WIDE" style="float:left; width:100%;">
+    <table id='LEGEND_WIDE' cellspacing='0' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px; margin-bottom:4px;'>
 		<tr>
-			<td class='rect_green' style='width:20px;'></td>
-			<td>Under 2 seconds
-			</td>
-			<td class='rect_yellow' style='width:20px;'></td>
-			<td>3 or 4 seconds
-			</td>
-			<td class='rect_orange' style='width:20px;'></td>
-			<td>5 or 6 seconds
-			</td>
-			<td class='rect_red' style='width:20px;'></td>
-			<td>Over 6 seconds
-			</td>
-			<td class='rect_blue' style='width:20px;'></td>
-			<td>HTTP error
-			</td>
-			<td class='rect_magenta' style='width:20px;'></td>
-			<td>Timeout
+			<td colspan='8' style='height:1px;'>&nbsp;
 			</td>
 		</tr>
-         <tr>
+		<tr>
+			<td class='rect_green'   style='height:20px; width:60px;'></td>
+			<td class='rect_yellow'  style='height:20px; width:60px;'></td>
+			<td class='rect_orange'  style='height:20px; width:60px;'></td>
+			<td class='rect_red'     style='height:20px; width:60px;'></td>
+			<td                      style='height:20px; width:5px;'></td>
+			<td class='rect_blue'    style='height:20px; padding-left:5px;'></td>
+			<td                      style='height:20px; width:5px;'></td>
+			<td class='rect_magenta' style='height:20px;'></td>
+		</tr>
+		<tr>
+			<td style='height:4px; '>&nbsp;seconds</td>
+ 			<td style='height:4px; border-left:thin; border-left-color:grey; border-left-style:solid;'>&nbsp;
+ 			</td>
+			<td style='height:4px; border-left:thin; border-left-color:grey; border-left-style:solid;'>&nbsp;
+			</td>
+			<td style='height:4px; border-left:thin; border-left-color:grey; border-left-style:solid;'>&nbsp;
+			</td>
+			<td>
+			</td>
+			<td style=''>&nbsp;&nbsp;HTTP error
+			</td>
+			<td>
+			</td>
+			<td style=''>&nbsp;&nbsp;Timeout
+			</td>
+		</tr>
+		<tr>
+			<td colspan='8' style=''>
+				<table cellspacing='0' cellpadding='0' border='0'>
+					<tr>
+						<td style='height:20px; width:58px; font-size:10px;'>0</td>
+						<td style='height:20px; width:60px; font-size:10px;'><?php echo CHART_YELLOW; ?></td>
+						<td style='height:20px; width:60px; font-size:10px;'><?php echo CHART_ORANGE; ?></td>
+						<td style='height:20px; width:60px; font-size:10px;'><?php echo CHART_RED; ?></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td colspan='8' style='height:4px;'>&nbsp;
+			</td>
+		</tr>
+        <tr>
         	<td colspan='12' style='padding:8px; border:thin; border-style:solid; border-width:1px; border-color:#d0d0d0;'>Mouseover (or tap) the colored bars in a chart to see details.<br/>
         	Click (or tap) a chart to view the associated URL.<br/>
         	Resize or maximize and the charts will float to fill the window.
@@ -589,5 +647,6 @@ function type(d) {
         	</td>
         </tr>
 	</table>
+</div>
 </body>
 </html>

@@ -13,7 +13,7 @@
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
+include_once "include/echolog.php";
 
 function basicScan($content, $args, $privateStore) {
 	$REFUSAL_TIME = 5;						// connections failing FASTER than this are "refusals"
@@ -23,7 +23,7 @@ function basicScan($content, $args, $privateStore) {
 	$url = $args['url'];
 	$message = '';
 	$contentLength = strlen($content);
-	$elapsedTime = $args['elapsedtime'];
+	$elapsedTime = roundTime($args['elapsedtime']);	// rounding precision is defined in cyberspark.sysdefs.php
 	$httpResult  = $args['httpresult'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script

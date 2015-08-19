@@ -2,11 +2,22 @@
 /* ////////////////////////////////////// */
 body {
 	padding-left: 40px;
-	font-family:Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: Gotham, "Helvetica Neue", Helvetica, Arial, sans-serif;
 	background-color: #F4EED3;
 }
+/* ################ */
 .CS_CHART {
-	width:      350px;
+	width:            290px;		/* you can wish for 350px, but this works on iPhone */
+	background-color: white;
+	margin-right:      40px;
+}
+.CS_CHART_NARROW {
+	width:            290px;		/* you can wish for 350px, but this works on iPhone */
+	background-color: white;
+	margin-right:      40px;
+}
+.CS_CHART_WIDE {
+	width:            720px;		/* nice on tablets */
 	background-color: white;
 }
 #LEGEND_NARROW {
@@ -16,14 +27,34 @@ body {
 	width:      300px;
 	height:      50px;
 }
+/* ################ */
+#CS_TITLES {
+	max-width:  760px;
+	height:      30px;
+}
 .CS_TITLE {
 	font-size:   22px;
 }
 .CS_SUBTITLE {
-	font-size:   14px;
+	font-size:   12px;
+	margin-top: -16px;
+	float:      right;
+	margin-right:10px;
 }
+.CS_SUBTITLE_NARROW {
+	display:     none;
+	font-size:   12px;
+	margin-top: -16px;
+	float:      right;
+}
+.CS_CHARTS_BUBBLES {
+	float:      right;
+	width:       24px;
+	margin-right: 0px;
+	margin-left: 10px;
+}
+/* ################ */
 #CS_START_END {
-	width:      350px;
 	height:      30px;
 	font-size:   14px;
 }
@@ -31,20 +62,36 @@ body {
 	height:      32px;
 	width:       32px;
 }
+/* ################ */
 #ENCLOSE_HEADER {
-	max-width:   720px;
-	height:       54px;
+	max-width:   760px;
+	height:       55px;
 }
-
 #ENCLOSE_HEADER_LEFT {
 	float:        left;
-	max-width:   350px;
+	max-width:   350px;		/* on large screens */
 }
 #ENCLOSE_HEADER_RIGHT {
 	float:       right;
-	max-width:   350px;
+	max-width:   350px;		/* on large screens */
 	margin-top:    6px;
-	margin-right: 10px;
+	margin-right: 30px;
+}
+/* ################ */
+#CS_FOOTER_WIDE {
+	float:        left;
+/*	max-width:   720px;	*/
+	max-width:   633px;
+}
+#CS_FOOTER_NARROW {
+	float:        left;
+	width:       290px;
+}
+/* ################ */
+.CS_SITE_LINK {
+	text-decoration: none; 
+	font-size:       18px; 
+	color:          black;
 }
 
 /* ////////////////////////////////////// */
@@ -52,31 +99,132 @@ body {
 	body {
 		padding-left: 10px;
 	}
+	/* ################ */
+	.CS_CHART {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
+	}
+	.CS_CHART_NARROW {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
+	}
 }
 
 /* ////////////////////////////////////// */
+/* iPad for example */
 @media only screen and (max-width: 768px), only screen and (max-device-width: 768px) {
 	body {
-		padding-left: 10px;
+		padding-left:        10px;
 		background-color: #F4EED3;
+	}
+	#CS_LOGO {
+		width:      260px;
+		height:      50px;
+	}
+	/* ################ */
+	.CS_CHART {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
+	}
+	.CS_CHART_NARROW {
+		width:            290px;		/* you can wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      35px;
 	}
 }
 
 /* ////////////////////////////////////// */
 @media only screen and (max-width: 767px), only screen and (max-device-width: 767px) {
 	body {
-		padding-left: 10px;
+		padding-left:10px;
 	}
+	#CS_LOGO {
+		width:      260px;
+		height:      50px;
+	}
+	/* ################ */
+/*
 	#LEGEND_WIDE {
-		display:none;
+		display:     none;
 	}
 	#LEGEND_NARROW {
-		display:block;
+		display:    block;
+	}
+*/
+	#ENCLOSE_HEADER {
+		height:     64px; /* 104px */
 	}
 	#ENCLOSE_HEADER_RIGHT {
 		float:       none;
+		max-width:   none !important;		/* on smaller screens */
 		margin-top:   5px;
 		margin-right: 0px;
+	}
+}
+
+/* ////////////////////////////////////// */
+/* nexus 7 for example */
+@media only screen and (max-width: 600px), only screen and (max-device-width: 600px) {
+	body {
+		padding-left: 0px;
+		margin:       2px;;
+	}
+	/* ################ */
+	#LEGEND_WIDE {
+		display:     none;
+	}
+	#LEGEND_NARROW {
+		display:    block;
+	}
+	#ENCLOSE_HEADER {
+		height:     64px; /* 104px */
+	}
+	#ENCLOSE_HEADER_RIGHT {
+		float:       none;
+		max-width:  350px;		/* on smaller screens */
+		margin-top:   5px;
+		margin-right: 0px;
+	}
+	/* ################ */
+	.CS_CHART {
+		width:            290px;		/* wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      5px;
+	}	
+	.CS_CHART_NARROW {
+		width:            290px;		/* wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:      5px;
+	}
+	.CS_CHART_WIDE {
+		width:            720px;		/* nice on tablets */
+		background-color: white;
+	}
+	.chart {
+		padding:            0px;
+	}
+	.CS_TRIANGLE {
+		height:      20px;
+		width:       20px;
+	}	
+	/* ################ */
+	#LEGEND_WIDE {
+		display:    block;
+	}
+	#LEGEND_NARROW {
+		display:     none;
+	}
+	/* ################ */
+	#CS_FOOTER_WIDE {
+		float:        left;
+		max-width:   580px;
+	}
+	#CS_FOOTER_NARROW {
+		float:        left;
+		max-width:   580px;
 	}
 }
 
@@ -85,35 +233,56 @@ body {
 	body {
 		padding-left: 5px;
 	}
+	/* ################ */
 	#LEGEND_WIDE {
-		display:none;
+		display:     none;
 	}
 	#LEGEND_NARROW {
-		display:block;
+		display:    block;
 	}
 	.CS_CHART {
-		width: 290px;
+		width:      290px;	/* wish for 350px, but this works on iPhone */
 		background-color: white;
+		margin-right:       0px;
+		margin-left:        0px;
 	}
+	/* ################ */
+	.CS_CHART_NARROW {
+		width:      290px;	/* wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:       0px;
+		margin-left:        0px;
+	}
+	/* ################ */
+	.CS_TITLE {
+		font-size:   20px;
+	}
+	.CS_SUBTITLE {
+		display:     none;
+	}
+	.CS_SUBTITLE_NARROW {
+		display:    block;
+	}
+	/* ################ */
 	#CS_START_END {
-		width:    290px;
-		height:    20px;
-		font-size: 13px;
+		height:      20px;
+		font-size:   13px;
 	}
 	#CS_LOGO {
-		width:  260px;
-		height:  40px;
+		width:      260px;
+		height:      40px;
 	}
 	.CS_TRIANGLE {
-		height: 20px;
-		width:  20px;
+		height:      20px;
+		width:       20px;
 	}	
 	#CS_CONTROL_PANEL_VERTICAL_SEPARATOR {
-		display:none;
+		display:     none;
 		visibility: hidden;
 	}
+	/* ################ */
 	#ENCLOSE_HEADER {
-		height:       74px;
+		height:      104px;
 	}
 	#ENCLOSE_HEADER_RIGHT {
 		float:       none;
@@ -123,48 +292,132 @@ body {
 }
 
 /* ////////////////////////////////////// */
-@media only screen and (max-width: 320px), only screen and (max-device-width: 320px) {
+@media only screen and (max-width: 375px), only screen and (max-device-width: 375px) {
 	body {
-		padding-left: 0px;
+		padding-left: 10px;
 	}
+	/* ################ */
 	#LEGEND_WIDE {
-		display:none;
+		display:     none;
 	}
 	#LEGEND_NARROW {
-		display:block;
+		display:    block;
 	}
+	/* ################ */
 	.CS_CHART {
-		width: 290px;
+		width:            290px;		/* wish for 350px, but this works on iPhone */
 		background-color: white;
+		margin-right:       0px;
+		margin-left:        0px;
 	}
+	/* ################ */
+	.CS_CHART_NARROW {
+		width:            290px;		/* wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:       0px;
+		margin-left:        0px;
+	}
+	/* ################ */
 	.CS_TITLE {
-		font-size:20px;
+		font-size:   20px;
 	}
 	.CS_SUBTITLE {
-		font-size:12px;
+		display:     none;
 	}
+	.CS_SUBTITLE_NARROW {
+		display:    block;
+	}
+	/* ################ */
 	#CS_START_END {
-		width:    290px;
-		height:    20px;
-		font-size: 13px;
+		height:      20px;
+		font-size:   13px;
 	}
 	#CS_LOGO {
-		width:  260px;
-		height:  40px;
+		width:      260px;
+		height:      40px;
 	}
 	.CS_TRIANGLE {
-		height: 20px;
-		width:  20px;
+		height:      20px;
+		width:       20px;
 	}	
 	#CS_CONTROL_PANEL_VERTICAL_SEPARATOR {
-		display:none;
+		display:     none;
 		visibility: hidden;
 	}
 	.CS_SELECTOR {
-		font-size: 10px;
+		font-size:   10px;
 	}
+	/* ################ */
 	#ENCLOSE_HEADER {
-		height:       74px;
+		height:      74px;
+	}
+	#ENCLOSE_HEADER_RIGHT {
+		float:       none;
+		margin-top:   5px;
+		margin-right: 0px;
+		max-width:  320px !important;
+	}
+}
+
+/* ////////////////////////////////////// */
+@media only screen and (max-width: 320px), only screen and (max-device-width: 320px) {
+	body {
+		padding-left: 10px;
+	}
+	/* ################ */
+	#LEGEND_WIDE {
+		display:     none;
+	}
+	#LEGEND_NARROW {
+		display:    block;
+	}
+	/* ################ */
+	.CS_CHART {
+		width:            290px;		/* wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:       0px;
+		margin-left:        0px;
+	}
+	/* ################ */
+	.CS_CHART_NARROW {
+		width:            290px;		/* wish for 350px, but this works on iPhone */
+		background-color: white;
+		margin-right:       0px;
+		margin-left:        0px;
+	}
+	/* ################ */
+	.CS_TITLE {
+		font-size:   20px;
+	}
+	.CS_SUBTITLE {
+		display:     none;
+	}
+	.CS_SUBTITLE_NARROW {
+		display:    block;
+	}
+	/* ################ */
+	#CS_START_END {
+		height:      20px;
+		font-size:   13px;
+	}
+	#CS_LOGO {
+		width:      260px;
+		height:      40px;
+	}
+	.CS_TRIANGLE {
+		height:      20px;
+		width:       20px;
+	}	
+	#CS_CONTROL_PANEL_VERTICAL_SEPARATOR {
+		display:     none;
+		visibility: hidden;
+	}
+	.CS_SELECTOR {
+		font-size:   10px;
+	}
+	/* ################ */
+	#ENCLOSE_HEADER {
+		height:      74px;
 	}
 	#ENCLOSE_HEADER_RIGHT {
 		float:       none;

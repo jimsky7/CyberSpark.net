@@ -58,20 +58,13 @@ Create a function with the same name as the file (but not the ".php" extension).
 //      passed in again as the argument "$store" ... the code must respect this store
 //      and index it appropriately so as not to mess with data belonging to other
 //      plugin filters.
-
-// CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
-
 */
 ?>
 <?php 
 
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
-include_once "include/echolog.inc";
-
-define ('FILTER_NAME', 'how_to_make_a_plugin_filter');
+include_once "include/echolog.php";
 
 //// how_to_make_a_plugin_filterScan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -80,8 +73,16 @@ define ('FILTER_NAME', 'how_to_make_a_plugin_filter');
 //// $args holds arguments/parameters/properties from the daemon
 //// $privateStore is an associative array of data which contains, if indexed properly,
 ////   persistent data related to the URL being scanned.
+////   Note: In filters written prior to 2015, $privateStore[] was erroneously given
+////   an extra 'index' of [$filtername] which was unnecessary. This is being
+////   corrected as filters are upgraded. In other words this was used in 2014:
+////   $privateStore[$filterName][$url]['value']
+////   when it should have been
+////   $privateStore[$url]['value']
+////
 function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
-	$filterName = FILTER_NAME;
+	$filterName = 'how_to_make_a_plugin_filter';
+	$attributeName = 'my_value';
 	$result   = "OK";						// default result
 	$url = $args['url'];					// the actual URL, not its contents
 
@@ -93,14 +94,14 @@ function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
 	//   Get $privateStore properly, based on filter name and URL being checked
 	//   You can define any number of last-position values ... don't use 'sampledata' use
 	//   something meaningful for your filter.
-	if (isset($privateStore[$filterName][$url][$filterName])) {
+	if (isset($privateStore[$url][$attributeName])) {
 		// Get value from previous run
-		$sampleData = $privateStore[$filterName][$url][$filterName];
+		$sampleData = $privateStore[$url][$attributeName];
 	}
 	else {
 		// Set up value because this URL has not been seen before
 		$sampleData = '';
-		$privateStore[$filterName][$url][$filterName] = $sampleData;
+		$privateStore[$url][$attributeName] = $sampleData;
 	}
 
 	//// If something changed, for example, return status
@@ -119,11 +120,22 @@ function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
 	
 }
 
+//// how_to_make_a_plugin_filterNotify()
+//// This function is called when a URL is being scanned and when it is the NOTIFY hour.
+//// Other than 'when it is called' it can pretty much be the same as the 'Scan' function.
+////
+function how_to_make_a_plugin_filterNotify($content, $args, $privateStore) {
+	//// In this example, we'll just return the result of the 'Scan' function.
+	//// But there might be something you only want to do once a day. This is where
+	////   you'd put it.
+	return how_to_make_a_plugin_filterScan($content, $args, $privateStore);
+}
+
 //// how_to_make_a_plugin_filterInit()
 //// This function is called by the daemon once when it is first loaded.
 //// It returns a message, but doesn't touch the private date (in $privateStore).
 function how_to_make_a_plugin_filterInit($content, $args, $privateStore) {
-	$filterName = FILTER_NAME;
+	$filterName = 'how_to_make_a_plugin_filter';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the 
@@ -140,7 +152,7 @@ function how_to_make_a_plugin_filterInit($content, $args, $privateStore) {
 //// the daemon's "private" database in $privateStore, which we simply pass back. We also
 //// pass back a message saying that this filter has properly shut down.
 function how_to_make_a_plugin_filterDestroy($content, $args, $privateStore) {
-	$filterName = FILTER_NAME;
+	$filterName = 'how_to_make_a_plugin_filter';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -158,9 +170,13 @@ function how_to_make_a_plugin_filterDestroy($content, $args, $privateStore) {
 //// (Note that the name "how_to_make_a_plugin_filter" matches the filename
 ////    "how_to_make_a_plugin_filter.php" -- this is required.)
 function how_to_make_a_plugin_filter($args) {
-	$filterName = FILTER_NAME;
+	$filterName = 'how_to_make_a_plugin_filter';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
+		return false;
+	}
+ 	if (!registerFilterHook($filterName, 'notify', $filterName.'Notify', 10)) {
+		echo "The filter '$filterName' was unable to add a 'Notify' hook. \n";	
 		return false;
 	}
 	if (!registerFilterHook($filterName, 'init', $filterName.'Init', 10)) {

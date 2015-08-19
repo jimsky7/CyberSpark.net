@@ -69,6 +69,10 @@
 			fill: #00c000 !important; /* override background */
 			background-color: #00c000 !important; /* for HTML */
 		}
+		.rect_cyan {
+			fill: #00ffff !important; /* override background */
+			background-color: 00ffff !important; /* for HTML */
+		}
 		
 		/* pop-up tooltips as you mouse over rectangles */
 		div.tooltip {   

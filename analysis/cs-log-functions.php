@@ -17,4 +17,25 @@ if (!function_exists('ifGetOrPost')) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////
+// Sometimes cURL error symbolics are not defined, so be sure we have them.
+// Errors related to timing out or failing to resolve
+if (!defined('CURLE_OPERATION_TIMEDOUT')) {
+	define ('CURLE_OPERATION_TIMEDOUT', 28);
+}
+// Possibly intercept these in the future
+// CURLE_COULDNT_RESOLVE_HOST'
+
+// Errors related to connecting or transmission
+if (!defined('CURLE_RECV_ERROR')) {
+	define ('CURLE_RECV_ERROR', 56);
+}
+// Possibly intercept these in the future
+// CURLE_COULDNT_CONNECT
+// CURLE_FTP_WEIRD_SERVER_REPLY
+// CURLE_READ_ERROR
+// CURLE_SSL_CONNECT_ERROR
+// CURLE_SSL_PEER_CERTIFICATE
+/// CURLE_GOT_NOTHING
+
 /* Do not close the php */

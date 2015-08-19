@@ -7,12 +7,9 @@
 	Note: Requires php5-curl (not the PEAR HTTP client)
 ****/
 
-// require_once 'HTTP/Client.php';
-// require_once 'HTTP/Request.php';
-// require_once 'include/http.inc';				// HTTP functions
 require_once 'log-transport-config.php';		// same directory as this script
 require_once 'log-transport-pw.php';			// same directory as this script
-require_once 'include/args.inc';
+require_once 'include/args.php';
 require_once 'cyberspark.sysdefs.php';
 
 declare(ticks = 1);					// allows shutdown functions to work
@@ -122,6 +119,7 @@ while (($maxLines==0) || ($i<$maxLines)) {
 		fseek($f, $fpos);
 		
 		while(true) {
+			$fpre = $fpos;
 			$s = fgets($f);
 	
     		if (feof($f) || ($s===false)) {
@@ -152,6 +150,12 @@ while (($maxLines==0) || ($i<$maxLines)) {
 					curl_setopt($ch, CURLOPT_HTTPHEADER, 		array('Content-Length: '.strlen($ueData)));
 					$curlResult = curl_exec($ch);
 					if ($curlResult === FALSE) {
+						// Error trying to POST
+						// Reset file position so the log entry will be retried later.
+						// Then bail out of the read process for a while.
+						$sleepTime = $longSleep;
+						$fpos = $fpre;
+						break;
 					}
 					curl_close($ch);
 				}

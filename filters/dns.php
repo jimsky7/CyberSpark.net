@@ -13,8 +13,8 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
-include_once "include/echolog.inc";
-include_once "include/functions.inc";
+include_once "include/echolog.php";
+include_once "include/functions.php";
 
 ///////////////////////////////// 
 function dnsScan($content, $args, $privateStore) {
@@ -29,7 +29,7 @@ function dnsScan($content, $args, $privateStore) {
 
 	echoIfVerbose("The [dns] filter was invoked \n");
 	$domain = domainOnly($url);
-	$fqdn   = fqdnOnly($url);
+	$fqdn   = $domain;
 	echoIfVerbose("Checking $domain \n");
 	
 	// NOTE: if more than one url= directive uses the [dns] condition, it will really only report
@@ -52,7 +52,18 @@ function dnsScan($content, $args, $privateStore) {
 //	print_rIfVerbose($da);
 	
 		////// SOA
-		$da = dns_get_record($domain, DNS_SOA);
+		// Staring with FQDN, whittle down until an SOA
+		// can be retrieved.
+		$da = false;
+		while (($i = strpos($domain, '.')) !== false) {
+			$da = dns_get_record($domain, DNS_SOA);
+			if (count($da)) {
+				break;
+			}
+			$domain = substr($domain, $i+1);
+		}
+		// At this point $fqdn contains the fully qualified domain name (server name) and
+		//   $domain contains the shortened domain name for which we could obtain an SOA.
 		if (($da !== false) && isset($da[0])) {
 			$da0 = $da[0];
 			// Note: don't include ttl because it counts down dynamically - everything else can be used
@@ -90,8 +101,8 @@ function dnsScan($content, $args, $privateStore) {
 		else {
 			///// When dns_get_record() comes back FALSE, it has failed to retrieve records.
 			$result = "DNS";
-			$message .= INDENT . "Could not retrieve DNS information for this domain.\n";
-			echoIfVerbose(       "Could not retrieve DNS information for this domain.\n");	
+			$message .= INDENT . "Could not retrieve DNS information for the domain ($domain).\n";
+			echoIfVerbose(       "Could not retrieve DNS information for the domain ($domain).\n");	
 		}
 	}
 	catch (Exception $dax) {

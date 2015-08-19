@@ -13,8 +13,8 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
-include_once "include/echolog.inc";
-include_once "include/functions.inc";
+include_once "include/echolog.php";
+include_once "include/functions.php";
 
 define('CYBERSCAN_MAX_ALERTS', 2);
 define('DISKWARNING', 80);

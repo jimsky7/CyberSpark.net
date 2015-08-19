@@ -17,7 +17,7 @@
 // CyberSpark system variables, definitions, declarations
 include_once "cyberspark.config.php";
 
-include_once "include/echolog.inc";
+include_once "include/echolog.php";
 
 ///////////////////////////////// 
 function gsbScan($content, $args, $privateStore) {
@@ -230,7 +230,7 @@ function breadcrumbsString($howToGetThere, $finalURL="") {
 }
 
 ///////////////////////////////// 
-function gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, &$howToGetThere) {
+function gsbCheckURL($args, $url, &$numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, &$howToGetThere) {
 	
 	$result = "OK";
 	$message = "";
@@ -305,7 +305,7 @@ function keepAliveURL($numberOfChecks, $url) {
 }
 
 ///////////////////////////////// 
-function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere) {
+function gsbExploreLinks($args, $url, $depth, $maxDepth, &$numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere) {
 	
 	$result = "OK";
 	$message = "";
@@ -347,7 +347,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 					// If you leave one, GSB will fail.
 					$link = ltrim($link, '_');
 					// Check this link against GSB. The remote GSB server, in Python, keeps track of malware and phishing domains.
-					list($r, $mess) = gsbCheckURL(&$args, $link, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
+					list($r, $mess) = gsbCheckURL($args, $link, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
 					if ($r != "OK") {
 						$result = $r;
 					}
@@ -356,7 +356,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, $numberOfChecks, $failu
 					// Go deeper
 					if (($depth+1) < $maxDepth) {
 						echoIfVerbose ("Going to depth " . ($depth+1) . " maximum " . $maxDepth . "\n");
-						list($r, $mess) = gsbExploreLinks(&$args, $link, $depth+1, $maxDepth, &$numberOfChecks, &$failures, &$prefix, &$checkedURLs, &$checkedDomains, &$howToGetThere);
+						list($r, $mess) = gsbExploreLinks($args, $link, $depth+1, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
 						echoIfVerbose ("Done at depth " . ($depth+1) . " \n");
 						if ($r != "OK") {
 							$result = $r;
