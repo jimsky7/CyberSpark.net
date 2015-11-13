@@ -55,6 +55,7 @@ function dnsScan($content, $args, $privateStore) {
 		// Staring with FQDN, whittle down until an SOA
 		// can be retrieved.
 		$da = false;
+		$originalFQDN = $domain;
 		while (($i = strpos($domain, '.')) !== false) {
 			$da = dns_get_record($domain, DNS_SOA);
 			if (count($da)) {
@@ -100,9 +101,12 @@ function dnsScan($content, $args, $privateStore) {
 		}
 		else {
 			///// When dns_get_record() comes back FALSE, it has failed to retrieve records.
+			///// Please note that we check the FQDN, then we progressively strip leading tokens, one dot at
+			/////    at a time, and if we get here we have checked every possible domain name right down to
+			/////    the TLD and they all failed.
 			$result = "DNS";
-			$message .= INDENT . "Could not retrieve DNS information for the domain ($domain).\n";
-			echoIfVerbose(       "Could not retrieve DNS information for the domain ($domain).\n");	
+			$message .= INDENT . "Could not retrieve DNS start-of-authority (SOA) information for this domain ($originalFQDN).\n";
+			echoIfVerbose(       "Could not retrieve DNS start-of-authority (SOA) information for this domain ($originalFQDN).\n");	
 		}
 	}
 	catch (Exception $dax) {
