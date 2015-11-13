@@ -51,6 +51,8 @@ function headersScan($content, $args, $privateStore) {
 //	Varnish
 //  Cloudflare
 		'CF-RAY',
+//	Yahoo (hk particularly)
+		'Y-Trace',
 //	WIX.com
 		'ETag'
 	);
