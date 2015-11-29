@@ -20,16 +20,16 @@ define ('CS_URL_POST',   	   'cs-log-post-entry.php');			// put one log entry in
 // Other definitions
 define ('PAD_VALUE', 3600);				// value to add when padding (3600 == one hour)
 define ('PAD_CODE', 222);				// HTTP result code to insert when padding
-define ('SAVE_MESSAGES', true);			// causes messages to be saved in table `messages` //need lots of storage
+define ('SAVE_MESSAGES', false);			// causes messages to be saved in table `messages` //need lots of storage
 
 ////////////////////////////////////////////////////////////////////////
-define('ONE_COLUMN', 720);
-define('CHART_WIDE', 720);
-define('TWO_COLUMN', 350);
-define('CHART_NARROW', 350);
-define('TOOL_TIP_WIDTH', 300);
+define('ONE_COLUMN',      720);
+define('CHART_WIDE',      720);
+define('TWO_COLUMN',      350);
+define('CHART_NARROW',    290);	/* wish for 350, but 290 fits an iPhone */
+define('TOOL_TIP_WIDTH',  270);
 define('TOOL_TIP_HEIGHT', 20);
-define('CHART_HEIGHT', 30);
+define('CHART_HEIGHT',    30);
 
 define('TIME_WHEN_HIDDEN', 1800000);		// 30 minutes
 define('TIME_WHEN_VISIBLE', 300000);		// 5 minutes
