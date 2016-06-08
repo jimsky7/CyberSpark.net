@@ -61,6 +61,10 @@ function sslScan($content, $args, $privateStore) {
 	$filterName = "ssl";
 	$result   = "OK";						// default result
 	$url = $args['url'];
+	if (isset($args['useragent'])) {
+		$userAgent = $args['useragent'];
+	}
+	
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
@@ -122,6 +126,9 @@ function sslScan($content, $args, $privateStore) {
 					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 //					curl_setopt($ch, CURLOPT_SSLVERSION,     3);
+					if (isset($userAgent) && strlen($userAgent)) {
+						curl_setopt($ch, CURLOPT_USERAGENT,		$userAgent);
+					}
 					// Reminder you can do this if you need specific additional CA certs
 					// curl_setopt ($ch, CURLOPT_CAINFO, "pathto/cacert.pem");
 					//
