@@ -55,11 +55,41 @@ function basicScan($content, $args, $privateStore) {
 			$message = "Timeout after " . $elapsedTime . " seconds.";
 //echo "  Timeout\n";
 		}
+		// CLOUDFLARE 520 thru 524
 		if ($httpResult['code'] >= 520 && $httpResult['code'] <= 524) {
 			$result = "HTTP";
-			$message = "If you are using Cloudflare, it thinks your underlying host is unresponsive. ";
-			$message .= "If you are not, then you still should look into this. ";
-			$message .= "The Cloudflare HTTP error number is ".$httpResult['code'].". ";
+			$message = "If the site uses Cloudflare, and if Cloudflare thinks the underlying host is unresponsive, it returns a error number between 520 and 524. ";
+			$message .= "If the site is not using Cloudflare, then you still should look into this error. ";
+			$message .= "The HTTP error number is ".$httpResult['code'].". ";
+			try {
+				// ob_start();
+				// print_r($httpResult['headers']);
+				// $message .= ob_get_clean();
+				if (isset($httpResult['headers']['Server'])) {
+					$sh = $httpResult['headers']['Server'];
+					$message .= "Here's a clue... The reported server type is '$sh'. ";
+				}
+			}
+			catch (Exception $allEX) {
+			}
+		}
+		// CLOUDFLARE 410
+		if ($httpResult['code'] == 410) {
+			$result = "HTTP";
+			$message = "If the site uses Cloudflare, and if Cloudflare thinks the underlying host is 'gone' it returns error 410. ";
+			$message .= "If the site is not using Cloudflare, then you still should look into this error. ";
+			$message .= "The HTTP error number is ".$httpResult['code'].". ";
+			try {
+				// ob_start();
+				// print_r($httpResult['headers']);
+				// $message .= ob_get_clean();
+				if (isset($httpResult['headers']['Server'])) {
+					$sh = $httpResult['headers']['Server'];
+					$message .= "Here's a clue... The reported server type is '$sh'. ";
+				}
+			}
+			catch (Exception $allEX) {
+			}
 		}
 	}
 	return array($message, $result, $privateStore);
