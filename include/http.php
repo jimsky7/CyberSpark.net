@@ -23,7 +23,10 @@ require_once('cyberspark.sysdefs.php');
 function setCommonHeaders(&$url, $options=null) {
 	$headers = array();
 	// Need "Accept:" for compatibility and FOR CLOUDFLARE, otherwise get 403
+	// Note that this means we won't accept non-text or non-HTML objects
 	$headers['Accept'] = 'text/html,text/plain';	
+	// We don't want compressed gzipped pages.
+	$headers['Accept-Encoding'] = 'identity';	
 	// IP address plus "Host:" header is requested by this form where the "Host:" value is in brackets
 	// http://[web.red7.com]173.45.230.19/home.php
 	$startingBracket = strpos($url, "[");

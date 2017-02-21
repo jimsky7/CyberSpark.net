@@ -6,7 +6,9 @@
 
 // PEAR mail package
 require_once 'Mail.php';
-require_once 'Mail/mime.php';
+if (PHP_VERSION_ID < 70000) {
+	require_once 'Mail/mime.php';
+}
 
 // CyberSpark stuff
 require_once 'include/echolog.php';
@@ -36,7 +38,7 @@ function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $mess
 		$params['username'] = $user;
 		$params['password'] = $password;
 		$params['timeout'] = 30;
-		$PEARmailer =& Mail::factory ('smtp', $params);
+		$PEARmailer = Mail::factory ('smtp', $params);
 	
 		$headers = array();
 		$headers['To'] = $to;				// this is everyone (altered later)

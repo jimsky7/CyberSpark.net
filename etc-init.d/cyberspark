@@ -21,7 +21,7 @@ INITDPATH="/etc/init.d"
 DESCRIPTION="CyberSpark service"
 STARTUPMSGFILE="important_startup_message.txt"
 
-
+    
 case "$1" in
   start)
     ## After forced power-off, PID and NEXT files still exist. Try to clean up.
