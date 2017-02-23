@@ -4,7 +4,8 @@
 		maintain the scanning filters
 	*/
 
-include_once "include/classdefs.php";
+global $path;
+include_once $path."include/classdefs.php";
 
 /////////////////////////////////
 // findAndAddFilters()

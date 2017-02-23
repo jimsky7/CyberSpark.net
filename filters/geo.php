@@ -12,11 +12,12 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "cyberspark.sysdefs.php";
-include_once "include/echolog.php";
-include_once "include/http.php";
-include_once "include/functions.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."cyberspark.sysdefs.php";
+include_once $path."include/echolog.php";
+include_once $path."include/http.php";
+include_once $path."include/functions.php";
 
 ///////////////////////////////// 
 // getGeoInfo() » Use FREEGEOIP software we have installed on our own server

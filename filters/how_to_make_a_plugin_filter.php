@@ -63,8 +63,9 @@ Create a function with the same name as the file (but not the ".php" extension).
 <?php 
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."include/echolog.php";
 
 //// how_to_make_a_plugin_filterScan()
 //// This function is called when a URL is being scanned and when 'length' has been

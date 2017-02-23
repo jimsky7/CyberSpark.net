@@ -11,10 +11,11 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
+global $path;
+include_once $path."cyberspark.config.php";
 
-include_once "include/echolog.php";
-include_once "include/functions.php";
+include_once $path."include/echolog.php";
+include_once $path."include/functions.php";
 
 ///////////////////////////////// 
 function dnsScan($content, $args, $privateStore) {

@@ -12,8 +12,9 @@
 
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."include/echolog.php";
 
 function basicScan($content, $args, $privateStore) {
 	$REFUSAL_TIME = 5;						// connections failing FASTER than this are "refusals"
