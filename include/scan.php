@@ -4,8 +4,9 @@
 		perform one round of scanning (all URLs once)
 	*/
 
-include_once "include/classdefs.php";
-include_once "cyberspark.sysdefs.php";
+global $path;
+include_once $path."include/classdefs.php";
+include_once $path."cyberspark.sysdefs.php";
 
 ///////////////////////////////////////////////////////////////////////////////////
 function scan($properties, $filters, &$store) {
