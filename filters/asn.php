@@ -12,11 +12,12 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "cyberspark.sysdefs.php";
-include_once "include/echolog.php";
-include_once "include/http.php";
-include_once "include/functions.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."cyberspark.sysdefs.php";
+include_once $path."include/echolog.php";
+include_once $path."include/http.php";
+include_once $path."include/functions.php";
 
 ///////////////////////////////// 
 // getASNinfo()
@@ -110,7 +111,11 @@ function asnNotify($content, $args, $privateStore) {
 	if (isset($args['notify']) && isset($privateStore[$url][$filterName.'_ran_today']) && isNotifyHour($args['notify']) && !$privateStore[$url][$filterName.'_ran_today']) {
 		$asnInfo = getASNinfo($url);
 		$host = hostname($url);
-		if ($asnInfo != null) {
+		// NOTE: If ASN information exists but if 'operator' is an empty string, ignore the info.
+		//       This eliminates false alarms when ASN 'operator' name goes empty, which it does a lot
+		//       in the team cymru interface. Also, when operator is empty, the IP is typically also missing.
+		// ALSO: If ASN information is not present, also ignore and don't report anything.
+		if (($asnInfo != null) && (strlen($asnInfo['operator']) > 0)) {
 			$message .= "\n";
 			// Warnings needed?
 			if (isset($privateStore[$url]['ip'])) {
@@ -126,6 +131,10 @@ function asnNotify($content, $args, $privateStore) {
 			else {
 				$result = 'Warning';
 				$message .= INDENT . "ASN information is available for the first time. (This is good.)\n";
+				$message .= INDENT . "You will be notified if ASN information changes.\n";
+				$message .= INDENT . "Please also note that if ASN information disappears in the future, \n";
+				$message .= INDENT . "or if the Team Cymru interface fails, you will not be alerted.\n";
+				$message .= INDENT . "You will always have only the most recent non-empty ASN information.\n";
 			}
 			// Document the current values in the message
 			$message .= INDENT . "FQDN $host\n";
