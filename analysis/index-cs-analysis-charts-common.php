@@ -64,7 +64,7 @@ include ('index-cs-analysis-setupdates.php');
 <?php
 	} /* not calendar */
 ?>
-	<title><? echo $TITLE; ?></title>
+	<title><?php echo $TITLE; ?></title>
     <link href="css/d3.css"          rel="stylesheet" type="text/css" media="all" /> 
 	<link href="css/cs-analysis.css" rel="stylesheet" type="text/css" media="all" />    
     <script type="text/javascript">
@@ -143,7 +143,7 @@ while ($yx > 2009) {
 	</div><!-- ENCLOSE_HEADER -->
     
    	<div id="CS_TITLES">
-    <div class="CS_TITLE"><? echo $TITLE; ?></div>
+    <div class="CS_TITLE"><?php echo $TITLE; ?></div>
 <?php
 	/**** Determine whether a 'bubbles' counterpart exists for this page.
 	

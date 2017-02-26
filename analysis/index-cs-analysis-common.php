@@ -218,7 +218,7 @@ function cs_http_get($url) {
 <?php
 	} /* not calendar */
 ?>
-	<title><? echo $TITLE; ?></title>
+	<title><?php echo $TITLE; ?></title>
     <link href="css/d3.css"          rel="stylesheet" type="text/css" media="all" /> 
 	<link href="css/cs-analysis.css" rel="stylesheet" type="text/css" media="all" />    
     <script type="text/javascript">
@@ -288,7 +288,7 @@ while ($yx > 2009) {
 	</div><!-- ENCLOSE_HEADER -->
     
    	<div id="CS_TITLES">
-    <div class="CS_TITLE"><? echo $TITLE; ?></div>
+    <div class="CS_TITLE"><?php echo $TITLE; ?></div>
 <?php if (!$calendar) { ?>
     <div class="CS_SUBTITLE">&nbsp;&nbsp;(Page reloads every few minutes)</div>
     <div class="CS_SUBTITLE_NARROW">&nbsp;&nbsp;(Page will reload)</div>
@@ -557,7 +557,7 @@ function type(d) {
 ?>
 <!-- legend -->
 <div id="CS_FOOTER_NARROW">
-<table id='LEGEND_NARROW' cellspacing='0' cellpadding='0' border='0' style='width:100%; max-width:<? echo CHART_NARROW; ?>px; font-size:11px;'>
+<table id='LEGEND_NARROW' cellspacing='0' cellpadding='0' border='0' style='width:100%; max-width:<?php echo CHART_NARROW; ?>px; font-size:11px;'>
 		<tr>
 			<td class='rect_green'   style='height:20px; width:55px; color:White;'>&nbsp;&nbsp;seconds</td>
 			<td class='rect_yellow'  style='height:20px; width:40px; color:black;'>&nbsp;&nbsp;<?php echo CHART_YELLOW; ?> +</td>
@@ -581,7 +581,7 @@ function type(d) {
 	</table>
     </div>
     <div id="CS_FOOTER_WIDE" style="float:left; width:100%;">
-    <table id='LEGEND_WIDE' cellspacing='0' cellpadding='0' border='0' style='width:100%;max-width:<? echo CHART_WIDE; ?>px; font-size:11px; margin-bottom:4px;'>
+    <table id='LEGEND_WIDE' cellspacing='0' cellpadding='0' border='0' style='width:100%;max-width:<?php echo CHART_WIDE; ?>px; font-size:11px; margin-bottom:4px;'>
 		<tr>
 			<td colspan='8' style='height:1px;'>&nbsp;
 			</td>
