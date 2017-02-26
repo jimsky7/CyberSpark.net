@@ -42,8 +42,9 @@ mysqli is documented here => http://us2.php.net/manual/en/class.mysqli.php
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Setup
 
-include('cs-log-config.php');
-include('cs-log-functions.php');
+require_once('cs-log-config.php');
+require_once('cs-log-functions.php');
+require_once('cs-log-pw.php');
 
 define ('ECHO_SAMPLE', false);			// echo one sample SQL
 define ('LINE_LIMIT', 0);				// how many log entries to process before exiting (0==unlimited)
@@ -56,7 +57,7 @@ if (!isset($_POST['FILE_NAME'])) {
 }
 $fileName = $_POST['FILE_NAME'];
 	
-echo "<html><body><p>&laquo; <a href='/analysis/'>Back</a></p>";
+echo "<html><body><p>&laquo; <a href='$_POST[HTTP_REFERER]'>Back</a></p>";
 
 // Check the "filename" to see whether it might be a complete directory
 if (is_dir($fileName)) {
@@ -95,12 +96,23 @@ foreach ($outputFieldQuote as $key=>$value) {
 	$outputFieldTypes .= ($value?'s':'i');
 }
 
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// Open mysqli, check for connection errors
+
 $mysqli = new mysqli(MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE);
 
-echo "Opened a connection to MySQL <br/>\r\n";
+if ($mysqli != null) {
+	if ($mysqli->connect_errno) {
+		echo "'mysqli' error $mysqli->connect_errno.<br/>\r\n";
+		echo "$mysqli->connect_error.<br/>\r\n";
+		exit;
+	}
+	echo "Opened a connection to MySQL<br/>\r\n";
+}
 
 foreach ($fileArray as $fn) {
 	if (is_file($base.$fn)) {
+		echo "Checking $base$fn <br/>\r\n";
 		
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		// Check file names in the database to see whether we've read this file already
@@ -121,12 +133,13 @@ foreach ($fileArray as $fn) {
 			$result = $stmt->fetch() ; 	// We assume only one result and fetch only once
 			if ($ID > 0) {
 				echo "-----------------------------------------------<br/>\r\n";
-				echo "Previously processed $base$fn (skipping now) <br/>\r\n";
+				echo "Previously processed <span style='color:red;'>$base$fn</span> (skipping now) <br/>\r\n";
 				continue;
 			}
 		}
 		$stmt->close();
-		
+		echo "Opening $base$fn <br/>\r\n";
+				
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		$fh = fopen($base.$fn, 'r');
 
@@ -351,6 +364,7 @@ foreach ($fileArray as $fn) {
 // All done
 
 $mysqli->close();
+echo "All done<br/>\r\n";
 
 echo '</body></html>';
 
