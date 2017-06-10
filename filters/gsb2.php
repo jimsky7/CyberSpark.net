@@ -32,6 +32,14 @@ function gsb2Scan($content, $args, $privateStore) {
 	//   available only for use by this plugin filter.
 	$message = "";
 
+	// Check for presence of server info and API KEY
+	// If either one is missing, then return 'OK' but with a message.
+	if ((GSB_SERVER == '') || (GSB_API_KEY == '')) {
+		$message .=   "Google Safe Browsing URL or API_KEY was missing from 'cyberspark.config', so GSB will not be checked.";
+		echoIfVerbose("Google Safe Browsing URL or API_KEY was missing from 'cyberspark.config', so GSB will not be checked.");	
+		return array($message, $result, $privateStore);
+	}
+
 // Thanks for the DOM suggestion! - see
 //   http://w-shadow.com/blog/2009/10/20/how-to-extract-html-tags-and-their-attributes-with-php/
 
