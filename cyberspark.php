@@ -157,7 +157,10 @@ beginLog();
 //   messages to console and nothing else except alerts.
 if ($isDaemon) {
 	$subject = $ID . " Daemon launched " . date("r");
-	$message = date("r") . "\nLaunched as a daemon\n";
+	$message =  "$ID was launched as a daemon.\n";
+	$message .=  date('r')."\n";
+	$message .= "The default hour for notifications and log rotations will be $notify:00 UTC (24-hour clock)\n";
+	$message .= "The properties file may change this to a different time.\n";
 	textMail($to, $from, $replyTo, $abuseTo, $subject, $message, $smtpServer, $smtpPort, $user, $pass);
 }
 
@@ -257,7 +260,15 @@ if (file_exists('log-transport.php')) {
 				$time		= $properties['time'];
 			}
 			if (isset($properties['notify'])) {
+				// If the properties file contained a 'notify' specification
+				// then override the default from the config file
 				$notify		= $properties['notify'];
+			}
+			else {
+				// Otherwise, propagate the default value from the config file.
+				// Note that $properties[] is sent to various places which might
+				//   need to know whether it's the "notify" hour or not.
+				$properties['notify'] = $notify;
 			}
 			if (isset($properties['user'])) {
 				$user		= $properties['user'];
@@ -321,6 +332,7 @@ if (file_exists('log-transport.php')) {
 				}
 				else{
 					echoIfVerbose("No datastore exists yet\n");
+					writeLogAlert("Created a new datastore");
 				}
 				if ($store['cyberspark']['tripwire']==true) {
 					writeLogAlert("Ouch that hurt! Apparently this process wasn't shut down correctly - may have crashed.");
@@ -328,7 +340,7 @@ if (file_exists('log-transport.php')) {
 				}
 				$store['cyberspark']['tripwire'] = true;
 				if (isset($store['cyberspark']['notifiedtoday'])) {
-					if (!isNotifyHour($properties['notify'])) {
+					if (!isNotifyHour($notify)) {
 						// If it's not the 'notify' hour, force the flag false.
 						// This fix can be needed if the daemon was running,
 						//   sent notification, then was shut down during DURING the notify hour, 
