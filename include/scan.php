@@ -104,10 +104,12 @@ function scan($properties, $filters, &$store) {
 					try {
 						// Run 'basic' filter
 						if (isNotifyHour($filterArgs['notify']) && ($filters[$rankIndex]->notify != null)) {
+							// During the 'Notify" hour, and if it exists, this function is invoked.
 							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->notify, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
 						}
 						else {
-							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+							// During all other hours, this function is invoked
+							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan,   $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
 						}
 						if (isset($st)) {
 							// Save this filter's private store
