@@ -434,11 +434,13 @@ foreach ($fileArray as $fn) {
 
 $mysqli->close();
 
-echo "All done$BR\r\n";
-echo "$HL$BR\r\n";
-
-if (!$cl) {
-	echo '</body></html>';
+if ($cl) {
+    echo "All done. \r\n";
+}
+else {
+    echo "All done.$BR\r\n";
+    echo "$HL$BR\r\n";
+    echo '</body></html>';
 }
 
 ?>
