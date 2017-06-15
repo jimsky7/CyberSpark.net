@@ -44,9 +44,10 @@ function dnsScan($content, $args, $privateStore) {
 	
 	
 	try {
+		$soa = null;
 		$isSOA = checkdnsrr($domain, "SOA");
 		echoIfVerbose("SOA? $isSOA \n");
-	
+			
 //	DNS_A, DNS_CNAME, DNS_HINFO, DNS_MX, DNS_NS, DNS_PTR, DNS_SOA, DNS_TXT, DNS_AAAA, DNS_SRV, 
 //  DNS_NAPTR, DNS_A6, DNS_ALL or DNS_ANY
 //		$da = dns_get_record($domain, DNS_ALL);
@@ -73,11 +74,17 @@ function dnsScan($content, $args, $privateStore) {
 			echoIfVerbose("$soa \n");
 			if (isset($privateStore[$filterName][$domain][DNS_SOA])) {
 				if (strcasecmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
+					// SOA information has changed
 					$result = "DNS";
 					$message .= "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" To \"$soa\"\n";
 				}
+				else {
+					// Not changed - always report back the contents of the SOA
+					$message .= "$soa\n";
+				}
 			}
 			else {
+					// Have not seen any SOA before
 					$message .= "SOA first seen \"$soa\"\n";
 			}
 			$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
@@ -116,7 +123,7 @@ function dnsScan($content, $args, $privateStore) {
 		echoIfVerbose("Exception in fliters:dns:dnsScan() $dax\n");	
 	}
 
-
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }

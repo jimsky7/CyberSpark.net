@@ -133,6 +133,9 @@ function gsbDestroy($content, $args, $privateStore) {
 }
 
 ///////////////////////////////// 
+// Register the hooks for Scan, Init and Destroy.
+// Note that there is no special Notify hook for this filter, meaning that the
+//   gsbScan() function is used even during the Notify hour.
 function gsb($args) {
 	$filterName = "gsb";
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {

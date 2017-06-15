@@ -96,6 +96,41 @@ function asnScan($content, $args, $privateStore) {
 		}
 		$message .= " (thx to Team-Cymru ASN API)";
 	}
+	else {
+		// Info has not yet been saved for this domain
+		// Add it to database
+		$asnInfo = getASNinfo($url);
+		$host = hostname($url);
+
+		if ($asnInfo == null) {
+			$result = 'Warning';
+			$message .= " (Could not retrieve any ASN info for '$host' [1])";
+			echoIfVerbose(" Could not retrieve any ASN info for '$host' [1]\n");
+			$message .= INDENT . "Data is from Team Cymru http://www.team-cymru.org/Services/ip-to-asn.html and is checked once a day.";
+		}
+		else {
+			$result = 'Warning';
+			$message .= "\n";
+			$message .= INDENT . "ASN information is available for the first time. (This is good.) [1]\n";
+			$message .= INDENT . "You will be notified if ASN information changes.\n";
+			$message .= INDENT . "Please also note that if ASN information disappears in the future, \n";
+			$message .= INDENT . "or if the Team Cymru interface fails, you will not be alerted.\n";
+			$message .= INDENT . "FQDN $host\n";
+			$message .= INDENT . "ASN $asnInfo[asn] operated by '$asnInfo[operator]'\n";
+			$message .= INDENT . "IP is $asnInfo[ip]\n";
+			$message .= INDENT . "API latency: $asnInfo[latency]\n";
+			$message .= INDENT . "Data is from Team Cymru http://www.team-cymru.org/Services/ip-to-asn.html and is checked once a day.";
+			// While debugging...
+			echoIfVerbose(" ASN information for $url [1]\n");
+			echoIfVerbose(" ASN: $asnInfo[asn] IP: $asnInfo[ip] Latency: $asnInfo[latency] [1]\n");
+			echoIfVerbose(" Operator: $asnInfo[operator] [1]\n");
+			// Save current values for next time
+			$privateStore[$url][$attributeName] = $asnInfo['asn'];
+			$privateStore[$url]['ip']       	= $asnInfo['ip'];
+			$privateStore[$url]['operator'] 	= $asnInfo['operator'];
+			$privateStore[$url]['latency']  	= $asnInfo['latency'];
+		}
+	}
 	
 	return array($message, $result, $privateStore);
 }
@@ -134,18 +169,17 @@ function asnNotify($content, $args, $privateStore) {
 				$message .= INDENT . "You will be notified if ASN information changes.\n";
 				$message .= INDENT . "Please also note that if ASN information disappears in the future, \n";
 				$message .= INDENT . "or if the Team Cymru interface fails, you will not be alerted.\n";
-				$message .= INDENT . "You will always have only the most recent non-empty ASN information.\n";
 			}
 			// Document the current values in the message
 			$message .= INDENT . "FQDN $host\n";
 			$message .= INDENT . "ASN $asnInfo[asn] operated by '$asnInfo[operator]'\n";
 			$message .= INDENT . "IP is $asnInfo[ip]\n";
 			$message .= INDENT . "API latency: $asnInfo[latency]\n";
-			$message .= INDENT . "Data is from Team Cymru http://www.team-cymru.org/Services/ip-to-asn.html\n";
+			$message .= INDENT . "Data is from Team Cymru http://www.team-cymru.org/Services/ip-to-asn.html and is checked once a day.";
 			// While debugging...
-			echoIfVerbose(" ASN information for $url \n");
-			echoIfVerbose(" ASN: $asnInfo[asn] IP: $asnInfo[ip] Latency: $asnInfo[latency] \n");
-			echoIfVerbose(" Operator: $asnInfo[operator] \n");
+			echoIfVerbose(" ASN information for $url [2]\n");
+			echoIfVerbose(" ASN: $asnInfo[asn] IP: $asnInfo[ip] Latency: $asnInfo[latency] [2]\n");
+			echoIfVerbose(" Operator: $asnInfo[operator] [2]\n");
 			// Save current values for next time
 			$privateStore[$url][$attributeName] = $asnInfo['asn'];
 			$privateStore[$url]['ip']       	= $asnInfo['ip'];
@@ -153,8 +187,8 @@ function asnNotify($content, $args, $privateStore) {
 			$privateStore[$url]['latency']  	= $asnInfo['latency'];
 		}
 		else {
-			$message .= "Could not retrieve ASN info for '$host'\n";
-			echoIfVerbose(" Could not retrieve ASN info for '$host' \n");
+			$message .= "Could not retrieve ASN info for '$host' [2]\n";
+			echoIfVerbose(" Could not retrieve ASN info for '$host' [2]\n");
 		}
 	}
 	return array($message, $result, $privateStore);

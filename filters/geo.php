@@ -76,10 +76,6 @@ function geoScan($content, $args, $privateStore) {
 	$url        = $args['url'];
 	$message    = '';
 
-	if (isset($args['notify']) && isset($privateStore[$url][$filterName.'_ran_today']) && isNotifyHour($args['notify']) && !$privateStore[$url][$filterName.'_ran_today']) {
-		return geoNotify($content, $args, $privateStore);
-	}
-	
 	// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
 	$privateStore[$url][$filterName.'_ran_today'] = false;
 	echoIfVerbose(" The $filterName filter only runs once  day and this is not that time. \n");
@@ -87,15 +83,14 @@ function geoScan($content, $args, $privateStore) {
 	// This information will only appear in messages outside of the 'notify' hour and
 	//   such messages are only triggered if some other filter is reporting a problem.
 	if (isset($privateStore[$url][$attributeName])) {
-		$message .= "\n";
-		$message .= INDENT . ' IP: '.$privateStore[$url][$attributeName];
+		$message .= ' IP: '.$privateStore[$url][$attributeName];
 		if (isset($privateStore[$url]['city'])) {
-			$message .= ' City: '.$privateStore[$url]['city'];
+			$message .= '; City: '.$privateStore[$url]['city'];
 		}
 		if (isset($privateStore[$url]['metro_code'])) {
-			$message .= ' Metro code: '.$privateStore[$url]['metro_code'];
+			$message .= '; Metro code: '.$privateStore[$url]['metro_code'];
 		}
-		$message .= " Checked once a day. (thx to freegeoip.net for services)";
+		$message .= "; Checked once a day. (thanks to freegeoip.net for services)";
 	}
 	
 	return array($message, $result, $privateStore);
@@ -213,6 +208,9 @@ function geoDestroy($content, $args, $privateStore) {
 }
 
 ///////////////////////////////// 
+// Register the hooks for Scan, Notify, Init and Destroy.
+//   Note that geoScan() is invoked during regular hours, but geoNotify() is invoked
+//   during the special 'Notify' hour each day.
 function geo($args) {
 	$filterName = 'geo';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {

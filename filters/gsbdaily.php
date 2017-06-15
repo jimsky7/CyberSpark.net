@@ -131,6 +131,9 @@ function gsbdailyDestroy($content, $args, $privateStore) {
 }
 
 ///////////////////////////////// 
+// Note: gsbDaily has only a gsbdailyScan() function and not a special gsbdailyNotify()
+//   function. It will internally determine whether to fire off and it will only analyze
+//   during the daily 'Notify' hour, not during other hours.
 function gsbDaily($args) {
 	$filterName = "gsbdaily";
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
