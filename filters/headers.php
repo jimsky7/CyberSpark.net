@@ -160,8 +160,7 @@ function headersScan($content, $args, $privateStore) {
 		$message .= INDENT . "No headers remain for analysis.\n";
 	}
 
-
-
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 }
 
