@@ -142,6 +142,7 @@ function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
 	//     actually have to contain anything.
 	//   $result may be "OK" "Changed" or "Critical"
 	//   $privateStore returns to the daemon and persists between invocations of filter
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }
@@ -169,6 +170,7 @@ function how_to_make_a_plugin_filterInit($content, $args, $privateStore) {
 	$message = "[$filterName] Initialized. URL is " . $args['url'];
 	$result   = "OK";
 
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }
