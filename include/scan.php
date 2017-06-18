@@ -153,6 +153,9 @@ function scan($properties, $filters, &$store) {
 						//   and ASN information was saved.
 						if (isset($store['asn'])) {
 							$privateStore = $store['asn'];
+							if (isset($privateStore[$url]['ip'])) {
+								$message .= "          IP: ".$privateStore[$url]['ip']."\n";
+							}
 							if (isset($privateStore[$url]['asn'])) {
 								$message .= "          ASN: ".$privateStore[$url]['asn']."\n";
 							}
@@ -168,6 +171,9 @@ function scan($properties, $filters, &$store) {
 						//   and geolocation information was saved.
 						if (isset($store['geo'])) {
 							$privateStore = $store['geo'];
+							if (isset($privateStore[$url]['ip'])) {
+								$message .= "          IP: ".$privateStore[$url]['ip']."\n";
+							}
 							if (isset($privateStore[$url]['city'])) {
 								$message .= "          City: ".$privateStore[$url]['city']."\n";
 							}
