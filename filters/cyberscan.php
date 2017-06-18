@@ -155,6 +155,7 @@ function cyberscanScan($content, $args, $privateStore) {
 		}
 	}
 
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }

@@ -318,6 +318,7 @@ function sslScan($content, $args, $privateStore) {
 		echoIfVerbose("Exception in filter:SSL:SSLScan() $dax\n");	
 	}
 
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }

@@ -74,6 +74,8 @@ function lengthScan($content, $args, $privateStore) {
 	}
 	// Record previous lengths plus the (possibly new) length of this URL
 	$privateStore[$filterName][$url]['lengths'] = $lengthsString;
+
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }

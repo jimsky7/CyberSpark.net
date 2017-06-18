@@ -308,6 +308,7 @@ function smartscanScan($content, $args, $privateStore) {
 	// Record the length of this URL
 	$privateStore[$filterName][$url]['lengths'] = $lengthsString;
 
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }
