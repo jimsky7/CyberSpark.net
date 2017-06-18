@@ -17,6 +17,51 @@ include_once $path."cyberspark.config.php";
 include_once $path."include/echolog.php";
 include_once $path."include/functions.php";
 
+define ('SECONDS_PER_DAY', 86400);
+define ('SECONDS_PER_HOUR', 3600);
+define ('SECONDS_PER_MINUTE', 60);
+
+function niceTTL($seconds) {
+	$result = '';
+	
+	if ($seconds >= SECONDS_PER_DAY) {
+		// A day or more
+		$result .= intval($seconds/SECONDS_PER_DAY);
+		if (intval($seconds/SECONDS_PER_DAY)>=2) {
+			$result .= ' days';
+		}
+		else {
+			$result .= ' day';
+		}
+		$seconds = $seconds - (SECONDS_PER_DAY*intval($seconds/SECONDS_PER_DAY));
+	}
+	if ($seconds >= SECONDS_PER_HOUR) {
+		// An hour or more
+		if ($result != '') {
+			$result .= ' ';
+		}
+		$result .= intval($seconds/SECONDS_PER_HOUR) . ' hr';
+		$seconds = $seconds - (SECONDS_PER_HOUR*intval($seconds/SECONDS_PER_HOUR));
+	}
+	if ($seconds >= SECONDS_PER_MINUTE) {
+		// A minute or more
+		if ($result != '') {
+			$result .= ' ';
+		}
+		$result .= intval($seconds/SECONDS_PER_MINUTE) . ' min';
+		$seconds = $seconds - (SECONDS_PER_MINUTE*intval($seconds/SECONDS_PER_MINUTE));
+	}
+	if ($seconds > 0) {
+		// Seconds
+		if ($result != '') {
+			$result .= ' ';
+		}
+		$result .= $seconds . ' sec';
+	}	
+	
+	return $result;
+}
+
 ///////////////////////////////// 
 function dnsScan($content, $args, $privateStore) {
 	$filterName = "dns";
@@ -70,7 +115,11 @@ function dnsScan($content, $args, $privateStore) {
 		if (($da !== false) && isset($da[0])) {
 			$da0 = $da[0];
 			// Note: don't include ttl because it counts down dynamically - everything else can be used
-			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname'].". serial:".$da0['serial']." refresh:".$da0['refresh']." retry:".$da0['retry']." expire:".$da0['expire']." min-ttl:".$da0['minimum-ttl'];
+			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname']." serial:" .$da0['serial'];
+			$soa .= " refresh:".$da0['refresh']    .' ('.niceTTL($da0['refresh'])    .')';
+			$soa .= " retry:"  .$da0['retry']      .' ('.niceTTL($da0['retry'])      .')';
+			$soa .= " expire:" .$da0['expire']     .' ('.niceTTL($da0['expire'])     .')';
+			$soa .= " min-ttl:".$da0['minimum-ttl'].' ('.niceTTL($da0['minimum-ttl']).')';
 			echoIfVerbose("$soa \n");
 			if (isset($privateStore[$filterName][$domain][DNS_SOA])) {
 				if (strcasecmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
