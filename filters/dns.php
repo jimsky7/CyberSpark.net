@@ -124,8 +124,9 @@ function dnsScan($content, $args, $privateStore) {
 			if (isset($privateStore[$filterName][$domain][DNS_SOA])) {
 				if (strcasecmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
 					// SOA information has changed
-					$result = "DNS";
-					$message .= "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" To \"$soa\"\n";
+					$result = "Critical";
+					$message .= INDENT . "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".INDENT."to \"$soa\"\n";
+					echoIfVerbose(       "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".       "to \"$soa\"\n");	
 				}
 				else {
 					// Not changed - always report back the contents of the SOA
@@ -134,7 +135,9 @@ function dnsScan($content, $args, $privateStore) {
 			}
 			else {
 					// Have not seen any SOA before
-					$message .= "SOA first seen \"$soa\"\n";
+					$result = "Notice";
+					$message .=   "SOA first seen \"$soa\"\n";
+					echoIfVerbose("SOA first seen \"$soa\"\n");	
 			}
 			$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
 	
@@ -161,15 +164,15 @@ function dnsScan($content, $args, $privateStore) {
 			///// Please note that we check the FQDN, then we progressively strip leading tokens, one dot at
 			/////    at a time, and if we get here we have checked every possible domain name right down to
 			/////    the TLD and they all failed.
-			$result = "DNS";
-			$message .= INDENT . "Could not retrieve DNS start-of-authority (SOA) information for this domain ($originalFQDN).\n";
-			echoIfVerbose(       "Could not retrieve DNS start-of-authority (SOA) information for this domain ($originalFQDN).\n");	
+			$result = "Critical";
+			$message .= INDENT . "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n";
+			echoIfVerbose(       "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n");	
 		}
 	}
 	catch (Exception $dax) {
-		$result = "DNS";
-		$message .= INDENT . "Exception in filters:dns:dnsScan() $dax \n";
-		echoIfVerbose("Exception in fliters:dns:dnsScan() $dax\n");	
+		$result = "Error";
+		$message .= INDENT . "Exception in dns.php::dnsScan() $dax\n";
+		echoIfVerbose(       "Exception in dns.php::dnsScan() $dax\n");	
 	}
 
 	$message = trim($message , "\n");				// remove any trailing LF
