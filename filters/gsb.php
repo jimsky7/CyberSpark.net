@@ -15,9 +15,10 @@
 //       of the functions that are defined in this file.
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
+global $path;
+include_once $path."cyberspark.config.php";
 
-include_once "include/echolog.php";
+include_once $path."include/echolog.php";
 
 ///////////////////////////////// 
 function gsbScan($content, $args, $privateStore) {
@@ -30,6 +31,14 @@ function gsbScan($content, $args, $privateStore) {
 	//   available only for use by this plugin filter.
 	$message = "";
 
+	// Check for presence of server info and API KEY
+	// If either one is missing, then return 'OK' but with a message.
+	if ((GSB_SERVER == '') || (GSB_API_KEY == '')) {
+		$message .=   "Google Safe Browsing URL or API_KEY was missing from 'cyberspark.config', so GSB will not be checked.";
+		echoIfVerbose("Google Safe Browsing URL or API_KEY was missing from 'cyberspark.config', so GSB will not be checked.");	
+		return array($message, $result, $privateStore);
+	}
+	
 	// Remove chars that don't make any difference and can get in the way
 	$content = str_replace(array("\r","\n","\t"), "", $content);
 
@@ -124,6 +133,9 @@ function gsbDestroy($content, $args, $privateStore) {
 }
 
 ///////////////////////////////// 
+// Register the hooks for Scan, Init and Destroy.
+// Note that there is no special Notify hook for this filter, meaning that the
+//   gsbScan() function is used even during the Notify hour.
 function gsb($args) {
 	$filterName = "gsb";
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {

@@ -18,9 +18,10 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.php";
-include_once "include/filter_functions.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."include/echolog.php";
+include_once $path."include/filter_functions.php";
 
 //// lengthScan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -73,6 +74,8 @@ function lengthScan($content, $args, $privateStore) {
 	}
 	// Record previous lengths plus the (possibly new) length of this URL
 	$privateStore[$filterName][$url]['lengths'] = $lengthsString;
+
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }

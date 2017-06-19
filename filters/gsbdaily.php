@@ -12,8 +12,9 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."include/echolog.php";
 
 // IMPORTANT NOTE:
 // Some functions required for this filter are in gsb.php and
@@ -29,6 +30,14 @@ function gsbdailyScan($content, $args, $privateStore) {
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
 	$message = "";
+
+	// Check for presence of server info and API KEY
+	// If either one is missing, then return 'OK' but with a message.
+	if ((GSB_SERVER == '') || (GSB_API_KEY == '')) {
+		$message .=   "Google Safe Browsing URL or API_KEY was missing from 'cyberspark.config', so GSB will not be checked.";
+		echoIfVerbose("Google Safe Browsing URL or API_KEY was missing from 'cyberspark.config', so GSB will not be checked.");	
+		return array($message, $result, $privateStore);
+	}
 
 // Thanks for the DOM suggestion! - see
 //   http://w-shadow.com/blog/2009/10/20/how-to-extract-html-tags-and-their-attributes-with-php/
@@ -122,6 +131,9 @@ function gsbdailyDestroy($content, $args, $privateStore) {
 }
 
 ///////////////////////////////// 
+// Note: gsbDaily has only a gsbdailyScan() function and not a special gsbdailyNotify()
+//   function. It will internally determine whether to fire off and it will only analyze
+//   during the daily 'Notify' hour, not during other hours.
 function gsbDaily($args) {
 	$filterName = "gsbdaily";
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {

@@ -13,11 +13,12 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
+global $path;
+include_once $path."cyberspark.config.php";
 
-include_once "include/echolog.php";
-include_once "include/functions.php";
-include_once "include/filter_functions.php";
+include_once $path."include/echolog.php";
+include_once $path."include/functions.php";
+include_once $path."include/filter_functions.php";
 
 define('SMARTSCAN_MAX_ALERTS', 2);
 
@@ -307,6 +308,7 @@ function smartscanScan($content, $args, $privateStore) {
 	// Record the length of this URL
 	$privateStore[$filterName][$url]['lengths'] = $lengthsString;
 
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }

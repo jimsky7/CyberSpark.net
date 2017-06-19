@@ -4,13 +4,17 @@
 		send email message
 	*/
 
+global $path;
+
 // PEAR mail package
 require_once 'Mail.php';
-require_once 'Mail/mime.php';
+if (PHP_VERSION_ID < 70000) {
+	require_once 'Mail/mime.php';
+}
 
 // CyberSpark stuff
-require_once 'include/echolog.php';
-include_once "include/functions.php";
+require_once $path.'include/echolog.php';
+include_once $path."include/functions.php";
 
 /////////////////////////////////////////////////////////
 function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $message='', $smtpServer, $smtpPort, $user, $password) {
@@ -36,7 +40,7 @@ function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $mess
 		$params['username'] = $user;
 		$params['password'] = $password;
 		$params['timeout'] = 30;
-		$PEARmailer =& Mail::factory ('smtp', $params);
+		$PEARmailer = Mail::factory ('smtp', $params);
 	
 		$headers = array();
 		$headers['To'] = $to;				// this is everyone (altered later)
@@ -127,7 +131,7 @@ function attachmentMail($to='', $from='', $replyTo='', $abuseTo='', $subject='',
 		$params['username'] = $user;
 		$params['password'] = $password;
 		$params['timeout'] = 30;
-		$PEARmailer =& Mail::factory ('smtp', $params);
+		$PEARmailer = Mail::factory ('smtp', $params);
 	
 		// Set up message's content type header
 		$contentType = "text/plain; charset=\"US-ASCII\""; // Default is text content type

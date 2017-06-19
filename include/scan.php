@@ -4,8 +4,9 @@
 		perform one round of scanning (all URLs once)
 	*/
 
-include_once "include/classdefs.php";
-include_once "cyberspark.sysdefs.php";
+global $path;
+include_once $path."include/classdefs.php";
+include_once $path."cyberspark.sysdefs.php";
 
 ///////////////////////////////////////////////////////////////////////////////////
 function scan($properties, $filters, &$store) {
@@ -103,10 +104,12 @@ function scan($properties, $filters, &$store) {
 					try {
 						// Run 'basic' filter
 						if (isNotifyHour($filterArgs['notify']) && ($filters[$rankIndex]->notify != null)) {
+							// During the 'Notify" hour, and if it exists, this function is invoked.
 							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->notify, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
 						}
 						else {
-							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+							// During all other hours, this function is invoked
+							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan,   $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
 						}
 						if (isset($st)) {
 							// Save this filter's private store
@@ -150,6 +153,9 @@ function scan($properties, $filters, &$store) {
 						//   and ASN information was saved.
 						if (isset($store['asn'])) {
 							$privateStore = $store['asn'];
+							if (isset($privateStore[$url]['ip'])) {
+								$message .= "          IP: ".$privateStore[$url]['ip']."\n";
+							}
 							if (isset($privateStore[$url]['asn'])) {
 								$message .= "          ASN: ".$privateStore[$url]['asn']."\n";
 							}
@@ -165,6 +171,9 @@ function scan($properties, $filters, &$store) {
 						//   and geolocation information was saved.
 						if (isset($store['geo'])) {
 							$privateStore = $store['geo'];
+							if (isset($privateStore[$url]['ip'])) {
+								$message .= "          IP: ".$privateStore[$url]['ip']."\n";
+							}
 							if (isset($privateStore[$url]['city'])) {
 								$message .= "          City: ".$privateStore[$url]['city']."\n";
 							}

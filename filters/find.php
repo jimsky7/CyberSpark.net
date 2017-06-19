@@ -12,8 +12,9 @@
 
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."include/echolog.php";
 
 function findScan($content, $args, $privateStore) {
 	$filterName = "find";
@@ -32,10 +33,19 @@ function findScan($content, $args, $privateStore) {
 		$key = substr($conditions, $i+1, $j-1);		
 		if (stripos($content, $key) !== false) {
 			$result = "Alert";
-			$message = "The value \"$key\" is present.";
+			$message = "The value \"$key\" was found on this page or file.\n";
+		}
+		else {
+			// String not found. Return a message in case it's the 'notify' hour.
+			$message = "The value \"$key\" was not found in this page or file.\n";
 		}
 	}
-
+	else {
+		// No search requested. Return a message in case it's the 'notify' hour.
+		$message .= "('find' was not requested)\n";
+	}
+	
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 }
 

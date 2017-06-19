@@ -11,10 +11,56 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
+global $path;
+include_once $path."cyberspark.config.php";
 
-include_once "include/echolog.php";
-include_once "include/functions.php";
+include_once $path."include/echolog.php";
+include_once $path."include/functions.php";
+
+define ('SECONDS_PER_DAY', 86400);
+define ('SECONDS_PER_HOUR', 3600);
+define ('SECONDS_PER_MINUTE', 60);
+
+function niceTTL($seconds) {
+	$result = '';
+	
+	if ($seconds >= SECONDS_PER_DAY) {
+		// A day or more
+		$result .= intval($seconds/SECONDS_PER_DAY);
+		if (intval($seconds/SECONDS_PER_DAY)>=2) {
+			$result .= ' days';
+		}
+		else {
+			$result .= ' day';
+		}
+		$seconds = $seconds - (SECONDS_PER_DAY*intval($seconds/SECONDS_PER_DAY));
+	}
+	if ($seconds >= SECONDS_PER_HOUR) {
+		// An hour or more
+		if ($result != '') {
+			$result .= ' ';
+		}
+		$result .= intval($seconds/SECONDS_PER_HOUR) . ' hr';
+		$seconds = $seconds - (SECONDS_PER_HOUR*intval($seconds/SECONDS_PER_HOUR));
+	}
+	if ($seconds >= SECONDS_PER_MINUTE) {
+		// A minute or more
+		if ($result != '') {
+			$result .= ' ';
+		}
+		$result .= intval($seconds/SECONDS_PER_MINUTE) . ' min';
+		$seconds = $seconds - (SECONDS_PER_MINUTE*intval($seconds/SECONDS_PER_MINUTE));
+	}
+	if ($seconds > 0) {
+		// Seconds
+		if ($result != '') {
+			$result .= ' ';
+		}
+		$result .= $seconds . ' sec';
+	}	
+	
+	return $result;
+}
 
 ///////////////////////////////// 
 function dnsScan($content, $args, $privateStore) {
@@ -43,9 +89,10 @@ function dnsScan($content, $args, $privateStore) {
 	
 	
 	try {
+		$soa = null;
 		$isSOA = checkdnsrr($domain, "SOA");
 		echoIfVerbose("SOA? $isSOA \n");
-	
+			
 //	DNS_A, DNS_CNAME, DNS_HINFO, DNS_MX, DNS_NS, DNS_PTR, DNS_SOA, DNS_TXT, DNS_AAAA, DNS_SRV, 
 //  DNS_NAPTR, DNS_A6, DNS_ALL or DNS_ANY
 //		$da = dns_get_record($domain, DNS_ALL);
@@ -68,16 +115,29 @@ function dnsScan($content, $args, $privateStore) {
 		if (($da !== false) && isset($da[0])) {
 			$da0 = $da[0];
 			// Note: don't include ttl because it counts down dynamically - everything else can be used
-			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname'].". serial:".$da0['serial']." refresh:".$da0['refresh']." retry:".$da0['retry']." expire:".$da0['expire']." min-ttl:".$da0['minimum-ttl'];
+			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname']." serial:" .$da0['serial'];
+			$soa .= " refresh:".$da0['refresh']    .' ('.niceTTL($da0['refresh'])    .')';
+			$soa .= " retry:"  .$da0['retry']      .' ('.niceTTL($da0['retry'])      .')';
+			$soa .= " expire:" .$da0['expire']     .' ('.niceTTL($da0['expire'])     .')';
+			$soa .= " min-ttl:".$da0['minimum-ttl'].' ('.niceTTL($da0['minimum-ttl']).')';
 			echoIfVerbose("$soa \n");
 			if (isset($privateStore[$filterName][$domain][DNS_SOA])) {
 				if (strcasecmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
-					$result = "DNS";
-					$message .= "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" To \"$soa\"\n";
+					// SOA information has changed
+					$result = "Critical";
+					$message .= INDENT . "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".INDENT."to \"$soa\"\n";
+					echoIfVerbose(       "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".       "to \"$soa\"\n");	
+				}
+				else {
+					// Not changed - always report back the contents of the SOA
+					$message .= "$soa\n";
 				}
 			}
 			else {
-					$message .= "SOA first seen \"$soa\"\n";
+					// Have not seen any SOA before
+					$result = "Notice";
+					$message .=   "SOA first seen \"$soa\"\n";
+					echoIfVerbose("SOA first seen \"$soa\"\n");	
 			}
 			$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
 	
@@ -104,18 +164,18 @@ function dnsScan($content, $args, $privateStore) {
 			///// Please note that we check the FQDN, then we progressively strip leading tokens, one dot at
 			/////    at a time, and if we get here we have checked every possible domain name right down to
 			/////    the TLD and they all failed.
-			$result = "DNS";
-			$message .= INDENT . "Could not retrieve DNS start-of-authority (SOA) information for this domain ($originalFQDN).\n";
-			echoIfVerbose(       "Could not retrieve DNS start-of-authority (SOA) information for this domain ($originalFQDN).\n");	
+			$result = "Critical";
+			$message .= INDENT . "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n";
+			echoIfVerbose(       "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n");	
 		}
 	}
 	catch (Exception $dax) {
-		$result = "DNS";
-		$message .= INDENT . "Exception in filters:dns:dnsScan() $dax \n";
-		echoIfVerbose("Exception in fliters:dns:dnsScan() $dax\n");	
+		$result = "Error";
+		$message .= INDENT . "Exception in dns.php::dnsScan() $dax\n";
+		echoIfVerbose(       "Exception in dns.php::dnsScan() $dax\n");	
 	}
 
-
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }

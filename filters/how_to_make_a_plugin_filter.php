@@ -1,6 +1,5 @@
 <?php
-/*
-
+/****
 
 ***************************************************************************************
 ***************************************************************************************
@@ -9,19 +8,42 @@ CyberSpark.net monitoring-alerting system
 ***************************************************************************************
 CyberSpark 'big picture' notes:
 
-The CyberSpark service is started (by 'rc' or by 'service') and runs as a daemon from cybersparkd.php until it quits or is terminated. It starts up child processes (AKA
-'threads' or 'monitor' or 'sniffers' in some of our other documentation) by launching cyberspark.php -- each reads its own 'properties' file to determine how to configure itself and which URLs to look at or spider. The process cybersparkd.php itself keeps running in order to monitor the child processes and to restart them if they crash (etc. see below). The system is designed to send notifications by email, write entries to stdout, and can write log files.
+The CyberSpark service is started (by 'rc' or by 'service') and runs as a daemon from 
+cybersparkd.php until it quits or is terminated. It starts up child processes (AKA
+'threads' or 'monitor' or 'sniffers' in some of our other documentation) by launching 
+cyberspark.php -- each reads its own 'properties' file to determine how to configure 
+itself and which URLs to look at or spider. The process cybersparkd.php itself keeps 
+running in order to monitor the child processes and to restart them if they crash 
+(etc. see below). The system is designed to send notifications by email, write 
+entries to stdout, and can write log files.
 
-The CyberSpark monitoring processes (cyberspark.php) are fired up by the parent daemon, and they keep running until terminated by an appropriate SIGnal, by the server being turned off, by crashing, or by a KILL. In the case of graceful terminations, they save their data and write log entries as they shut down. In the case of a forced termination, nothing is saved and cybersparkd will try to restart them if it is still running. In the event of a hard power-down of the server, the /etc/init.d/cyberspark script will clean up PID files and will clear the way for the daemon, which will start these child processes again.
+The CyberSpark monitoring processes (cyberspark.php) are fired up by the parent 
+daemon, and they keep running until terminated by an appropriate SIGnal, by the 
+server being turned off, by crashing, or by a KILL. In the case of graceful 
+terminations, they save their data and write log entries as they shut down. In the 
+case of a forced termination, nothing is saved and cybersparkd will try to restart 
+them if it is still running. In the event of a hard power-down of the server, the 
+/etc/init.d/cyberspark script will clean up PID files and will clear the way for the 
+daemon, which will start these child processes again.
 
-Each monitor runs periodically (timing comes from its properties file), then sleeps for a short time. When activated, it reads its properties file, setting options and then finding URLs to sniff. For each "url=..." line it is given a URL, various 'filter' names, and email addresses to notify. The 'filter' names tell the daemon what kind of analysis to perform for each particular URL. The filter names correspond to PHP files in the /filters directory. Upon startup, each daemon examines the 'filters' directory filenames, and attempts to initialize each filter.
+Each monitor runs periodically (timing comes from its properties file), then 
+sleeps for a short time. When activated, it reads its properties file, setting 
+options and then finding URLs to sniff. For each "url=..." line it is given a 
+URL, various 'filter' names, and email addresses to notify. The 'filter' names tell 
+the daemon what kind of analysis to perform for each particular URL. The filter 
+names correspond to PHP files in the /filters directory. Upon startup, each daemon 
+examines the 'filters' directory filenames, and attempts to initialize each filter.
 
-The file you are reading is itself structured as a (trivial) filter, and describes how a 'filter' file is structured.
+The file you are reading is itself structured as a (trivial) filter, and describes 
+how a 'filter' file is structured.
 
 ***************************************************************************************
 To make a new plugin "filter":
 
-Filters are "plugin" in the sense that you can create a new PHP filter file and drop it into the /filters directory without upsetting the daemons. You can then alter the "url=..." lines in the properties file, restart an individual daemon, and the daemon can immediately use the new filter.
+Filters are "plugin" in the sense that you can create a new PHP filter file and drop 
+it into the /filters directory without upsetting the daemons. You can then alter the 
+"url=..." lines in the properties file, restart an individual daemon, and the daemon 
+can immediately use the new filter.
 
 Using the file you are reading as a sample, you can modify to create your own filter.
 
@@ -58,13 +80,17 @@ Create a function with the same name as the file (but not the ".php" extension).
 //      passed in again as the argument "$store" ... the code must respect this store
 //      and index it appropriately so as not to mess with data belonging to other
 //      plugin filters.
-*/
+***************************************************************************************
+***************************************************************************************
+
+****/
 ?>
 <?php 
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
-include_once "include/echolog.php";
+global $path;
+include_once $path."cyberspark.config.php";
+include_once $path."include/echolog.php";
 
 //// how_to_make_a_plugin_filterScan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -116,6 +142,7 @@ function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
 	//     actually have to contain anything.
 	//   $result may be "OK" "Changed" or "Critical"
 	//   $privateStore returns to the daemon and persists between invocations of filter
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }
@@ -143,6 +170,7 @@ function how_to_make_a_plugin_filterInit($content, $args, $privateStore) {
 	$message = "[$filterName] Initialized. URL is " . $args['url'];
 	$result   = "OK";
 
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }
@@ -165,8 +193,10 @@ function how_to_make_a_plugin_filterDestroy($content, $args, $privateStore) {
 
 //// how_to_make_a_plugin_filter()
 //// This function is called to "instantiate" the filter. Actually all we do here is
-////   register three hooks with the daemon so it knows who we are and how to notify us
+////   register four hooks with the daemon so it knows who we are and how to notify us
 ////   that it is starting up, shutting down, or wants us to filter a URL.
+//// Note that if you do the same thing 24/7 and don't need anything special during the
+////   daily 'Notify" hour then you can completely omit the Notify section below.
 //// (Note that the name "how_to_make_a_plugin_filter" matches the filename
 ////    "how_to_make_a_plugin_filter.php" -- this is required.)
 function how_to_make_a_plugin_filter($args) {

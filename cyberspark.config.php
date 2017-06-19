@@ -57,21 +57,22 @@ if (!defined('SSL_FILTER_REQUIRE_EXPLICIT_OK')) {
 
 /////////////////////////////////////////////////////////////////////////////////
 // If you have a GSB server, or if CyberSpark gave you the IP address to use theirs,
-//   insert the actual IP address here instead of "0.0.0.0" -- this is used in the GSB-
-//   related filters. The CyberSpark GSB implementation listens only on port 4040.
-define('GSB_SERVER', 'http://0.0.0.0:4040');		// NO ending "/" please!
+//   insert the URL for the threatMatches:find method and your Google API key.
+define('GSB_SERVER', 'https://safebrowsing.googleapis.com/v4/threatMatches:find?key=GSB_API_KEY');
+define('GSB_API_KEY', '');						// insert your Google API key
 
 /////////////////////////////////////////////////////////////////////////////////
 // If you have arranged access to an ASN locator service, put the full URL below
 //   This must be compatible with team-cymru API
 //	 See the ASN filter source file for more information.
-define('ASN_SERVER', "https://0.0.0.0/cgi-bin/whois.cgi");
+define('ASN_SERVER', "https://asn.cymru.com/cgi-bin/whois.cgi");
 
 /////////////////////////////////////////////////////////////////////////////////
 // If you have arranged access to GEO IP locator service, put the full URL below
-//   This must be compatible with FREEGEOIP API
+//   This must be compatible with FREEGEOIP API - see http://freegeoip.net/
 //   See the GEO filter source file for more information
-define('GEO_SERVER', "http://0.0.0.0:8080/json/");
+// Note that freegeoip.net provides a free public service up to 15,000 hits an hour
+define('GEO_SERVER', "https://freegeoip.net/json/");
 
 /////////////////////////////////////////////////////////////////////////////////
 // Paths

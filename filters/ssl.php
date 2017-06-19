@@ -27,10 +27,11 @@
 	**/
 
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.config.php";
+global $path;
+include_once $path."cyberspark.config.php";
 
-include_once "include/echolog.php";
-include_once "include/functions.php";
+include_once $path."include/echolog.php";
+include_once $path."include/functions.php";
 
 /////////////////////////////////////////////////////////////////////////////////
 // If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to true, the 'ssl' filter looks for a definitive
@@ -61,6 +62,10 @@ function sslScan($content, $args, $privateStore) {
 	$filterName = "ssl";
 	$result   = "OK";						// default result
 	$url = $args['url'];
+	if (isset($args['useragent'])) {
+		$userAgent = $args['useragent'];
+	}
+	
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
@@ -122,6 +127,9 @@ function sslScan($content, $args, $privateStore) {
 					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 					curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 //					curl_setopt($ch, CURLOPT_SSLVERSION,     3);
+					if (isset($userAgent) && strlen($userAgent)) {
+						curl_setopt($ch, CURLOPT_USERAGENT,		$userAgent);
+					}
 					// Reminder you can do this if you need specific additional CA certs
 					// curl_setopt ($ch, CURLOPT_CAINFO, "pathto/cacert.pem");
 					//
@@ -310,6 +318,7 @@ function sslScan($content, $args, $privateStore) {
 		echoIfVerbose("Exception in filter:SSL:SSLScan() $dax\n");	
 	}
 
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 	
 }
