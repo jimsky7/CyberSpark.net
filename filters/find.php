@@ -42,7 +42,7 @@ function findScan($content, $args, $privateStore) {
 	}
 	else {
 		// No search requested. Return a message in case it's the 'notify' hour.
-		$message .= "('find' was not requested)\n";
+		$message .= "(no request)\n";
 	}
 	
 	$message = trim($message , "\n");				// remove any trailing LF
