@@ -124,9 +124,9 @@ function dnsScan($content, $args, $privateStore) {
 			if (isset($privateStore[$filterName][$domain][DNS_SOA])) {
 				if (strcasecmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
 					// SOA information has changed
-					$result = "Critical";
-					$message .= INDENT . "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".INDENT."to \"$soa\"\n";
-					echoIfVerbose(       "SOA changed from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".       "to \"$soa\"\n");	
+					$result = "Alert";
+					$message .=   "SOA changed \n".INDENT."From \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".INDENT."To \"$soa\"\n";
+					echoIfVerbose("SOA changed ".         "from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".       "to \"$soa\"\n");	
 				}
 				else {
 					// Not changed - always report back the contents of the SOA
@@ -141,21 +141,45 @@ function dnsScan($content, $args, $privateStore) {
 			}
 			$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
 	
+			// Save possible error indication because checkEntriesByType() might change it to "OK"
+			$previousResult = $result;	
+			
 			////// MX
 			list ($message, $result) = checkEntriesByType($domain, DNS_MX, "MX", $privateStore, $filterName, $message, 'target');
-		
+			if ($result != "OK") {
+				$previousResult = $result;
+			}		
 			////// NS
 			list ($message, $result) = checkEntriesByType($domain, DNS_NS, "NS", $privateStore, $filterName, $message, 'target');
+			if ($result != "OK") {
+				$previousResult = $result;
+			}		
 		
 			////// TXT
 			list ($message, $result) = checkEntriesByType($domain, DNS_TXT, "TXT", $privateStore, $filterName, $message, 'txt');
+			if ($result != "OK") {
+				$previousResult = $result;
+			}		
 		
 			////// A     (use fqdn)
 			list ($message, $result) = checkEntriesByType($fqdn, DNS_A, "A", $privateStore, $filterName, $message, array('host', 'ip'));
+			if ($result != "OK") {
+				$previousResult = $result;
+			}		
 		
 			////// AAAA  (use fqdn)
 			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA, "AAAA", $privateStore, $filterName, $message, array('host', 'ip'));
+			if ($result != "OK") {
+				$previousResult = $result;
+			}		
 
+			// checkEntriesByType() may have changed the result to OK even if it
+			//   previously was something else, so might have to reset it here to
+			//   return an error or alert that was previously spotted
+			if ($previousResult != "OK") {
+				$result = $previousResult;
+			}
+			
 			////// Note that the dns_get_record() function has constants defined for certain types of records.
 			//     There may be constants that were not available at the time of this writing.
 		}
@@ -234,7 +258,7 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 	try {
 		if (isset($da) && (count($da) > 0)) {
 			if (!isset($privateStore[$filterName][$domain][$typeString])) {
-				$result = "DNS";
+				$result = "Alert";
 				$message .= INDENT . "$typeString records are being seen for the first time.\n";
 				echoIfVerbose("$typeString records are being seen for the first time.\n");	
 			}
@@ -278,21 +302,21 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 			if (isset($privateStore[$filterName][$domain][$typeString])) {
 				$newMX = array_diff($mx, $privateStore[$filterName][$domain][$typeString]);
 				foreach ($newMX as $dms) {
-					$result = "DNS";
+					$result = "Changed";
 					$message .= INDENT . "New $typeString record: $dms \n";
 					echoIfVerbose("New $typeString record: $dms\n");	
 				}
 				// Note any disappeared records
 				$goneMX = array_diff($privateStore[$filterName][$domain][$typeString], $mx);
 				foreach ($goneMX as $dms) {
-					$result = "DNS";
+					$result = "Changed";
 					$message .= INDENT . "$typeString record deleted: $dms \n";
 					echoIfVerbose("$typeString deleted: $dms\n");	
 				}
 			}
 			else {
 				foreach ($mx as $dms) {
-					$result = "DNS";
+					$result = "Alert";
 					$message .= INDENT . "$typeString record: $dms \n";
 					echoIfVerbose("$typeString record: $dms\n");	
 				}
