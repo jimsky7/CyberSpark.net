@@ -332,8 +332,9 @@ function sslScan($content, $args, $privateStore) {
 		$message .= $analysisMessage;
 	}
 	else {
-		$message .= INDENT . "The SSL cert is OK, so no detail is included here.\n";
-
+		// Add an abbreviated message
+		$message = trim($message , "\n");				// remove any trailing LF
+		$message .= " » The SSL cert is valid. A full analysis will be sent if it changes.\n";
 	}
 	
 	$message = trim($message , "\n");				// remove any trailing LF
