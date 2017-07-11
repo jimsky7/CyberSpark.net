@@ -141,34 +141,42 @@ function dnsScan($content, $args, $privateStore) {
 			}
 			$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
 	
+			$notify = $args['notify'];
+			
 			// Save possible error indication because checkEntriesByType() might change it to "OK"
 			$previousResult = $result;	
 			
 			////// MX
-			list ($message, $result) = checkEntriesByType($domain, DNS_MX, "MX", $privateStore, $filterName, $message, 'target');
+			list ($message, $result) = checkEntriesByType($domain, DNS_MX, 'MX', $privateStore, $filterName, $message, 'target', null, $notify);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 			////// NS
-			list ($message, $result) = checkEntriesByType($domain, DNS_NS, "NS", $privateStore, $filterName, $message, 'target');
+			list ($message, $result) = checkEntriesByType($domain, DNS_NS, 'NS', $privateStore, $filterName, $message, 'target', null, $notify);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 		
 			////// TXT
-			list ($message, $result) = checkEntriesByType($domain, DNS_TXT, "TXT", $privateStore, $filterName, $message, 'txt');
+			list ($message, $result) = checkEntriesByType($domain, DNS_TXT, 'TXT', $privateStore, $filterName, $message, 'txt', null, $notify);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 		
 			////// A     (use fqdn)
-			list ($message, $result) = checkEntriesByType($fqdn, DNS_A, "A", $privateStore, $filterName, $message, array('host', 'ip'));
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_A, 'A', $privateStore, $filterName, $message, array('host', 'ip'), null, $notify);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 		
+			////// CNAME (use fqdn)
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_CNAME, 'CNAME', $privateStore, $filterName, $message, array('host', 'target'), null, $notify);
+			if ($result != "OK") {
+				$previousResult = $result;
+			}		
+
 			////// AAAA  (use fqdn)
-			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA, "AAAA", $privateStore, $filterName, $message, array('host', 'ip'));
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA,  'AAAA',  $privateStore, $filterName, $message, array('host', 'ip'), null, $notify);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
@@ -250,25 +258,51 @@ function dns($args) {
 }
 
 ///////////////////////////////// 
-function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filterName, $message, $keyField, $keyExtra=null) {
+function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filterName, $message, $keyField, $keyExtra=null, $notify) {
 	// Get all records of a particular type that exist in the domain's DNS
 	$da = dns_get_record($domain, $type);
 	echoIfVerbose("$typeString count: " . count($da) . "\n");
 	$result = "OK";
+// vvv
+	if (FALSE && isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
+		unset($privateStore[$filterName][$domain][$typeString.'_POOL']);
+	}
+	if (FALSE && isset($privateStore[$filterName][$domain][$typeString.'_LAST'])) {
+		unset($privateStore[$filterName][$domain][$typeString.'_LAST']);
+	}
+// nuke all records
+	if (FALSE && isset($privateStore[$filterName][$domain][$typeString])) {
+		unset($privateStore[$filterName][$domain][$typeString]);
+	}
+// ^^^
 	try {
 		if (isset($da) && (count($da) > 0)) {
+			// $da contains (array) all of the records of one particular type, 
+			//   as reported by our DNS
 			if (!isset($privateStore[$filterName][$domain][$typeString])) {
 				$result = "Alert";
 				$message .= INDENT . "$typeString records are being seen for the first time.\n";
 				echoIfVerbose("$typeString records are being seen for the first time.\n");	
 			}
+			
+// vvv
+			if (!isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
+				// No pool yet for this type, so initialize
+				$privateStore[$filterName][$domain][$typeString.'_POOL']  = array();
+				$privateStore[$filterName][$domain][$typeString.'_LAST'] = array();
+			}
+// ^^^
+
 			// Build array of current entries (which data depends on parameter $keyField)
-			$mx = array();
-			// $da contains (array) the records of one particular type
+			$records = array();
+			echoIfVerbose("[dns] '$typeString' records as reported by DNS\n");
 			foreach ($da as $dmx) {
+				if (isset($dmx['host']) && isset($dmx['ip'])) {
+					echoIfVerbose("»»» ".$dmx['host'].' '.$dmx['ip']."\n");
+				}
 				// $dmx is one single DNS entry
 				// It is indexed somewhat like this; may vary.
-				// Our caller has requested certain ones (in $keyField) and we can
+				// Caller has requested certain ones (in $keyField) and we can
 				//   only retrive them if they exist.
 				//      [host] => php.net
             	//		[type] => MX
@@ -293,36 +327,126 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 				}
 				// Force lowercase because DNS records don't care about case
 				$keyFieldString = strtolower($keyFieldString);
-				if (!in_array($keyFieldString, $mx)) {
-					$mx[] = $keyFieldString;
+				if (!in_array($keyFieldString, $records)) {
+					$records[] = $keyFieldString;
 				}
 			}
+			
 			// Note any "new" records
-			// array_diff() gets us all members of $mx that are NOT in the private store from earlier
+			// array_diff() gets us all members of $records that are NOT in the private store from earlier
 			if (isset($privateStore[$filterName][$domain][$typeString])) {
-				$newMX = array_diff($mx, $privateStore[$filterName][$domain][$typeString]);
-				foreach ($newMX as $dms) {
-					$result = "Changed";
-					$message .= INDENT . "New $typeString record: $dms \n";
-					echoIfVerbose("New $typeString record: $dms\n");	
+				$newRecords = array_diff($records, $privateStore[$filterName][$domain][$typeString]);
+				foreach ($newRecords as $dms) {
+					// POOLS
+					// -> Check pool so we can detect round robin or load sharing
+					// This is designed specifically to catch the type of pooling DNS
+					//   where only one record (sometimes two) are returned to a DNS 
+					//   inquiry but the IP addresses change by rotating through a
+					//   pool of IPs. Normally when an IP address changes, we report it
+					//   via email as an exception, but in cases where there's a pool, 
+					//   we don't want to report these changes since they're normal.
+					// (One common place where we see this behavior is from Akamai.)
+					if (isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
+						// Is this server in pool already?
+						// Notes:
+						// This array contains the records, indexed by record
+						//		$privateStore[$filterName][$domain][$typeString.'_POOL']
+						// This array contains "last time seen", indexed by full server records
+						//		$privateStore[$filterName][$domain][$typeString.'_LAST']
+						if (isset($privateStore[$filterName][$domain][$typeString.'_POOL'][$dms])) {
+							// Exists in pool, record the "last time seen" 
+							//   and (note) do not return error
+							echoIfVerbose("Found in pool: $dms time will be updated\n");
+							$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = time();
+						}
+						else {
+							// Not yet in this pool, add record to array and initial time seen
+							$privateStore[$filterName][$domain][$typeString.'_POOL'][$dms] = true;
+							$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = time();
+							// Return a change notification
+							$result = "Changed";
+							$message .= INDENT . "New $typeString record: $dms \n";
+							echoIfVerbose("Was not found in pool\n");
+							echoIfVerbose("New $typeString record: $dms\n");
+						}
+					}
+					else {
+						// Return a change notification
+						$result = "Changed";
+						$message .= INDENT . "New $typeString record: $dms \n";
+						echoIfVerbose("No pool defined\n");
+						echoIfVerbose("New $typeString record: $dms\n");
+					}
 				}
+
 				// Note any disappeared records
-				$goneMX = array_diff($privateStore[$filterName][$domain][$typeString], $mx);
-				foreach ($goneMX as $dms) {
+				$goneRecords = array_diff($privateStore[$filterName][$domain][$typeString], $records);
+				foreach ($goneRecords as $dms) {
 					$result = "Changed";
 					$message .= INDENT . "$typeString record deleted: $dms \n";
 					echoIfVerbose("$typeString deleted: $dms\n");	
 				}
 			}
 			else {
-				foreach ($mx as $dms) {
+				// Add to pool - note this is the first time records are being seen,
+				//   so initialize the pool.
+				$privateStore[$filterName][$domain][$typeString.'_POOL'] = array();
+				$privateStore[$filterName][$domain][$typeString.'_LAST'] = array();
+				// Add and report each record
+				foreach ($records as $dms) {
+					// Add this record and set the initial time seen
+					$privateStore[$filterName][$domain][$typeString.'_POOL'][$dms] = true;
+					$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = time();
+					// Cause alert
 					$result = "Alert";
-					$message .= INDENT . "$typeString record: $dms \n";
-					echoIfVerbose("$typeString record: $dms\n");	
+					$message .= INDENT . "Initial $typeString record: $dms \n";
+					echoIfVerbose("Initial $typeString record: $dms\n");	
 				}
 			}
-			// Save the current MX server names
-			$privateStore[$filterName][$domain][$typeString] = $mx;
+
+			// Set the expiration time here
+			$expireMinutes = 60*6;			// 6 hours
+			$expireSeconds = $expireMinutes*60;
+			$expireTime = time() - $expireSeconds;
+			echoIfVerbose("Expiration times calculated: $expireSeconds $expireMinutes $expireTime \n");
+
+			// Expire any old pool entries
+			if (isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
+				foreach ($privateStore[$filterName][$domain][$typeString.'_POOL'] as $dms=>$value) {
+					$last = $privateStore[$filterName][$domain][$typeString.'_LAST'][$dms];
+					if ($last < $expireTime) {
+						echoIfVerbose("»»» $dms [$last] has expired and is being deleted from the pool\n");
+						unset($privateStore[$filterName][$domain][$typeString.'_POOL'][$dms]);
+						unset($privateStore[$filterName][$domain][$typeString.'_LAST'][$dms]);
+					}
+				}
+			}
+			
+			// During the "notify" hour, if the size of the pool exceeds the
+			//   number of current records, then display the pool.
+			if (isVerbose() || isNotifyHour($notify)) {
+				if (isset($privateStore[$filterName][$domain][$typeString.'_POOL']) && count($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
+					if ((count($privateStore[$filterName][$domain][$typeString.'_POOL']) > count($da))) {
+						echoIfVerbose("Pool contains ".count($privateStore[$filterName][$domain][$typeString.'_POOL'])." records\n");
+						echoIfVerbose("DNS inquiry reported ".count($da)." records\n");
+						// If the pool contains more than just the active records
+						// This was determined by count, not by comparing records
+						$message .= INDENT. "Active pool of '$typeString' records (each expires after $expireMinutes minutes) [< $expireTime]\n";
+						echoIfVerbose("[dns] Active pool of '$typeString' records (each expires after $expireMinutes minutes) [< $expireTime]\n");	
+						foreach ($privateStore[$filterName][$domain][$typeString.'_POOL'] as $dms=>$value) {
+							$last = $privateStore[$filterName][$domain][$typeString.'_LAST'][$dms];
+							$message .= INDENT . INDENT . "$dms [$last]\n";
+							echoIfVerbose("»»» $dms [$last]\n");
+						}
+					}
+				}
+				else {
+					echoIfVerbose("No pool (yet) of '$typeString' records\n");
+				}
+			}
+			
+			// Save the current server names (using type as spec'd by $typeString)
+			$privateStore[$filterName][$domain][$typeString] = $records;
 		}
 	}
 	catch (Exception $x) {
