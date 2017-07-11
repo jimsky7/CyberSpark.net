@@ -262,6 +262,7 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 	// Get all records of a particular type that exist in the domain's DNS
 	$da = dns_get_record($domain, $type);
 	echoIfVerbose("$typeString count: " . count($da) . "\n");
+	$nowTime = time();
 	$result = "OK";
 // vvv
 	if (FALSE && isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
@@ -356,13 +357,13 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 						if (isset($privateStore[$filterName][$domain][$typeString.'_POOL'][$dms])) {
 							// Exists in pool, record the "last time seen" 
 							//   and (note) do not return error
-							echoIfVerbose("Found in pool: $dms time will be updated\n");
-							$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = time();
+							echoIfVerbose("Found in pool: $dms time will be updated to $nowTime\n");
+							$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = $nowTime;
 						}
 						else {
 							// Not yet in this pool, add record to array and initial time seen
 							$privateStore[$filterName][$domain][$typeString.'_POOL'][$dms] = true;
-							$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = time();
+							$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = $nowTime;
 							// Return a change notification
 							$result = "Changed";
 							$message .= INDENT . "New $typeString record: $dms \n";
@@ -379,12 +380,20 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 					}
 				}
 
-				// Note any disappeared records
-				$goneRecords = array_diff($privateStore[$filterName][$domain][$typeString], $records);
-				foreach ($goneRecords as $dms) {
-					$result = "Changed";
-					$message .= INDENT . "$typeString record deleted: $dms \n";
-					echoIfVerbose("$typeString deleted: $dms\n");	
+				// Alert if any disappeared records
+				if (count($privateStore[$filterName][$domain][$typeString.'_POOL']) <= count($da)) {
+					// Pool and live had the same number of records, or pool was smaller, 
+					//   so notify that records are being dropped from live DNS.
+					// In cases where the pool was larger, the dropping records will all
+					//   be retained in the pool for a while, so if they reappear (because
+					//   of DNS pooling) we won't be notifying of either the drop or the
+					//   reappearance.
+					$goneRecords = array_diff($privateStore[$filterName][$domain][$typeString], $records);
+					foreach ($goneRecords as $dms) {
+						$result = "Changed";
+						$message .= INDENT . "$typeString record deleted: $dms \n";
+						echoIfVerbose("$typeString deleted: $dms\n");	
+					}
 				}
 			}
 			else {
@@ -396,7 +405,7 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 				foreach ($records as $dms) {
 					// Add this record and set the initial time seen
 					$privateStore[$filterName][$domain][$typeString.'_POOL'][$dms] = true;
-					$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = time();
+					$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = $nowTime;
 					// Cause alert
 					$result = "Alert";
 					$message .= INDENT . "Initial $typeString record: $dms \n";
@@ -405,17 +414,19 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 			}
 
 			// Set the expiration time here
-			$expireMinutes = 60*6;			// 6 hours
+			$expireMinutes = 60*24;			// 24 hours
 			$expireSeconds = $expireMinutes*60;
-			$expireTime = time() - $expireSeconds;
-			echoIfVerbose("Expiration times calculated: $expireSeconds $expireMinutes $expireTime \n");
+			$expireTime = $nowTime - $expireSeconds;
+			echoIfVerbose("Expiration times calculated: $expireSeconds $expireMinutes $expireTime (now is $nowTime)\n");
 
 			// Expire any old pool entries
 			if (isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
 				foreach ($privateStore[$filterName][$domain][$typeString.'_POOL'] as $dms=>$value) {
 					$last = $privateStore[$filterName][$domain][$typeString.'_LAST'][$dms];
 					if ($last < $expireTime) {
-						echoIfVerbose("»»» $dms [$last] has expired and is being deleted from the pool\n");
+						$result = "Alert";
+						$message .= INDENT . "$dms expired after $expireMinutes minutes and was deleted from the pool\n";
+						echoIfVerbose("»»» $dms [$last] expired and was deleted from the pool\n");
 						unset($privateStore[$filterName][$domain][$typeString.'_POOL'][$dms]);
 						unset($privateStore[$filterName][$domain][$typeString.'_LAST'][$dms]);
 					}
@@ -426,7 +437,7 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 			//   number of current records, then display the pool.
 			if (isVerbose() || isNotifyHour($notify)) {
 				if (isset($privateStore[$filterName][$domain][$typeString.'_POOL']) && count($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
-					if ((count($privateStore[$filterName][$domain][$typeString.'_POOL']) > count($da))) {
+					if (count($privateStore[$filterName][$domain][$typeString.'_POOL']) > count($da)) {
 						echoIfVerbose("Pool contains ".count($privateStore[$filterName][$domain][$typeString.'_POOL'])." records\n");
 						echoIfVerbose("DNS inquiry reported ".count($da)." records\n");
 						// If the pool contains more than just the active records
