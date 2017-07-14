@@ -98,6 +98,13 @@ function dnsScan($content, $args, $privateStore) {
 //		$da = dns_get_record($domain, DNS_ALL);
 //	print_rIfVerbose($da);
 	
+
+		// Set up pool expiration time (default is 24 hours)
+		$expireMinutes = 1440;			// 24 hours
+		if (isset($args['dnsexpire'])) {
+			$expireMinutes = $args['dnsexpire'];
+		}
+
 		////// SOA
 		// Staring with FQDN, whittle down until an SOA
 		// can be retrieved.
@@ -147,36 +154,37 @@ function dnsScan($content, $args, $privateStore) {
 			$previousResult = $result;	
 			
 			////// MX
-			list ($message, $result) = checkEntriesByType($domain, DNS_MX, 'MX', $privateStore, $filterName, $message, 'target', null, $notify);
+			list ($message, $result) = checkEntriesByType($domain, DNS_MX, 'MX', $privateStore, $filterName, $message, 'target', null, $notify, $expireMinutes);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 			////// NS
-			list ($message, $result) = checkEntriesByType($domain, DNS_NS, 'NS', $privateStore, $filterName, $message, 'target', null, $notify);
+			list ($message, $result) = checkEntriesByType($domain, DNS_NS, 'NS', $privateStore, $filterName, $message, 'target', null, $notify, $expireMinutes);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 		
 			////// TXT
-			list ($message, $result) = checkEntriesByType($domain, DNS_TXT, 'TXT', $privateStore, $filterName, $message, 'txt', null, $notify);
+			list ($message, $result) = checkEntriesByType($domain, DNS_TXT, 'TXT', $privateStore, $filterName, $message, 'txt', null, $notify, $expireMinutes);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 		
 			////// A     (use fqdn)
-			list ($message, $result) = checkEntriesByType($fqdn, DNS_A, 'A', $privateStore, $filterName, $message, array('host', 'ip'), null, $notify);
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_A, 'A', $privateStore, $filterName, $message, array('host', 'ip'), null, $notify, $expireMinutes);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 		
 			////// CNAME (use fqdn)
-			list ($message, $result) = checkEntriesByType($fqdn, DNS_CNAME, 'CNAME', $privateStore, $filterName, $message, array('host', 'target'), null, $notify);
+			// (My recollection is that CNAME doesn't always get the right information - i.e. it is "unreliable") -Sky
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_CNAME, 'CNAME', $privateStore, $filterName, $message, array('host', 'target'), null, $notify, $expireMinutes);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
 
 			////// AAAA  (use fqdn)
-			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA,  'AAAA',  $privateStore, $filterName, $message, array('host', 'ip'), null, $notify);
+			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA,  'AAAA',  $privateStore, $filterName, $message, array('host', 'ip'), null, $notify, $expireMinutes);
 			if ($result != "OK") {
 				$previousResult = $result;
 			}		
@@ -258,13 +266,14 @@ function dns($args) {
 }
 
 ///////////////////////////////// 
-function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filterName, $message, $keyField, $keyExtra=null, $notify) {
+function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filterName, $message, $keyField, $keyExtra=null, $notify, $expireMinutes=1440) {
 	// Get all records of a particular type that exist in the domain's DNS
 	$da = dns_get_record($domain, $type);
 	echoIfVerbose("$typeString count: " . count($da) . "\n");
 	$nowTime = time();
 	$showPool = false;
 	$result = "OK";
+	$exmsg = niceTTL($expireMinutes*60);
 // vvv
 	if (FALSE && isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
 		unset($privateStore[$filterName][$domain][$typeString.'_POOL']);
@@ -416,7 +425,6 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 			}
 
 			// Set the expiration time here
-			$expireMinutes = 60*24;			// 24 hours
 			$expireSeconds = $expireMinutes*60;
 			$expireTime = $nowTime - $expireSeconds;
 			echoIfVerbose("Expiration times calculated: $expireSeconds $expireMinutes $expireTime (now is $nowTime)\n");
@@ -441,13 +449,13 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 						// Also we pay no attention to the "expires" that may be present in the SOA - just sayin'.
 						// For example, when an "A" record changes, we end up having two in the pool (the old one and the new one) for 
 						//   a day, then after a day has passed without the old one appearing in DNS, it expires and triggers this message.
-						$message .= INDENT . "\"$typeString\" record ($dms) hasn't been used for over $expireMinutes minutes and was deleted\n";
+						$message .= INDENT . "\"$typeString\" record ($dms) hasn't been used in more than $exmsg and was deleted\n";
 						if (count($privateStore[$filterName][$domain][$typeString.'_POOL']) > 2) {
 							// Add a notation that this may be pooled DNS - this goes out if there are more than two records in our
 							//   internal pool. For example, say there's a single "A" record 
 							$message .= INDENT . INDENT . "from what might be a pooled, round-robin, or load-sharing DNS\n";
 						}
-						echoIfVerbose("»»» \"$typeString\" record ($dms) hasn't been used for over $expireMinutes minutes and was deleted from pool\n");
+						echoIfVerbose("»»» \"$typeString\" record ($dms) hasn't been used in more than $exmsg and was deleted\n");
 						unset($privateStore[$filterName][$domain][$typeString.'_POOL'][$dms]);
 						unset($privateStore[$filterName][$domain][$typeString.'_LAST'][$dms]);
 					}
@@ -463,8 +471,8 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 						echoIfVerbose("DNS inquiry reported ".count($da)." records\n");
 						// If the pool contains more than just the active records
 						// This was determined by count, not by comparing records
-						$message .= INDENT. "Active pool of '$typeString' records (each expires after $expireMinutes minutes) [< $expireTime]\n";
-						echoIfVerbose("[dns] Active pool of '$typeString' records (each expires after $expireMinutes minutes) [< $expireTime]\n");	
+						$message .= INDENT. "Active pool of '$typeString' records (each expires after $exmsg) [< $expireTime]\n";
+						echoIfVerbose("[dns] Active pool of '$typeString' records (each expires after $exmsg) [< $expireTime]\n");	
 						foreach ($privateStore[$filterName][$domain][$typeString.'_POOL'] as $dms=>$value) {
 							$last = $privateStore[$filterName][$domain][$typeString.'_LAST'][$dms];
 							$message .= INDENT . INDENT . "$dms [$last]\n";
