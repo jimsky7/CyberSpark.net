@@ -39,6 +39,9 @@ if (!defined('DEFAULT_SOCKET_TIMEOUT')) {
 if (!defined('DEFAULT_LOOP_TIME')) {
 	define('DEFAULT_LOOP_TIME', 30);					// minutes
 }
+if (!defined('DEFAULT_DNS_POOL_EXPIRE_MINUTES')) {
+	define('DEFAULT_DNS_POOL_EXPIRE_MINUTES', 1440);					// 24 hours (in minutes)
+}
 // If this file is present, it is a message left over from starting up the CyberSpark
 // service, and it needs to be sent to a system administrator.
 define('STARTUP_MESSAGE_FILE', 'important_startup_message.txt');

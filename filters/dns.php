@@ -99,8 +99,8 @@ function dnsScan($content, $args, $privateStore) {
 //	print_rIfVerbose($da);
 	
 
-		// Set up pool expiration time (default is 24 hours)
-		$expireMinutes = 1440;			// 24 hours
+		// Set up pool expiration time (default is 24 hours - set in cyberspark.sysdefs.php)
+		$expireMinutes = DEFAULT_DNS_POOL_EXPIRE_MINUTES;
 		if (isset($args['dnsexpire'])) {
 			$expireMinutes = $args['dnsexpire'];
 		}
@@ -471,12 +471,22 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 						echoIfVerbose("DNS inquiry reported ".count($da)." records\n");
 						// If the pool contains more than just the active records
 						// This was determined by count, not by comparing records
-						$message .= INDENT. "Active pool of '$typeString' records (each expires after $exmsg) [< $expireTime]\n";
-						echoIfVerbose("[dns] Active pool of '$typeString' records (each expires after $exmsg) [< $expireTime]\n");	
+						$message .= INDENT. "Active pool of '$typeString' records (each expires after $exmsg)\n";
+						echoIfVerbose("[dns] Active pool of '$typeString' records (each expires after $exmsg)\n");	
 						foreach ($privateStore[$filterName][$domain][$typeString.'_POOL'] as $dms=>$value) {
 							$last = $privateStore[$filterName][$domain][$typeString.'_LAST'][$dms];
-							$message .= INDENT . INDENT . "$dms [$last]\n";
-							echoIfVerbose("»»» $dms [$last]\n");
+							$timeRemaining = niceTTL($last - ($nowTime - $expireSeconds)) . ' remaining';
+							$tSS = $nowTime - $last;
+							$timeSeenMessage = '';
+							$timeSinceSeen = niceTTL($tSS);
+							if ($tSS < 1) {
+								$timeSeenMessage = "current || ";
+							}
+							else {
+								$timeSeenMessage = "last seen $timeSinceSeen ago || ";
+							}
+							$message .= INDENT . INDENT . "$dms ($timeSeenMessage$timeRemaining)\n";
+							echoIfVerbose("»»» $dms ($timeSeenMessage$timeRemaining)\n");
 						}
 					}
 				}
