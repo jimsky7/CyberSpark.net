@@ -475,18 +475,24 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 						echoIfVerbose("[dns] Active pool of '$typeString' records (each expires after $exmsg)\n");	
 						foreach ($privateStore[$filterName][$domain][$typeString.'_POOL'] as $dms=>$value) {
 							$last = $privateStore[$filterName][$domain][$typeString.'_LAST'][$dms];
-							$timeRemaining = niceTTL($last - ($nowTime - $expireSeconds)) . ' remaining';
+							$tR   = $last - ($nowTime - $expireSeconds);
+							$timeRemainingMessage = niceTTL($tR) . ' remaining';
+							$expiresSoonMessage   = '';
+							if ($tR < 60*60*2) {
+								// Little time remaining for this record in pool
+								$expiresSoonMessage = " || expires soon!";
+							}
 							$tSS = $nowTime - $last;
 							$timeSeenMessage = '';
 							$timeSinceSeen = niceTTL($tSS);
 							if ($tSS < 1) {
-								$timeSeenMessage = "current || ";
+								$timeSeenMessage = "new || ";
 							}
 							else {
 								$timeSeenMessage = "last seen $timeSinceSeen ago || ";
 							}
-							$message .= INDENT . INDENT . "$dms ($timeSeenMessage$timeRemaining)\n";
-							echoIfVerbose("»»» $dms ($timeSeenMessage$timeRemaining)\n");
+							$message .= INDENT . INDENT . "$dms ($timeSeenMessage$timeRemainingMessage$expiresSoonMessage)\n";
+							echoIfVerbose("»»» $dms ($timeSeenMessage$timeRemainingMessage$expiresSoonMessage)\n");
 						}
 					}
 				}
