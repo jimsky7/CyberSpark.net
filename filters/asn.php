@@ -54,25 +54,45 @@ function getASNinfo($url) {
 	
 	$r = curlPost($APIurl, $userAgent, $paramArray, $timeout, $auth=null, $sslVerify=false, $options=null);
 
-	// Parse the result from the Team-cymru API
-	// This might change without notice.
-	$i = stripos($r['body'], '<PRE>');
-	if ($i !== false) {
-		$j = stripos($r['body'], '</PRE>', $i);
-		if ($j !== false) {
-			$rx = substr($r['body'], ($i+5), ($j-$i-5));
-			$e = explode("\n", $rx);
-			$x = explode('|', $e[3]);
-			$result = array();
-			$result['asn']      = trim($x[0]);
-			$result['ip']       = trim($x[1]);
-			$result['operator'] = trim($x[2]);	
-			$result['latency']  = $r['curl_info']['total_time'];
-			return $result;	
+	// Interface may fail?
+	if (isset($r['code']) && $r['code'] == 200) {
+		// Parse the result from the Team-cymru API
+		// This might change without notice.
+// echoIfVerbose(" Cymru result: - - - - - - - - - - - - - - - - - - \n");
+// echoIfVerbose(" $r[body] \n");
+		$i = stripos($r['body'], '<PRE>');
+		// Result is like MySQL table with column headers
+		// Example:
+		//   <PRE>AS | IP | AS Name\n
+		//   19999 | 10.0.0.230 | RACKSPACE\n
+		//   </PRE>
+		if ($i !== false) {
+			$j = stripos($r['body'], '</PRE>', $i);
+			if ($j !== false) {
+				$rx = substr($r['body'], ($i+5), ($j-$i-5));
+				$e = explode("\n", $rx);
+				// $e[0] contains headers, delimited by "|"
+				// $e[1] contains data, delimited by "|"
+// echoIfVerbose("0:$e[0] \n");
+// echoIfVerbose("1:$e[1] \n");
+				$x = explode('|', $e[1]);
+				$result = array();
+				$result['asn']      = trim($x[0]);
+				$result['ip']       = trim($x[1]);
+				$result['operator'] = trim($x[2]);	
+				$result['latency']  = $r['curl_info']['total_time'];
+				return $result;	
+			}
+		}
+		else {
 		}
 	}
 	else {
+		echoIfVerbose("ASN interface failed. HTTP result code is $r[code] \n");
+		echoIfVerbose("ASN interface URL is: $APIurl \n");
+		echoIfVerbose($r['body']." \n");
 	}
+
 
 	return null;
 }
@@ -87,7 +107,7 @@ function asnScan($content, $args, $privateStore) {
 
 	// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
 	$privateStore[$url][$filterName.'_ran_today'] = false;
-	echoIfVerbose(" The $filterName filter only runs once  day and this is not that time. \n");
+	echoIfVerbose(" The $filterName filter only runs once a day and this is not that time. \n");
 	// Add some ASN information even though the result is "OK" and the filter isn't really running
 	if (isset($privateStore[$url][$attributeName])) {
 		$message .= " ASN: ".$privateStore[$url][$attributeName];
@@ -132,6 +152,7 @@ function asnScan($content, $args, $privateStore) {
 		}
 	}
 	
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 }
 
@@ -191,6 +212,7 @@ function asnNotify($content, $args, $privateStore) {
 			echoIfVerbose(" Could not retrieve ASN info for '$host' [2]\n");
 		}
 	}
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 }
 
