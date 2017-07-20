@@ -449,13 +449,13 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 						// Also we pay no attention to the "expires" that may be present in the SOA - just sayin'.
 						// For example, when an "A" record changes, we end up having two in the pool (the old one and the new one) for 
 						//   a day, then after a day has passed without the old one appearing in DNS, it expires and triggers this message.
-						$message .= INDENT . "\"$typeString\" record ($dms) hasn't been used in more than $exmsg and was deleted\n";
+						$message .= INDENT . "\"$typeString\" record ($dms) hasn't been seen in more than $exmsg and was deleted\n";
 						if (count($privateStore[$filterName][$domain][$typeString.'_POOL']) > 2) {
 							// Add a notation that this may be pooled DNS - this goes out if there are more than two records in our
 							//   internal pool. For example, say there's a single "A" record 
 							$message .= INDENT . INDENT . "from what might be a pooled, round-robin, or load-sharing DNS\n";
 						}
-						echoIfVerbose("»»» \"$typeString\" record ($dms) hasn't been used in more than $exmsg and was deleted\n");
+						echoIfVerbose("»»» \"$typeString\" record ($dms) hasn't been seen in more than $exmsg and was deleted\n");
 						unset($privateStore[$filterName][$domain][$typeString.'_POOL'][$dms]);
 						unset($privateStore[$filterName][$domain][$typeString.'_LAST'][$dms]);
 					}
