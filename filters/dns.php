@@ -122,7 +122,18 @@ function dnsScan($content, $args, $privateStore) {
 		if (($da !== false) && isset($da[0])) {
 			$da0 = $da[0];
 			// Note: don't include ttl because it counts down dynamically - everything else can be used
-			$soa = $da0['host']." ".$da0['class']." ".$da0['type']." ".$da0['mname'].". ".$da0['rname']." serial:" .$da0['serial'];
+			//
+			// ALSO: If Cloudflare, then the SOA 'serial' often changes without any other visible change,
+			//   so for Cloudflare, do not compare 'serial'. Instead insert a (constant) comment
+			//   indicating it's being ignored.
+			if (stripos($da0['mname'], 'cloudflare')!==FALSE) {
+				// Cloudflare
+				$soa = $da0['host'].' '.$da0['class'].' '.$da0['type'].' '.$da0['mname'].'. '.$da0['rname'].' (Cloudflare serial ignored)';
+			}
+			else {
+				// Non-cloudflare
+				$soa = $da0['host'].' '.$da0['class'].' '.$da0['type'].' '.$da0['mname'].'. '.$da0['rname'].' serial:' .$da0['serial'];
+			}
 			$soa .= " refresh:".$da0['refresh']    .' ('.niceTTL($da0['refresh'])    .')';
 			$soa .= " retry:"  .$da0['retry']      .' ('.niceTTL($da0['retry'])      .')';
 			$soa .= " expire:" .$da0['expire']     .' ('.niceTTL($da0['expire'])     .')';
