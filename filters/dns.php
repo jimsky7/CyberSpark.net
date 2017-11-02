@@ -140,11 +140,11 @@ function dnsScan($content, $args, $privateStore) {
 			$soa .= " min-ttl:".$da0['minimum-ttl'].' ('.niceTTL($da0['minimum-ttl']).')';
 			echoIfVerbose("$soa \n");
 			if (isset($privateStore[$filterName][$domain][DNS_SOA])) {
-				if (strcasecmp($soa,$privateStore[$filterName][$domain][DNS_SOA]) != 0) {
+				if ($k=strcasecmp($soa, $privateStore[$filterName][$domain][DNS_SOA])) {
 					// SOA information has changed
 					$result = "Alert";
-					$message .=   "SOA changed \n".INDENT."From \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".INDENT."To \"$soa\"\n";
-					echoIfVerbose("SOA changed ".         "from \"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".       "to \"$soa\"\n");	
+					$message .=   "SOA changed ($k)\n".INDENT."From \t\"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".INDENT."To \t\"$soa\"\n";
+					echoIfVerbose("SOA changed ($k)".         "from \""   . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".       "to   \"$soa\"\n");	
 				}
 				else {
 					// Not changed - always report back the contents of the SOA
