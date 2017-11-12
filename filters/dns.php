@@ -142,27 +142,27 @@ function dnsScan($content, $args, $privateStore) {
 			$soa .= " expire:" .$da0['expire']     .' ('.niceTTL($da0['expire'])     .')';
 			$soa .= " min-ttl:".$da0['minimum-ttl'].' ('.niceTTL($da0['minimum-ttl']).')';
 			echoIfVerbose("$soa \n");
-			if (isset($privateStore[$filterName][$domain][DNS_SOA])) {
-				if ($k=strcasecmp($soa, $privateStore[$filterName][$domain][DNS_SOA])) {
+			if (isset($privateStore[$filterName][$domain]['SOA'])) {
+				if ($k=strcasecmp($soa, $privateStore[$filterName][$domain]['SOA'])) {
 					// SOA information has changed
 // vvv
 //	This code alerts any time SOA changes. Worked fine until mid-2017 when some SOA records
 //		started changing with no apparent reason. Also some SOAs seem to be
 //		round-robin with just 2 or 3 values.
 //		If you activate these lines, you'll be alerted on every change.
-					$result = "Alert";
-					$message .=   "SOA changed \n".INDENT."From \t\"" . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".INDENT."To \t\"$soa\"\n";
-					echoIfVerbose("SOA changed ".         "from \""   . $privateStore[$filterName][$domain][DNS_SOA] ."\" \n".       "to   \"$soa\"\n");	
+//					$result = "Alert";
+//					$message .=   "SOA changed \n".INDENT."From \t\"" . $privateStore[$filterName][$domain]['SOA'] ."\" \n".INDENT."To \t\"$soa\"\n";
+//					echoIfVerbose("SOA changed ".         "from \""   . $privateStore[$filterName][$domain]['SOA'] ."\" \n".       "to   \"$soa\"\n");	
 // ^^^
 // vvv
-// PROPOSED CHANGE - NOT TESTED
-// 			(You'll want to test when you know there's a SOA available that is pooled. As of today
-// 			I don't see one, but I've seen them in the past.)
+// PROPOSED CHANGE 2017-11-10
+// 			(You'll want to test when you know there's an SOA available that is pooled. 
+// 			 As of today I don't see one, but I've seen them in the past.)
 //		If you activate these lines you'll treat SOA as possibly pooled.
-//					list ($message, $result) = checkEntriesByType($domain, DNS_SOA, 'SOA', $privateStore, $filterName, $message, 'target', null, $notify, $expireMinutes);
-//					if ($result != "OK") {
-//						$previousResult = $result;
-//					}		
+					list ($message, $result) = checkEntriesByType($domain, DNS_SOA, 'SOA', $privateStore, $filterName, $message, 'target', null, $notify, $expireMinutes);
+					if ($result != "OK") {
+						$previousResult = $result;
+					}		
 // ^^^
 				}
 				else {
@@ -176,7 +176,7 @@ function dnsScan($content, $args, $privateStore) {
 					$message .=   "SOA first seen \"$soa\"\n";
 					echoIfVerbose("SOA first seen \"$soa\"\n");	
 			}
-			$privateStore[$filterName][$domain][DNS_SOA] = $soa;	
+			$privateStore[$filterName][$domain]['SOA'] = $soa;	
 	
 			$notify = $args['notify'];
 			
