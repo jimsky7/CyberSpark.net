@@ -23,10 +23,9 @@ function basicScan($content, $args, $privateStore) {
 	$result   = "OK";						// default result
 	$url = $args['url'];
 	$message = '';
-	$contentLength = strlen($content);
 	$elapsedTime = roundTime($args['elapsedtime']);	// rounding precision is defined in cyberspark.sysdefs.php
 	$httpResult  = $args['httpresult'];
-	// $content is the URL being checked right now
+	// $content is the URL being checked right now (which may be null or empty string)
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.

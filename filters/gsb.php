@@ -11,14 +11,77 @@
 		on how to make one of these and integrate it into the CyberSpark daemons.
 	**/
 
-// NOTE: This filter is required if 'gsbdaily' is to work properly. It includes some
-//       of the functions that are defined in this file.
+//	NOTE: This filter is required for 'gsbdaily' to work properly.
+
+	/**
+		Code for GSB API suggested by 
+			https://developers.google.com/safe-browsing/v4/lookup-api#http-post-request
+		This URL always checks out as malware so you can use it to test
+			http://malware.testing.google.test/testing/malware/
+	**/
 
 // CyberSpark system variables, definitions, declarations
 global $path;
 include_once $path."cyberspark.config.php";
 
 include_once $path."include/echolog.php";
+
+/////////////////////////////////
+// As of at least 2017, google provides an API that can be used to directly check
+// a URL and get a response. No longer necessary to operate one's own server.
+// Config needs these defined
+//		GSB_SERVER = the URL of the GSB API
+//		GSB_API_KEY = your registered Google API key
+//			(They validate this, so you need to have it set up.)
+function gsbDirectCheck($url, $bcs=null) {
+	$result = 'OK';
+	if (GSB_SERVER != '' && GSB_API_KEY != '') {
+		$APIurl = GSB_SERVER;
+		$APIurl = str_replace('GSB_API_KEY', GSB_API_KEY, $APIurl);
+
+		$postBody =  "{";
+		$postBody .=   "'client':{";
+		$postBody .=     "'clientId':'cyberspark.net/agent','clientVersion':'20171111'";
+		$postBody .=   "},";
+		$postBody .=   "'threatInfo':{";
+		$postBody .=     "'threatTypes':['MALWARE'],'platformTypes':['ANY_PLATFORM'],";
+		$postBody .=     "'threatEntryTypes':['URL'],'threatEntries':{'url':'$url'}";
+		$postBody .=   "}";
+		$postBody .= "}";
+
+		$options = array(
+    		'http' => array(
+        		'header'  => "Content-type: application/json\r\nX-User-Agent-Info: http://cyberspark.net/agent",
+        		'method'  => 'POST',
+				'content' => $postBody
+    		)
+		);
+
+		try {
+			$context  = stream_context_create($options);
+			$result = file_get_contents($APIurl, false, $context);
+
+			$GSBresult = json_decode($result);
+
+			if (isset($GSBresult->matches)) {
+				$matches = $GSBresult->matches;
+				$mZero = $matches[0];
+				$m = $mZero->threatType;
+				$result = "GSB reports this URL as '$m'";
+			}
+			else {
+				$result = 'OK';
+			}
+		}
+		catch (Exception $gsbX) {
+			$gm = $gsbX->getMessage();
+			$result = "GSB failed - exception $gm";
+			echoIfVerbose("GSB lookup failed. '$gm' URL: $url \n");
+			writeLogAlert("GSB lookup failed. '$gm' URL: $url");
+		}
+	}
+	return $result;
+}
 
 ///////////////////////////////// 
 function gsbScan($content, $args, $privateStore) {
@@ -43,7 +106,7 @@ function gsbScan($content, $args, $privateStore) {
 	$content = str_replace(array("\r","\n","\t"), "", $content);
 
 	// Get the pertinent HTML tags
-	echoIfVerbose("GSB check \n");
+	echoIfVerbose("GSB check begins \n");
 
 	///////////////////////////////// 
 	// Find all links in this document
@@ -60,34 +123,20 @@ function gsbScan($content, $args, $privateStore) {
 	$prefix = "";
 	foreach ($links as $link) {
 		$checkLink = str_replace(' ', '+', domainAndSubdirs($link));
-		echoIfVerbose("GSB checking $checkLink\n");	
-		try {
-			$httpResult = httpGet($args['gsbserver'] . "/gsb-check?url=$checkLink", $args['useragent'], 15);
-			$numberOfChecks++;
-			if (isset($httpResult['code']) && ($httpResult['code'] == 200)) {
-				$body = $httpResult['body'];
-				echoIfVerbose("$body \n");
-				if (strncmp(strtoupper($body), "OK", 2) == 0) {
-					// URL is safe
-				}
-				elseif (strlen($body) > 0) {
-					// URL is unsafe
-					// It's possible to get an empty $body, in which case (elseif above) we ignore the result
-					$result = "Malware";
-					$message .= $prefix . "This link from the main page needs attention: $checkLink... Google Safe Browsing says \"$body\"\n";
-					$prefix = INDENT;
-				}
-			}
-			else {
-//// Long report
-//				echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink Base was: $content \n");
-//				writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink Base was: $content");
-//// Short report
-				echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink \n");
-				writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " URL: $checkLink");
-			}
+		$cl = count($links);
+		echoIfVerbose("GSB checking '$checkLink' which contains $cl links.\n");	
+// »»» Using GSB API as of 2017
+		$gsbResult = gsbDirectCheck($checkLink);
+		$numberOfChecks++;
+
+		if ($gsbResult == 'OK') {
+			// URL is safe
 		}
-		catch (Exception $x) {
+		else {
+			// URL is unsafe
+			$result = "Alert";
+			$message .= $prefix . "This link from the main page needs attention: $checkLink... Google Safe Browsing says \"$gsbResult\"\n";
+			$prefix = INDENT;
 		}
 	}
 	if ($result == "OK") {
@@ -258,43 +307,27 @@ function gsbCheckURL($args, $url, &$numberOfChecks, $failures, $prefix, $checked
 		// Add to array of "already checked" links
 		$checkedDomains[] = $das;
 		
-		$httpResult = httpGet($args['gsbserver'] . "/gsb-check?url=$das", $args['useragent'], 15);
+// »»» Using GSB API as of 2017
+		$gsbResult = gsbDirectCheck($das);
 		$numberOfChecks++;
-		if (isset($httpResult['code']) && ($httpResult['code'] == 200)) {
-			$body = $httpResult['body'];
-			echoIfVerbose("$body \n");
-			if (strncmp(strtoupper($body), "OK", 2) == 0) {
-				// URL is safe
-				$result = "OK";
-				echoIfVerbose("  OK \n");
-			}
-			else {
-				if (isset($body) && (strpos($body, 'goog-')!==false) ) {
-					// goog-malware-shavar   (malware)
-					// goog-                 (phishing)
-					// ($body is the response GSB gave us)
-					// URL is unsafe
-					$result = "Malware";
-					$message .= $prefix . "Google Safe Browsing reports a problem with this URL: $das Problem description: $body  \n";
-					$prefix = INDENT;
-					$message .= $prefix . "How we got there: " . breadcrumbsString($howToGetThere, $url) . " \n";
-					echoIfVerbose("  BAD $body \n");
-				}
-			}
+
+		if ($gsbResult=='OK') {
+			// URL is safe
+			$result = "OK";
+			echoIfVerbose("  OK \n");
 		}
-		else {
+		elseif (strncmp($gsbResult, 'GSB failed', 10) == 0) {
 			$bcs = breadcrumbsString($howToGetThere, $das);
-			echoIfVerbose("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " Looking up: $das How we got there: $bcs\n");
-			writeLogAlert("GSB lookup failed. HTTP result code: " . $httpResult['code'] . " Looking up: $das How we got there: $bcs");
+			echoIfVerbose("GSB lookup failed. GSB result: '$gsbResult' URL: '$das' How we got there: $bcs\n");
+			writeLogAlert("GSB lookup failed. GSB result: '$gsbResult' URL: '$das' How we got there: $bcs");
 			$prefix = INDENT;
 			$failures++;
-
 		}
 	}
 	catch (Exception $x) {
 		$bcs = breadcrumbsString($howToGetThere, $das);
-		echoIfVerbose("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $url\n");  // use $url not $das
-		writeLogAlert("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $url\n");  // use $url not $das
+		echoIfVerbose("In gsbCheckURL Exception: '" . $x->getMessage() . "' URL: '$das' How we got there: $url\n");  // use $url not $bcs
+		writeLogAlert("In gsbCheckURL Exception: '" . $x->getMessage() . "' URL: '$das' How we got there: $url\n");  // use $url not $bcs
 	}
 	
 	return array($result, $message);

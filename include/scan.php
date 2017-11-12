@@ -5,11 +5,14 @@
 	*/
 
 global $path;
+
 include_once $path."include/classdefs.php";
 include_once $path."cyberspark.sysdefs.php";
 
 ///////////////////////////////////////////////////////////////////////////////////
 function scan($properties, $filters, &$store) {
+	global $BASIC_FILTERS;
+	
 	$scanResults = array();
 	
 	$urlCount = count($properties['urls']);		// number of URLs to examine
@@ -86,58 +89,19 @@ function scan($properties, $filters, &$store) {
 			$urlNumber++;
 			continue;
 		}
-		
-		
-		// Scan with regular filters	
+				
 		if (!isset($httpResult['code']) || ($httpResult['code'] != 200)) {
 			/////////////////////////////////////////////////////////
 			// HTTP failed - some error code other than "200"
-			// Still need to execute the 'basic' filter even in this case
-			$rankIndex = 0;
-			$top		= count($filters);
+			// Still need to execute some filters even in this case
 			$message = "";
 			$isOK = false;
-			while ($rankIndex < $top) {
-				$filterName = $filters[$rankIndex]->name;
-				if (($filterName == "basic") && isset($filters[$rankIndex]->scan)) {
-					$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
-					try {
-						// Run 'basic' filter
-						if (isNotifyHour($filterArgs['notify']) && ($filters[$rankIndex]->notify != null)) {
-							// During the 'Notify" hour, and if it exists, this function is invoked.
-							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->notify, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
-						}
-						else {
-							// During all other hours, this function is invoked
-							list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan,   $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
-						}
-						if (isset($st)) {
-							// Save this filter's private store
-							$store[$filters[$rankIndex]->name] = $st;
-						}
-					}
-					catch (Exception $fx) {
-						// The filter barfed
-						$mess = "  Exception: " . $fx->getMessage() . "\n";
-						echoIfVerbose("[$filterName] $mess");
-						writeLogAlert("[$filterName] $mess");
-						$result = "Exception";
-						$isOK = false;
-					}
-					if (isset($mess) && isset($result)) {
-						// Add any message returned by the filter
-						$message .= "  " . $mess . "\n";
-						// If filter said anything other than "OK" then there's
-						//   an overall failure for this URL.
-						$isOK = $isOK && ($result == 'OK');		// (both terms must be true)						
-					}
-				}
-				$rankIndex++;
+			$content = null;
+			if (isset($httpResult['body'])) {
+				$content = $httpResult['body'];
 			}
-			$prefix = "Failed    ";
-			if ($result != "OK") {
-				$prefix = sprintf("%-' 10s", $result);	// pad string out to 10 chars
-			}
+			$result = "Failed";
+						
 			$httpCode = "";
 			if (isset($httpResult['code'])) {
 				$code = $httpResult['code'];
@@ -200,7 +164,7 @@ function scan($properties, $filters, &$store) {
 					if ($location != null) {
 						// Note: "Location" requires initial cap and must match what the server returns, so if
 						//   the server doesn't cap it, then this comparison didn't work.
-						$message .= "          (The redirect to '$location' was not followed. DO NOT CLICK!)";
+						$message .= "          (The redirect to '$location' was not followed. DO NOT CLICK!)\n";
 					}
 				}
 				// 500-series errors are backoffice failures, including CLoudflare errors
@@ -236,28 +200,72 @@ function scan($properties, $filters, &$store) {
 						$message .= "          No GEO information is available.\n";
 					}
 				}
+				// For any error
+				// Run all filters that have been defined as 'basic'
+				// These are to be run even if HTTP or cURL returns an error (i.e. no data retrieved from URL)
+				// Note that $result already indicates an error, so do not change it here
+				foreach ($filters as $filter) {
+					$filterName = $filter->name;
+					if ((array_search ($filterName, $BASIC_FILTERS) != FALSE) && isset($filter->scan)) {
+						$tempResult = 'OK';
+						$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
+						try {
+							if (isNotifyHour($filterArgs['notify']) && ($filter->notify != null)) {
+								// During the 'Notify" hour, and if it exists, 'notify' function is invoked.
+								list($mess, $tempResult, $st) = call_user_func($filter->notify, $content, $filterArgs, $store[$filterName]);
+							}
+							else {
+								// During all other hours, 'scan' function is invoked
+								list($mess, $tempResult, $st) = call_user_func($filter->scan,   $content, $filterArgs, $store[$filterName]);
+							}
+							if (isset($st)) {
+								// Save this filter's private store
+								$store[$filterName] = $st;
+							}
+						}
+						catch (Exception $fx) {
+							// The filter barfed
+							$mess = "  Exception: " . $fx->getMessage() . "\n";
+							echoIfVerbose("[$filterName] $mess");
+							writeLogAlert("[$filterName] $mess");
+							$result = "Exception";
+						}
+						if (isset($mess) && isset($tempResult)) {
+							$pf = sprintf("%-' 10s", $tempResult);	// pad string out to 10 chars
+							// Add any message returned by the filter
+							$message .= $pf . "[$filterName] $mess \n";
+						}
+					}
+				}
 			}
 	
-			$scanResults[$urlNumber] = $prefix . $httpCode . " $url  $message \n";
+			$prefix = "Failed    ";
+			if ($result != "OK") {
+				$prefix = sprintf("%-' 10s", $result);	// pad string out to 10 chars
+			}
+			
+			$scanResults[$urlNumber] = $prefix . $httpCode . " $url\n$message \n";
 			writeLog($scanResults[$urlNumber], $elapsedTime, strlen($httpResult['body']), "", $conditions, $url, $httpResult['code'], 0);
 		}
 		else {
 			/////////////////////////////////////////////////////////
 			// HTTP succeeded (code==200)
 			// SCAN ONE URL HERE USING ALL DEFINED FILTERS
-			$rankIndex = 0;
-			$top = count($filters);
 			$message = "";
 			$isOK = true;
+			$content = null;
+			$contentLength = 0;
+			if (isset($httpResult['body'])) {
+				$content = $httpResult['body'];
+				$contentLength = strlen($content);
+			}
 						
-			
 			// Run all filters (including 'basic')
-			while ($rankIndex < $top) {
-
-				// There are filters in different flavors ('scan' 'init' 'destroy') -- only use 'scan' !
+			foreach ($filters as $filter) {
+				// There are filters in different flavors ('scan' 'notify' 'init' 'destroy') -- only use 'scan' or 'notify' here !
 				// They've already been ranked in the order they should be applied (and thus displayed or emailed)
-				if (isset($filters[$rankIndex]->scan)) {
-					$filterName = $filters[$rankIndex]->name;
+				if (isset($filter->scan)) {
+					$filterName = $filter->name;
 					if (($filterName == "basic") || ($filterName == "find") || isACondition($urls[$urlNumber], $filterName)) {
 						// Filter either was asked for in the properties for this URL,
 						// OR its name is 'basic' OR its name is 'find'
@@ -266,15 +274,15 @@ function scan($properties, $filters, &$store) {
 						$filterArgs = setFilterArgs($properties, $httpResult, $url, $conditions, $elapsedTime);
 						
 						try {
-							if (isNotifyHour($filterArgs['notify']) && ($filters[$rankIndex]->notify != null)) {
-								list($mess, $result, $st) = call_user_func($filters[$rankIndex]->notify, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+							if (isNotifyHour($filterArgs['notify']) && ($filter->notify != null)) {
+								list($mess, $result, $st) = call_user_func($filter->notify, $content, $filterArgs, $store[$filterName]);
 							}
 							else {
-								list($mess, $result, $st) = call_user_func($filters[$rankIndex]->scan, $httpResult['body'], $filterArgs, $store[$filters[$rankIndex]->name]);
+								list($mess, $result, $st) = call_user_func($filter->scan, $content, $filterArgs, $store[$filterName]);
 							}
 							if (isset($st)) {
 								// Save this filter's private store
-								$store[$filters[$rankIndex]->name] = $st;
+								$store[$filterName] = $st;
 							}
 						}
 						catch (Exception $fx) {
@@ -295,10 +303,9 @@ function scan($properties, $filters, &$store) {
 						}
 					}
 				}
-				$rankIndex++;
 			}
 			$scanResults[$urlNumber] = ($isOK?'OK        ':'Errors    ') . "$url\n$message\n";
-			writeLog($scanResults[$urlNumber], $elapsedTime, strlen($httpResult['body']), "", $conditions, $url, $httpResult['code'], 0);
+			writeLog($scanResults[$urlNumber], $elapsedTime, $contentLength, "", $conditions, $url, $httpResult['code'], 0);
 		}
 		usleep(100);	// Yield a minimal time. Just polite in case OS needs to do anything else.
 						// Sometimes HTTP is very slow on a URL and although it's supposed to be

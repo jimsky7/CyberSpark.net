@@ -225,9 +225,15 @@ if (file_exists('log-transport.php')) {
 				break;
 			}
 			
-			// Set some properties that can't be set in the properties files
-			$properties['abuseto']	= EMAIL_ABUSETO;			// default from config
-			$properties['replyto']	= EMAIL_REPLYTO;			// default from config
+			// Add some properties if they're not in the properties files
+			if (!isset($properties['abuseto'])) {
+				$properties['abuseto']	= EMAIL_ABUSETO;			// default from config
+			}
+			if (!isset($properties['replyto'])) {
+				$properties['replyto']	= EMAIL_REPLYTO;			// default from config
+			}
+			
+			// Set some properties that can't ever be set in the properties files
 			$properties['shortid']	= $ID;
 			$properties['gsbserver']= GSB_SERVER;				// default from config
 			$properties['loop']		= $loop;
@@ -235,6 +241,7 @@ if (file_exists('log-transport.php')) {
 			
 			$properties = fixProperties($properties);
 			
+			// Set some local variables
 			if (isset($properties['smtpport'])) {
 				$smtpPort	= $properties['smtpport'];
 			}

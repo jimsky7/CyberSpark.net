@@ -58,7 +58,8 @@ Create a function with the same name as the file (but not the ".php" extension).
 // The callback functions get 3 args when called:
 //  $content
 //    The content of the URL being spidered.  Could be null if the callback
-//      is for an 'init' or 'destroy' event
+//      is for an 'init' or 'destroy' event. Could also be null if the HTTP request
+//      failed. So don't assume anything.
 //  $args
 //    which is an asociative array containing various arguments/parameters from
 //    the main script.

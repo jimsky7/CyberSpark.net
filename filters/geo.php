@@ -78,7 +78,7 @@ function geoScan($content, $args, $privateStore) {
 
 	// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
 	$privateStore[$url][$filterName.'_ran_today'] = false;
-	echoIfVerbose(" The $filterName filter only runs once  day and this is not that time. \n");
+	echoIfVerbose(" The $filterName filter only runs once a day and this is not that time. \n");
 	// Add some GEO information even though the result is "OK" and the filter isn't really running
 	// This information will only appear in messages outside of the 'notify' hour and
 	//   such messages are only triggered if some other filter is reporting a problem.
@@ -93,6 +93,7 @@ function geoScan($content, $args, $privateStore) {
 		$message .= "; Checked once a day. (thanks to freegeoip.net for services)";
 	}
 	
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 }
 
@@ -175,6 +176,7 @@ function geoNotify($content, $args, $privateStore) {
 		}
 	}
 	
+	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
 }
 

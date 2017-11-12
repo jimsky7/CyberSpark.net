@@ -40,6 +40,14 @@ define('EMAIL_ADMINISTRATOR', 'email@example.com');
 //  - properties files can override
 define('EMAIL_TO', 'email@example.com');					
 // Items for email headers
+// Note: Each 'properties' file may specify SMTP info for outbound alerts. If a
+//       perticular properties file is going to use a DIFFERENT SMTP than the others
+//       (e.g. you're using a third party SMTP for just one specific properties file)
+//       then you should add 'replyto' and 'abuseto' properties to that specific
+//       properties file. Examples:
+//       	replyto=x@example.com
+//       	abuseto=x@example.com
+//  The defaults below will be used unless you override them in the properties file(s).
 define('EMAIL_REPLYTO', 'email@example.com');		// MUST USE NO quotes or <> brackets
 define('EMAIL_ABUSETO', 'email@example.com');		// MUST USE NO quotes or <> brackets
 

@@ -1,14 +1,16 @@
 #! /bin/sh
 
-### CyberSpark.net monitoring services
-# Provides:		cybersparkd
-# Required-Start:    $all
-# Required-Stop:     $all
-# Default-Start:	2 3 4 5
-# Default-Stop:		0 1 6
-# Short-Description:	CyberSpark.net
-# Description:	CyberSpark monitoring software
-### 
+### CyberSpark.net monitoring and cyberdetection software
+
+### BEGIN INIT INFO
+# Provides:             cybersparkd
+# Required-Start:       $all
+# Required-Stop:        $all
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    See http://CyberSpark.net
+# Description:          CyberSpark monitoring and cyberdetection software
+### END INIT INFO
 
 . /lib/lsb/init-functions
 . /etc/default/rcS
