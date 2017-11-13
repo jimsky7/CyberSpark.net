@@ -177,8 +177,12 @@ function scan($properties, $filters, &$store) {
 						if (isset($privateStore[$url]['asn'])) {
 							$message .= "          ASN: ".$privateStore[$url]['asn']."\n";
 						}
-						if (isset($privateStore[$url]['asn'])) {
-							$message .= "          Operator: ".$privateStore[$url]['operator']."\n";
+						if (isset($privateStore[$url]['asn']) && isset($privateStore[$url]['operator'])) {
+							$oper = $privateStore[$url]['operator'];
+							$message .= "          Operator: $oper\n";
+							if ((stripos($oper, 'cloudflare') !== FALSE) && ($code>=520 && $code<=529)) {
+								$message .= "          (Cloudflare can't connect to the underlying site/server.)\n";
+							}
 						}
 					}
 					else {
