@@ -57,6 +57,66 @@ define ('CURL_ERR_BUFFER_SIZE', 2048);		// libcurl error buffer length
 //   we removed these from the "stderr" it returns. If libcurl were to change its
 //   "err" message length, you'd have to change this constant here. See http://curl.haxx.se/
 
+define ('BEGIN_CERTIFICATE', '-----BEGIN CERTIFICATE-----');
+define ('END_CERTIFICATE',   '-----END CERTIFICATE-----'  );
+
+// »»» NEW 2017-11-14 to clean up and shorten our resulting messages
+///////////////////////////////// 
+function removeCerts($analysis) {
+	$result = $analysis;
+
+	// Remove any certs from the analysis string
+	$i = strpos($result, BEGIN_CERTIFICATE);
+	while ($i !== false) {
+		$s2048 = substr($result, $i, CURL_ERR_BUFFER_SIZE);
+		$j = strpos($s2048, END_CERTIFICATE);
+		if ($j !== false) {
+			// There's an -----END CERTIFICATE-----
+			// Remove any slack between it and the next "*" 
+			//   (libcurl may leave junk there -- it's a bug)
+			$tail2048 = substr($result, ($i+$j+25));
+			$k = strpos($tail2048, '*');
+			if ($k !== false) {
+				$tail2048 = substr($tail2048, $k);
+			}
+			$result = substr($result, 0, $i) . "\n{CERTIFICATE removed here}\n" . $tail2048;
+		}
+		else {
+			if (strlen($s2048) == CURL_ERR_BUFFER_SIZE) {
+				// Remove 2048 characters exactly because there's no END
+				$result = substr($result, 0, $i) . "\n{CERTIFICATE removed here}\n" . substr($result, ($i + CURL_ERR_BUFFER_SIZE));
+			}
+			else {
+				// Remove less than 2048 because we're at end of string
+				$result = substr($result, 0, $i) . "\n{CERTIFICATE removed here}\n";
+			}
+		}
+		$i = strpos($result, BEGIN_CERTIFICATE);
+	}
+	return $result;
+}
+
+// »»» NEW 2017-11-14 to clean up and shorten our resulting messages
+///////////////////////////////// 
+function makeAnalysisMessage($analysisMessage, $certs, $analysis, $stderrString) {
+	$result = $analysisMessage;
+
+	$result .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+	$result .= INDENT.INDENT."(SSL certificates have been logged, but are not included in this analysis)\n";
+//	$result .= $certs."\n\n";		// human doesn't need the actual certs every time
+
+	$result .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n";
+	$result .= removeCerts($analysis)."\n\n";
+
+	$result .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+	$result .= removeCerts($stderrString)."\n\n";
+
+	$result .= INDENT."END OF SSL ANALYSIS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+
+	return $result;
+}
+
+
 ///////////////////////////////// 
 function sslScan($content, $args, $privateStore) {
 	$filterName = "ssl";
@@ -159,34 +219,6 @@ function sslScan($content, $args, $privateStore) {
 					if ($s !== false) {
 						$stderrString .= $s;
 					}
-					// Remove any certs from the stderr stream
-					$i = strpos($stderrString, '-----BEGIN CERTIFICATE-----');
-					while ($i !== false) {
-						$s2048 = substr($stderrString, $i, CURL_ERR_BUFFER_SIZE);
-						$j = strpos($s2048, '-----END CERTIFICATE-----');
-						if ($j !== false) {
-							// There's an -----END CERTIFICATE-----
-							// Remove any slack between it and the next "*" 
-							//   (libcurl may leave junk there -- it's a bug)
-							$tail2048 = substr($stderrString, ($i+$j+25));
-							$k = strpos($tail2048, '*');
-							if ($k !== false) {
-								$tail2048 = substr($tail2048, $k);
-							}
-							$stderrString = substr($stderrString, 0, $i) . "\n{CERTIFICATE removed here}\n" . $tail2048;
-						}
-						else {
-							if (strlen($s2048) == CURL_ERR_BUFFER_SIZE) {
-								// Remove 2048 characters exactly because there's no END
-								$stderrString = substr($stderrString, 0, $i) . "\n{CERTIFICATE removed here}\n" . substr($stderrString, ($i + CURL_ERR_BUFFER_SIZE));
-							}
-							else {
-								// Remove less than 2048 because we're at end of string
-								$stderrString = substr($stderrString, 0, $i) . "\n{CERTIFICATE removed here}\n";
-							}
-						}
-						$i = strpos($stderrString, '-----BEGIN CERTIFICATE-----');
-					}
 					fclose($tf);
 					curl_close($ch);
 				}
@@ -215,12 +247,13 @@ function sslScan($content, $args, $privateStore) {
 				$message .= INDENT.INDENT."The word '$failureType' appears near '".substr($stderrString, $i, SSL_FILTER_EXCERPT_LENGTH)."'\n";
 			}
 		}
-// >>>
-		//// Insert other information
-		$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-		$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-		$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-		$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
+
+		//// Insert other information...
+		//		Note that the analysis message will be sent by email, so certs are removed because
+		//		there's no way a human wants to see them and they make the message challenging to
+		//		read. They are nevertheless logged locally, so you could get them if you want them.
+//		$analysisMessage = makeAnalysisMessage($analysisMessage, $certs, $analysis, $stderrString);
+
 		$needErrString = false;
 		if (stripos($stderrString,'subjectaltname does not match')>0) {
 			//// cURL is reporting a problem directly - return everything it said.
@@ -228,10 +261,7 @@ function sslScan($content, $args, $privateStore) {
 			$result = "Critical";
 			$analysisMessage .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$analysisMessage .= INDENT."The name in the certificate does not match the site domain.\n\n";
-			$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-			$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-			$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-			$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
+			$needErrString = true;
 		}
 		else if (stripos($stderrString,'SSL peer certificate or SSH remote key was not OK')>0) {
 			// cURL is reporting a problem directly - return everything it said.
@@ -239,11 +269,7 @@ function sslScan($content, $args, $privateStore) {
 			$result = "Critical";
 			$analysisMessage .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$analysisMessage .= INDENT."The difficulty might be with the root CA signature.\n\n";
-			$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-			$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-			$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-			$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
-			$needErrString = false;
+			$needErrString = true;
 		}
 		else if (stripos($stderrString,'SSL connection timeout')>0) {
 			// cURL timed out when attempting to connect.
@@ -251,11 +277,7 @@ function sslScan($content, $args, $privateStore) {
 			$result = "Critical";
 			$analysisMessage .= INDENT."The HTTPS connection timed out, so there is no new (current) certificate info.\n";
 			$analysisMessage .= INDENT."The previous cert information will be retained for comparison during the next attempt.\n\n";
-			$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-			$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-			$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-			$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
-			$needErrString = false;
+			$needErrString = true;
 		}
 		else if ((!SSL_FILTER_REQUIRE_EXPLICIT_OK) || (stripos($stderrString,'SSL certificate verify ok')>0)) {
 			// The cert is valid.
@@ -268,24 +290,17 @@ function sslScan($content, $args, $privateStore) {
 					$result = "Critical";
 					$analysisMessage .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! \n";
 					$analysisMessage .= INDENT."This is either a serious error or they've updated the cert. Check it carefully!\n\n";
-					$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-					$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-					$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-					$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
 					$analysisMessage .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain]['SSL_BASELINE_CERT']."\n\n";
-					$needErrString = false;
+					$analysisMessage .= INDENT."CURRENT CERT(S):\n" .$certs."\n\n";
+					$needErrString = true;
 				}
 			}
 			else {
 				// First time we've seen this server, so record a BASELINE version of the cert
 				$result = "Critical";
 				$analysisMessage .= INDENT."First time we've seen this certificate. Examine the interaction carefully. Things may be just fine. \n";
-				$analysisMessage .= INDENT."Here is a transcript of the interaction with the HTTPS server.\n\n";
-				$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-				$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-				$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-				$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
-				$needErrString = false;
+				$analysisMessage .= INDENT."Here is info from the interaction with the HTTPS server.\n\n";
+				$needErrString = true;
 			}
 			// Save just the cert(s). (Only save if there IS a cert.)
 			if ($certs != '') {
@@ -301,19 +316,15 @@ function sslScan($content, $args, $privateStore) {
 			$analysisMessage .= INDENT."Something is odd here. The certificate is neither 'valid' nor 'failed' - - \n";
 			$analysisMessage .= INDENT."Examine the details carefully under 'CURRENT' below. \n";
 			$analysisMessage .= INDENT."These are transcripts of the interactions with the HTTPS server.\n\n";
-			$analysisMessage .= INDENT."PREVIOUS:\n".$privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT']."\n\n";
-			$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-			$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-			$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-			$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
-			$needErrString = false;
+			$analysisMessage .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain]['SSL_BASELINE_CERT']."\n\n";
+			$analysisMessage .= INDENT."CURRENT CERT(S):\n" .$certs."\n\n";
+			$needErrString = true;
 		}
 		$privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT'] = $stderrString;
+		// Add a common "analysis message" for all of the above
 		if ($needErrString) {
-			$analysisMessage .= INDENT."CERTIFICATES >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" .$certs."\n\n";
-			$analysisMessage .= INDENT."ANALYSIS from libcurl >>>>>>>>>>>>>>>>>>>>>\n" .$analysis."\n\n";
-			$analysisMessage .= INDENT."INTERACTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-			$analysisMessage .= INDENT."(Actual CERTS have been removed below.) >>>\n" .$stderrString."\n\n";
+			$analysisMessage = makeAnalysisMessage($analysisMessage, $certs, $analysis, $stderrString);
+			$needErrString = false;
 		}
 	}
 	catch (Exception $dax) {
