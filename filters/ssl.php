@@ -60,7 +60,6 @@ define ('CURL_ERR_BUFFER_SIZE', 2048);		// libcurl error buffer length
 define ('BEGIN_CERTIFICATE', '-----BEGIN CERTIFICATE-----');
 define ('END_CERTIFICATE',   '-----END CERTIFICATE-----'  );
 
-// »»» NEW 2017-11-14 to clean up and shorten our resulting messages
 ///////////////////////////////// 
 function removeCerts($analysis) {
 	$result = $analysis;
@@ -96,7 +95,6 @@ function removeCerts($analysis) {
 	return $result;
 }
 
-// »»» NEW 2017-11-14 to clean up and shorten our resulting messages
 ///////////////////////////////// 
 function makeAnalysisMessage($analysisMessage, $certs, $analysis, $stderrString) {
 	$result = $analysisMessage;
@@ -162,7 +160,7 @@ function sslScan($content, $args, $privateStore) {
 	$certs      = '';
 	$analysis   = '';
 
-	$message .= "Verify SSL/HTTPS on $fqdn using php5-curl (libcurl '$versionInfo[version]') with OpenSSL '$versionInfo[ssl_version]'\n";
+	$message .= "Verifying SSL/HTTPS on $fqdn using php5-curl (libcurl '$versionInfo[version]') with OpenSSL '$versionInfo[ssl_version]'\n";
 		
 	try {
 		$stderrString='';
@@ -344,8 +342,9 @@ function sslScan($content, $args, $privateStore) {
 	}
 	else {
 		// Add an abbreviated message
-		$message = trim($message , "\n");				// remove any trailing LF
-		$message .= " » The SSL cert is valid. A full analysis will be sent if it changes.\n";
+		$message = trim($message , "\n");				// remove any excess trailing LF's
+		$message .= "\n";								// need just one
+		$message .= INDENT."The SSL certificate is valid. A full analysis will be sent if anything changes.\n";
 	}
 	
 	$message = trim($message , "\n");				// remove any trailing LF
