@@ -288,15 +288,16 @@ function sslScan($content, $args, $privateStore) {
 					$result = "Critical";
 					$analysisMessage .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! \n";
 					$analysisMessage .= INDENT."This is either a serious error or they've updated the cert. Check it carefully!\n\n";
+					$analysisMessage .= INDENT."You can check the certs at https://www.sslchecker.com/certdecoder\n\n";
+					$analysisMessage .= INDENT."CURRENT (NEW) CERT(S):\n" .$certs."\n\n";
 					$analysisMessage .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain]['SSL_BASELINE_CERT']."\n\n";
-					$analysisMessage .= INDENT."CURRENT CERT(S):\n" .$certs."\n\n";
 					$needErrString = true;
 				}
 			}
 			else {
 				// First time we've seen this server, so record a BASELINE version of the cert
 				$result = "Critical";
-				$analysisMessage .= INDENT."First time we've seen this certificate. Examine the interaction carefully. Things may be just fine. \n";
+				$analysisMessage .= INDENT."This is a certificate seen for the first time. Examine the interaction carefully. Things may be just fine. \n";
 				$analysisMessage .= INDENT."Here is info from the interaction with the HTTPS server.\n\n";
 				$needErrString = true;
 			}
@@ -313,9 +314,10 @@ function sslScan($content, $args, $privateStore) {
 			$result = "Critical";
 			$analysisMessage .= INDENT."Something is odd here. The certificate is neither 'valid' nor 'failed' - - \n";
 			$analysisMessage .= INDENT."Examine the details carefully under 'CURRENT' below. \n";
-			$analysisMessage .= INDENT."These are transcripts of the interactions with the HTTPS server.\n\n";
+			$analysisMessage .= INDENT."You can check the certs at https://www.sslchecker.com/certdecoder\n\n";
+			$analysisMessage .= INDENT."Transcripts of the interactions with the HTTPS server appear below.\n\n";
+			$analysisMessage .= INDENT."CURRENT (NEW) CERT(S):\n" .$certs."\n\n";
 			$analysisMessage .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain]['SSL_BASELINE_CERT']."\n\n";
-			$analysisMessage .= INDENT."CURRENT CERT(S):\n" .$certs."\n\n";
 			$needErrString = true;
 		}
 		$privateStore[$filterName][$domain]['SSL_VERBOSE_RESULT'] = $stderrString;
