@@ -10,6 +10,26 @@
 		on how to make one of these and integrate it into the CyberSpark daemons.
 	**/
 
+	/**
+		NOTE: if more than one url= directive in a single properties file uses the [dns] 
+	 	filter to observe DNS on the same FQDN it may not report accurately the changes
+		for both URLs. So it is best to only request the [dns] filter once for each FQDN
+		in a properties file.
+		Two different URLs on the same FQDN one after the other in one properties file
+		may report differening SOA or other DNS records because of rotating or differing 
+		DNS responses for that domain. So beware.
+		This isn't necessarily because WE are doing anything wrong. It's more likely the
+		DNS is reporting inconsistently over time or over multiple servers. We tolerate
+		this, but we do trigger alerts due to the changes. Better to alert than to miss
+		something important.
+		 	For example, consider a load-balanced DNS with several NS servers, being 
+		 	updated by its owner. If server 'a' receives the update, but server 'b' is  
+		 	delayed in receiving it, two consecutive DNS inquiries from us might 
+		 	retrieve different results, which we would report as a "change" (and we'd  
+			send an alert). This can confuse everyone. Regardless, it is just "The 
+			Internet being the Internet."
+	**/
+
 // CyberSpark system variables, definitions, declarations
 global $path;
 include_once $path."cyberspark.config.php";
@@ -78,8 +98,6 @@ function dnsScan($content, $args, $privateStore) {
 	$fqdn   = $domain;
 	echoIfVerbose("Checking $domain \n");
 	
-	// NOTE: if more than one url= directive uses the [dns] condition, it will really only report
-	//   changes for the first url= line that contains 'dns'
 	$newURL = !isset($privateStore[$filterName][$domain]['soa']) || (strlen($privateStore[$filterName][$domain]['soa']) == 0);
 	echoIfVerbose("New domain? $newURL \n");
 	
