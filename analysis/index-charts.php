@@ -7,7 +7,6 @@
 //	 Tutorials at http://bost.ocks.org/mike/bar/3/
 
 ////////////////////////////////////////////////////////////////////////
-$TITLE			= 'Sample bubbles &mdash;';
 
 include('index-hashes.php');
 

@@ -1,5 +1,7 @@
 <?php
 
+$TITLE			= 'Sample CyberSpark visuals &mdash;';
+
 $URL_HASHES		= array(
 					'b3eaf4bce2b85708a6c930a5d527340d',  // cyberspark.net
 					'cedbab8fd4859687b3e33f3362e78857',  // viz.cyberspark.net
