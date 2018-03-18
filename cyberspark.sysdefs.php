@@ -17,12 +17,16 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 // User-Agent and other identity to be presented by CyberSpark when sniffing using HTTP.
-define('CYBERSPARK_VERSION', '4.20170608');
+define('CYBERSPARK_VERSION', '4.20171207');
 if (!defined('DEFAULT_IDENTITY')) {
+	// Please use your own URL in this string (in place of cyberspark.net/agent)
 	define('DEFAULT_IDENTITY', 'CyberSpark Version '.CYBERSPARK_VERSION.' http://cyberspark.net/agent');
 }
 if (!defined('DEFAULT_USERAGENT')) {
-	define('DEFAULT_USERAGENT', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:33.0) '.DEFAULT_IDENTITY.' Ubuntu/14.04');
+	// Replace "Ubuntu..." with your server OS
+	define('DEFAULT_USERAGENT', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:33.0) '.DEFAULT_IDENTITY.' Ubuntu/16.04');
+	// Please use your own URL if you choose the one below instead of the one above
+//	define('DEFAULT_USERAGENT', "Mozilla/5.0 (compatible; MSIE 8.0; CyberSpark Version ".CYBERSPARK_VERSION." http://cyberspark.net/agent;) Ubuntu/16.04 LTS");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
