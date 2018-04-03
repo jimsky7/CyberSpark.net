@@ -2,6 +2,10 @@
 <?php
 /****
 	Read and display cyberspark data for one thread.
+	Run from command line (substitute your ID for "CS0-0" in command:
+		cd /usr/local/cyberspark
+		php ./cyberspark-data-dump.php --id CS0-0
+	The script will dump/display/echo all CS and filter data for the agent ID.
 ****/
 
 ///////////////////////////////////////////////////////////////////////////////////
