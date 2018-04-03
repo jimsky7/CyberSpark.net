@@ -1,6 +1,12 @@
 <?php
 /**** 
 	Capture a log entry
+	via HTTP POST ... parameters are
+		CS_API_KEY		=	a minimal secret key required to post anything
+		log	=			=	the log information, CSV (field may be quoted)
+		header			=	the field names, CSV (names may be quoted)
+	In this code we use an MD5 hash of the incoming URL to determine where to put data
+	in the database. Keep that in mind. This hash is used lots of places as an identifier.
 ****/
 
 // **** http://cyberspark.net/
