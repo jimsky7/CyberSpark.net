@@ -157,7 +157,9 @@ while (file_exists($propsDir . "/$ID-$subID" . PROPS_EXT)) {
 	$subID++;					// ready to look for next properties file
 }	
 $subID--;						// back off by one to be accurate with end of the array
-	
+	// From this point on, $subID can be relied upon to be the number of child processes
+	//	(agents) running.
+
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -202,6 +204,7 @@ while ($running) {
 	// Report in once a day to say "I'm OK"
 	$dateString = date("r");
 	if (strpos(date("r"), (' '.DEFAULT_NOTIFY_HOUR.':')) !== false) {
+		// NOTIFY HOUR
 		if (!$notified) {
 			$subject = "$ID daemon OK $timeStamp";
 			$message = "$ID (the parent) daemon reports that it's running.";
@@ -210,6 +213,49 @@ while ($running) {
 		}
 	}
 	else {
+		// NOT NOTIFY HOUR
+		// Log rotations: Each individual agent may rotate its logs during the 'notify hour'.
+		// Agents may have different 'notify hour' from this daemon, so it's possible that
+		// log rotations may happen at any time during the day. Don't worry about that.
+		// Once a day, right after the default notify hour, this daemon will look to see 
+		// if agents have created flag files, and will compile a single email report
+		// summarizing log rotations over the previous 24 hours. Because most agents will
+		// rotate during the 'notify hour' this check is performed immediately after the
+		// notify hour. ($notified is 'true' and we're not in the notified hour any more.)
+		$i = 0;
+		$fileCount = 0;
+		$message = '';
+		$message .= "There are $subID agents defined on $ID.\n";
+		while (($i <= $subID) && $running) {
+			try {
+				$rotFileName = "$path$ID-$i".ROT_EXT;
+				$s = @file_get_contents($rotFileName);
+				if ($s === FALSE) {
+					// Missing agent
+					$message .= "\t$ID-$i no report.\n";
+				}
+				else {
+					// Agent reported rotation
+					$fileCount++;
+					$message .= "\t$s\n";
+					@unlink($rotFileName);
+				}
+			}
+			catch (Exception $fix) {
+			}
+			$i++;
+		}
+		if ($fileCount) {
+			// Send email the details what logs were rotated.
+			// If nothing rotated, no report will be sent. This means that if all
+			// log rotations fail, you won't ever be alerted. But also if logs aren't
+			// being rotated, you also won't be bothered.
+			$timeStamp = date("r");
+			$subject = "$ID log rotation report $timeStamp";
+			$message .= "$fileCount agents reported rotations.\n";
+			$message .= ($subID-$fileCount)." agents were silent and reported nothing.\n";
+			textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
+		}
 		$notified = false;
 	}
 	

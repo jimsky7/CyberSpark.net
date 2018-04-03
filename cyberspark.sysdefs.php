@@ -17,7 +17,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////
 // User-Agent and other identity to be presented by CyberSpark when sniffing using HTTP.
-define('CYBERSPARK_VERSION', '4.20171207');
+define('CYBERSPARK_VERSION', '4.20180402');
 if (!defined('DEFAULT_IDENTITY')) {
 	// Please use your own URL in this string (in place of cyberspark.net/agent)
 	define('DEFAULT_IDENTITY', 'CyberSpark Version '.CYBERSPARK_VERSION.' http://cyberspark.net/agent');
@@ -84,6 +84,8 @@ define('FILTERS_EXT', '.php');				// extension for filter files
 define('LOG_DIR', 'log/');					// where the csv logs will be written
 define('LOG_EXT', '.log');					// extension for log files
 define('LOG_TRANSPORT', 'log-transport.php');	// name of log transport PHP file
+// FLAG FILES
+define('ROT_EXT', '.rotated');				// extension for flag files for log rotations
 // ZIP FILES
 define('ZIP_EXT', '.gz');					// extension for gzipped files
 // PID and heartbeat and 'last url' files

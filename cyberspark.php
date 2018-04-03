@@ -19,7 +19,7 @@ include_once "include/functions.php";
 
 ///////////////////////////////////////////////////////////////////////////////////
 // 
-$ID			= INSTANCE_ID;			// this "sniffer" ID (like "CS9-0")
+$ID			= INSTANCE_ID;			// this "agent" ID (example "CS9-0")
 $identity	= DEFAULT_IDENTITY;		// from config
 $userAgent  = DEFAULT_USERAGENT;	// from config
 $maxDataSize= MAX_DATA_SIZE;		// maximum serialized data file size = 10MB
@@ -107,6 +107,7 @@ $logFileName		 = $logDir   . $ID . LOG_EXT;
 $pidFileName		 = $path . $ID . PID_EXT;
 $heartbeatFileName	 = $path . $ID . HEARTBEAT_EXT;
 $urlFileName         = $path . $ID . URL_EXT;
+$rotFileName		 = $path . $ID . ROT_EXT;
 $running = true;
 $pipes = null;
 $logTransportProcess = null;
@@ -491,14 +492,17 @@ if (file_exists('log-transport.php')) {
 							// See if it should be sent to a special email address
 							//   logs=email@example.com
 							// ...in the properties file
-							sendMimeMail('Log', "A gzipped copy of the log file for $ID is attached.", $properties, $copyFileName);
+							sendMimeMail('Log attached', "A gzipped copy of the log file for $ID is attached.", $properties, $copyFileName);
 						}
 						else {
-							sendMimeMail('Log rotation', "The log file for $ID has been rotated. A gzipped copy remains on the server.", $properties, null);
+							// No longer send an email when log file is rotated 2018-04-02
+							//	sendMimeMail('Log rotation', "The log file for $ID has been rotated. A gzipped copy remains on the server.", $properties, null);
 						}
+						// Set a flag (file) indicating logs have been rotated. This is used by parent process.
+						@file_put_contents($rotFileName, "$ID; Log rotated ".date("r"));	// this file is a flag saying "logs rotated"
 					}
 					catch (Exception $zx) {
-						echoIfVerbose('Exception when sending files: '.$zx->getMessage()." \n");
+						echoIfVerbose('Exception when rotating logs or sending files: '.$zx->getMessage()." \n");
 					}
 					$properties['to'] = $saveTo;
 				}
