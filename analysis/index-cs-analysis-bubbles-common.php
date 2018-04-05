@@ -220,7 +220,7 @@ while ($yx > 2009) {
 <?php } ?>
     </div>
     <hr/>
-    <div id="CS_START_END" style="width:<?php echo $WIDTH_CHART; ?>px">
+    <div id="CS_START_END" style="width:<?php echo $BUBBLE_CHART_WIDTH; ?>px">
 <?php
 /****
     	<div style="float:left;">&darr;&nbsp;&nbsp;<?php echo $startDate; ?></div>
@@ -541,11 +541,17 @@ var urlFromHash = {};
 ?>
 var getDataURL = [<?php
 	$i = 0;
-	$stop = count($getDataURL) - 1;
-	while ($i < $stop) {
-		echo "'".$getDataURL[$i++]."',";
+	$c = count($getDataURL);
+	if ($c) {
+		$stop = $c - 1;
+		while ($i < $stop) {
+			echo "'".$getDataURL[$i++]."',";
+		}
+		echo "'".$getDataURL[$i]."'";
 	}
-	echo "'".$getDataURL[$i]."'";
+	else {
+		echo "''";		// degenerate case - happens for bubbles page not charts page
+	}
 ?>];
 </script>
 
