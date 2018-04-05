@@ -2,8 +2,17 @@
 <?php
 /****
 		CyberSpark.net monitoring-alerting system
-		launched from the command line as
-		  /usr/local/cyberspark/cyberspark.php --arg --arg
+		
+		cyberspark.php represents one "agent" and many of these may be running on the
+		same server under the control of the cybersparkd.php daemon.
+
+		Test from the command line by shutting down cybersparkd (daemon) and then
+		running an individual agent using the commands below. Be sure to wait after
+		turning off the cyberspark service until all agents stop running.
+			service cyberspark stop
+			cd /usr/local/cyberspark
+			php ./cyberspark.php --id CS0-0
+		(or whatever CS you want to run as - it picks up the matching properties)
 ****/
 
 ///////////////////////////////////////////////////////////////////////////////////

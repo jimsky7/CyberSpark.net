@@ -225,7 +225,7 @@ while ($running) {
 		$i = 0;
 		$fileCount = 0;
 		$message = '';
-		$message .= "There are $subID agents defined on $ID.\n";
+		$message .= "There are ".($subID+1)." agents defined on $ID.\n";
 		while (($i <= $subID) && $running) {
 			try {
 				$rotFileName = "$path$ID-$i".ROT_EXT;
@@ -253,7 +253,7 @@ while ($running) {
 			$timeStamp = date("r");
 			$subject = "$ID log rotation report $timeStamp";
 			$message .= "$fileCount agents reported rotations.\n";
-			$message .= ($subID-$fileCount)." agents were silent and reported nothing.\n";
+			$message .= ($subID-$fileCount+1)." agents were silent and reported nothing.\n";
 			textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
 		}
 		$notified = false;
