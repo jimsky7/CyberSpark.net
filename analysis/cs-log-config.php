@@ -12,10 +12,13 @@ define ('DEBUG', false);
 //       elsewhere, you may adjust these to include the proper 'subdirectories' as they'd appear in the URL.
 //       (I suppose you could even have them on a different server...)
 define ('CS_URL_CONFIG',       'cs-log-config.php');				// configuration file (this file)
-define ('CS_URL_FILE_PROCESS', 'cs-log-file-process.php');		// log file processor
-define ('CS_URL_GET',          'cs-log-get-entries.php');		// get CSV or TSV of log entries
-define ('CS_URL_FROM_HASH',    'cs-log-get-url-from-hash.php');	// given a HASH, return the actual URL
+define ('CS_URL_FILE_PROCESS', 'cs-log-file-process.php');			// log file processor
+define ('CS_URL_GET',          'cs-log-get-entries.php');			// get CSV or TSV of log entries
+define ('CS_URL_FROM_HASH',    'cs-log-get-url-from-hash.php');		// given a HASH, return the actual URL
 define ('CS_URL_POST',   	   'cs-log-post-entry.php');			// put one log entry into database
+define ('CS_LOCK_POST', 	   '/a/cs-lock-handler.php');			// for lock/suppress email notifications
+define ('CS_SUPPRESS_URL', 	   'cs-suppress.php');	    			// control suppressed email
+define ('CS_SUPPRESS_POST_URL', 'cs-suppress-post.php');	    	// control suppressed email
 
 // Other definitions
 define ('PAD_VALUE', 3600);				// value to add when padding (3600 == one hour)

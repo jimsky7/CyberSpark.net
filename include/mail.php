@@ -15,6 +15,9 @@ if (PHP_VERSION_ID < 70000) {
 // CyberSpark stuff
 require_once $path.'include/echolog.php';
 include_once $path."include/functions.php";
+include_once $path."log-transport-pw.php";			// required for cURL check of locked URL CS_API_KEY et al
+include_once $path."log-transport-config.php";		// required for cURL check of locked URL 'CS_LOCK_POST'
+
 
 /////////////////////////////////////////////////////////
 function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $message='', $smtpServer, $smtpPort, $user, $password) {
@@ -312,13 +315,70 @@ function sendMail($scanResults, &$properties) {
 			// Send alert
 			$urls = $properties['urls'];
 			echoIfVerbose("Sending alert(s) to: " . $urls[$iu]->emails . ": \n" . $scanResult . "\n");
-			sendAlert($urls[$iu]->emails, $scanResult, $properties, $timeStamp);
-// >>>
+
+			$checkURL = $urls[$iu]->url;
+			$checkLockURL = CS_LOCK_POST;		// from log-transport-config.php
+			$suppressionURL = CS_SUPPRESS_URL;	// from log-transport-config.php
+
+			// Check whether email notification is suppressed
+			// Note that PEAR isn't used here because our version doesn't do HTTP Basic Auth.
+			$suppressed = false;
+			$md5URL = md5($checkURL);
+			try {
+				$ch = curl_init();
+        		curl_setopt($ch, CURLOPT_POST, 1);
+				$u = $checkLockURL;
+				if (defined('CS_API_KEY') && (strlen(CS_API_KEY) > 0)) {
+					$ueData = 'md5_url='.$md5URL.'&hours=0&CS_API_KEY='.urlencode(CS_API_KEY);
+				}
+				else {
+					$ueData = 'md5_url='.md5($checkURL).'&hours=0';
+				}
+				curl_setopt($ch, CURLOPT_URL, $u);
+				if(defined('CS_HTTP_USER') && defined('CS_HTTP_PASS')) {
+					// You can define user name and password in log-transport-pw.php
+					curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+					curl_setopt($ch, CURLOPT_USERPWD, CS_HTTP_USER.':'.CS_HTTP_PASS);
+				}
+				curl_setopt($ch, CURLOPT_POSTFIELDS, 		$ueData); 
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER,		1);
+        		curl_setopt($ch, CURLOPT_HEADER, 			0);
+				curl_setopt($ch, CURLOPT_HTTPHEADER, 		array('Content-Length: '.strlen($ueData)));
+				$curlResult = curl_exec($ch);
+				if ($curlResult === FALSE) {
+					// Error trying to POST
+					ob_start();
+					print_r(curl_getinfo($ch));
+					$s = ob_get_clean();
+					$scanResult = "cURL returned FALSE for $checkURL: \ncURL handle contains $s\nThis is a Cyberspark internal error in mail.php\n".$scanResult;
+				}
+				else {
+					if (strncasecmp($curlResult, 'LOCK', 4)==0) {
+						// This URL is locked - do not send email - this is always temporary
+						$scanResult = "(An administrator has requested suppression of email alerts for $checkURL) \n$curlResult\n".$scanResult;
+						$suppressed = true;
+					}
+				}
+				curl_close($ch);
+			}
+			catch (Exception $chgx) {
+				ob_start();
+				print_r(curl_getinfo($ch));
+				$s = ob_get_clean();
+				$scanResult = "cURL threw an exception {".$chgx->getMessage()."} for $checkURL : cURL handle contents appear below: \n$s\n".$scanResult;
+			}
+			// Add suppression info and link
+			$scanResult .= "You may temporarily suppress these email alerts using this link:\n\t $suppressionURL?hash=$md5URL&url=$checkURL\n";
+			$scanResult .= "For other requests or questions, please contact info@cyberspark.net\n";
+			if (!$suppressed) {
+				sendAlert($urls[$iu]->emails, $scanResult, $properties, $timeStamp);
+			}
+
 			// Special audit copy?
 			if (isset($audit)) {
 				sendAlert($audit, "AUDIT copy: \n".$scanResult, $properties, $timeStamp);
 			}
-// >>>
+
 			// Special alerts related to HTTP error codes
 			foreach(array('301','302','307','500','501','502','504') as $code) {
 				if (isset($properties[$code]) && (strlen($properties[$code]) > 0)) {
