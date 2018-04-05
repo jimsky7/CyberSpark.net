@@ -18,15 +18,21 @@ function readMoreProps($fileName, &$data) {
 			// Ignore comment line (starts with "#")
 			continue;
 		}
-		list($key, $value) = explode('=', $s, 2);
+		if (strpos($s, '=') > 0) {
+			list($key, $value) = explode('=', $s, 2);
 		
-		if (strcasecmp($key, 'url') == 0) {
-			// url=ooooooooooooo
-			// Get URL
-			list ($url, $s) = explode(';', $value);
-			if (isset($url) && isset($s)) {
-				list ($filters, $emails) = explode('=', $s);
-				$data[$url] = array('ID'=>$ID, 'filters'=>$filters, 'emails'=>$emails);
+			if (strcasecmp($key, 'url') == 0) {
+				// url=ooooooooooooo
+				// Get URL
+				if (strpos($s, ';') > 0) {
+					list ($url, $s) = explode(';', $value);
+					if (isset($url) && isset($s)) {
+						if (strpos($s, '=') > 0) {
+							list ($filters, $emails) = explode('=', $s);
+							$data[$url] = array('ID'=>$ID, 'filters'=>$filters, 'emails'=>$emails);
+						}
+					}
+				}
 			}
 		}
 		$line++;		

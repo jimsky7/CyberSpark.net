@@ -30,14 +30,14 @@
 // include supporting code
 ///////////////////////////////// 
 // CyberSpark system variables, definitions, declarations
-include_once "../cyberspark.sysdefs.php";
+// include_once "../cyberspark.sysdefs.php";
 include_once "props-to-functions.php";
 
 ///////////////////////////////// 
 // 
 $propsFileName= "";				// exact name of the properties file
-$path		= APP_PATH;			// get from config - this will be a local copy
-$propsDir	= PROPS_DIR;		// get from config - this will be a local copy
+//	$path		= APP_PATH;			// get from config - this will be a local copy
+//	$propsDir	= PROPS_DIR;		// get from config - this will be a local copy
 	
 
 ///////////////////////////////// 
@@ -54,16 +54,14 @@ $path 		= substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/
   <STYLE TYPE='text/css'>.LOWER_LINE { font-size:12px; } </STYLE>
 </HEAD>
 <BODY style='font-family:Arial;'>
-  <p>
-&laquo; <a href='/analysis/'>Back</a> 
-  </p>
+<p style="font-size:22px;"><a href="http://cyberspark.net/"><img src="images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a><a href='index.php'><img src="images/uparrow.jpg" width="52" height="48" alt="Analysis home page"/></a>  </p>
 <?php
 if (!isset($_GET['base']) || (strlen($_GET['base']) == 0)) {
 	echo "Requires ?base=/dir/";
 	exit;
 }
 $propsDir = $path . $_GET['base'];
-if ($propsDir[strlen($propsDir)] != '/') {
+if ($propsDir[strlen($propsDir)-1] != '/') {
 	$propsDir = $propsDir . '/';
 	$propsDir = str_replace('//', '/', $propsDir);
 }
