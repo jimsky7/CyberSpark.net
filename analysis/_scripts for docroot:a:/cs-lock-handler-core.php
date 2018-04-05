@@ -4,12 +4,11 @@
 		Common portion of lock handler.
 		Include this in other files.
 
-		Outer file must include these definitions, adjusted for path if necessary:
-			//	include('cs-log-config.php');
-			//	include('cs-log-functions.php');
-			//	include('cs-log-pw.php');
-			//	define ('LOCKED_EXT', '.locked');
-			//	define ('LOCKED_DIR', 'locked/');
+		The lock file includes a serialized version of
+			array(
+				'expires'	=> time
+				'url'		=> the url that is locked
+			)
 
 	****/
 
@@ -21,7 +20,12 @@ define ('LOCKED_EXT', '.locked');
 define ('LOCKED_DIR', 'locked/');		
 
 function lessThanHours($seconds) {
-	return (int)(($seconds/(60*60))+0.999).' hours or less ';
+	$sv = (int)($seconds/(60*60)+0.999);
+	$ss = ' hours or less ';
+	if ($sv<2) {
+		$ss = ' hour or less ';
+	}
+	return $sv.$ss;
 }
 
 // In 'automated' mode responses are terse, like 'OK' 'LOCKED' 'GONE'
@@ -73,13 +77,15 @@ if (!isset($_POST['md5_url'])) {
 	echo "All required parameters must be supplied. [2]\n";
 	exit;
 }
-
 $md5URL = $_POST['md5_url'];
+
+// POST item "hours" is optional, and will be =0 if not present
 $hours = 0;
 if (isset($_POST['hours'])) {
 	$hours	= $_POST['hours'];
 }
 
+// POST item "url" is optional, but highly recommended
 $url = '(none given)';
 if (isset($_POST['url'])) {
 	$url = $_POST['url'];
@@ -121,16 +127,21 @@ if ($hours == 0) {
 	}
 	// Lock file exists for this URL.
 	$now = time();
-	$expires = (int)$s;
+	$sa = unserialize($s);
+	$expires = $sa['expires'];
 	if (($expires-$now) < 0) {
-		// Lock has expired, delete the file and return a 410 GONE result
+		// Lock has expired, delete the file and return a 410 GONE result.
+		// Yes, yes, this means that simply 'inquiring' about an expired lock will
+		//	delete the lock file.
+		// And note that GONE is the result only in a specific situation, and is usually
+		//  ignored and just treated the same as OK. Meaning 'not locked'.
 		@unlink($filename);
 		if ($automated) {
 			header($_SERVER['SERVER_PROTOCOL'].' 410 Gone', true, 410);
 			echo 'GONE';
 		}
 		else {
-			echo "Email alerts are active for $url <br/>\n";
+			echo "Email alerts are active for $url <br/>\n";	// means 'not suppressed/locked'
 		}
 		exit;
 	}
@@ -139,7 +150,7 @@ if ($hours == 0) {
 		echo 'LOCKED ('.($expires-$now).' seconds remaining)';
 	}
 	else {
-		echo "Email alerts are suspended for $url <br/>\n";
+		echo "Email alerts are suspended for $url <br/>\n";		// means suppressed/locked
 		echo '('.lessThanHours($expires-$now)." remaining)<br/>\n";
 	}
 	exit;
@@ -150,7 +161,15 @@ if ($hours == 0) {
 if ($hours > 0) {
 	$now = time();
 	$expires = $now + ($hours*60*60);
-	$result = @file_put_contents($filename, (string)$expires);
+
+	// data written into lock file
+	// array(
+	//		expires => time
+	//		url		=> the url that's being locked
+	// )
+	$sa = serialize(array('expires'=>$expires, 'url'=>$url));
+
+	$result = @file_put_contents($filename, $sa);
 	if ($result === FALSE) {
 		header($_SERVER['SERVER_PROTOCOL'].' 403 Forbidden', true, 403);
 		echo "Failed to create a lock file. ($filename)\n";
