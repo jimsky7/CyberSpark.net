@@ -159,7 +159,7 @@ include ('index-cs-analysis-setupdates.php');
     	<option value="12" <?php if($_SESSION['MONTH']=='12') { echo 'selected'; } ?>>Dec</option>
     </select>
     <input id="CS_CHART_HASH" name="CS_CHART_HASH" type="hidden" value="" />
-    <input id="DAY" name="DAY" type="text" size="2" <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?>  class='CS_SELECTOR' />
+    <input id="DAY" name="DAY" type="text" size="2" <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION['DAY'].'"'; } ?>  class='CS_SELECTOR' />
     <select id="YEAR" name="YEAR"  class="CS_SELECTOR">
 <?php
 $yx = (int)date('Y');
