@@ -3,14 +3,17 @@
 	****/
 include_once 'a/cs-log-config.php';
 
-	if (isset($_GET['hash']) && isset($_GET['url']) ) {
-		$hash = $_GET['hash'];
-		$url  = $_GET['url'];
-	}
-	else {
-		echo 'Invalid request.';
-		exit;
-	}
+$sessionAuth = SESSION_AUTH_USER;	// index of the $_SESSION[] var that indicates authenticated
+session_start();
+
+if (isset($_GET['hash']) && isset($_GET['url']) ) {
+	$hash = $_GET['hash'];
+	$url  = $_GET['url'];
+}
+else {
+	echo 'Invalid request.';
+	exit;
+}
 
 ?><html>
 <head>
@@ -36,6 +39,27 @@ include_once 'a/cs-log-config.php';
 		});
 	</script>
 
+<?php
+	/**** If user is HTTP logged in, then display analysis strip chart
+	****/
+	$auth = false;
+	// User has passed HTTP Basic authentication?
+	if (isset($_SESSION[$sessionAuth]) && $_SESSION[$sessionAuth]) {
+		$auth = true;
+		echo "<!-- user is HTTP basic authenticated -->\n";
+	}
+	else {
+		echo "<!-- user is not HTTP basic authenticated -->\n";
+//		echo "<!-- \n";
+//		// Want to use $_SERVER['REMOTE_USER'] but it's not set properly on this server
+//		// So instead use a session variable that gets set when certain authenticated pages are viewed
+//		echo 'Session ID: '.session_id().' | ' . 'Is authenticated? '.$_SESSION[$sessionAuth]."\n";
+//		echo " -->\n";
+	}
+?>
+<?php
+	if ($auth) {
+?>
     <script type="text/javascript">
 		var timer = 0;
 		var counter=0;
@@ -58,11 +82,11 @@ include_once 'a/cs-log-config.php';
 		function chart_onload() {
 <?php
 			$chartHash = $hash;		// from POST values
-//			$MDY = '';				// what?
+			$MDY = '';				// what is this?
 
 			if (($chartHash != null) && (strlen($chartHash) > 0)) {
 				echo "var elt=document.getElementById(\"CS_CHART_IFRAME\"); \r\n";	
-				echo "elt.src=\"/a/index-cs-analysis-frame.php?$MDY"."URL_HASH=$chartHash\"; \r\n";	
+				echo "elt.src=\"a/index-cs-analysis-frame.php?$MDY"."URL_HASH=$chartHash\"; \r\n";	
 				echo "chartHash=\"$chartHash\";\r\n";
 			}	
 ?>
@@ -93,14 +117,16 @@ include_once 'a/cs-log-config.php';
 			}
 		}
 	</script>
-
+<?php } /* auth */ ?>
 </head>
-<body style="font-family:'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', 'DejaVu Sans', Verdana, sans-serif;" onload="chart_onload();" >
+<body style="font-family:'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', 'DejaVu Sans', Verdana, sans-serif;" <?php if($auth) { ?>onload="chart_onload();"<?php } /* auth */ ?> >
 <div style="margin-left:40px; width:80%;">
 <a href="http://cyberspark.net/"><img src="https://viz.cyberspark.net/a/images/CyberSpark-banner-320x55.png" width="300" height="50" alt="CyberSpark web site"/></a>&nbsp;</p><p style="margin-left:40px; ">
 For <?php echo $url; ?> <br/><br/>
-				<iframe src="/a/index-cs-analysis-bubbles-iframe.php" id="CS_CHART_IFRAME" name="CS_CHART_IFRAME" width="320px" height="110px" style="z-index:3; margin-left:10px; border:thin; border-style:solid; border-color:#d0d0d0; background-color:none; opacity:0.80;"  >
+<?php if ($auth) { ?>
+				<iframe src="" id="CS_CHART_IFRAME" name="CS_CHART_IFRAME" width="320px" height="110px" style="z-index:3; margin-left:10px; border:thin; border-style:solid; border-color:#d0d0d0; background-color:none; opacity:0.80;"  >
 				</iframe>
+<?php } /* auth */ ?>
 <hr/>
 	<form id='SUPPRESS_EMAIL_ALERTS' action='<?php echo CS_SUPPRESS_POST_URL; ?>' method='post'>
 		<div style='margin-left:40px;'>

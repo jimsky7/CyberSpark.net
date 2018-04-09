@@ -19,15 +19,6 @@ include('cs-log-pw.php');
 define ('LOCKED_EXT', '.locked');
 define ('LOCKED_DIR', 'locked/');		
 
-function lessThanHours($seconds) {
-	$sv = (int)($seconds/(60*60)+0.999);
-	$ss = ' hours or less ';
-	if ($sv<2) {
-		$ss = ' hour or less ';
-	}
-	return $sv.$ss;
-}
-
 // In 'automated' mode responses are terse, like 'OK' 'LOCKED' 'GONE'
 // In 'human' mode responses are explained
 $automated = true;			// 'true' for terse response, 'false' for wordy
@@ -151,7 +142,7 @@ if ($hours == 0) {
 	}
 	else {
 		echo "Email alerts are suspended for $url <br/>\n";		// means suppressed/locked
-		echo '('.lessThanHours($expires-$now)." remaining)<br/>\n";
+		echo '('.hoursAndMinutes($expires-$now)." remaining)<br/>\n";
 	}
 	exit;
 }
