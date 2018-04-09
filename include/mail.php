@@ -324,6 +324,7 @@ function sendMail($scanResults, &$properties) {
 			// Note that PEAR isn't used here because our version doesn't do HTTP Basic Auth.
 			$suppressed = false;
 			$md5URL = md5($checkURL);
+			$dashedLine = "_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n";
 			try {
 				$ch = curl_init();
         		curl_setopt($ch, CURLOPT_POST, 1);
@@ -347,16 +348,20 @@ function sendMail($scanResults, &$properties) {
 				$curlResult = curl_exec($ch);
 				if ($curlResult === FALSE) {
 					// Error trying to POST
-					ob_start();
-					print_r(curl_getinfo($ch));
-					$s = ob_get_clean();
-					$scanResult = "cURL returned FALSE for $checkURL: \ncURL handle contains $s\nThis is a Cyberspark internal error in mail.php\n".$scanResult;
+
+//					ob_start();
+//					print_r(curl_getinfo($ch));
+//					$s = ob_get_clean();
+//					$scanResult .= $dashedLine;
+//					$scanResult = "cURL returned FALSE trying to check $checkURL: \ncURL handle contains $s\nThis is a Cyberspark internal error in mail.php\n$dashedLine".$scanResult;
+
+					$scanResult = "Oops! Checking email suppression failed [include/mail.php]. This is an internal CyberSpark error and the URL may be OK.".$scanResult;
 				}
 				else {
 					if (strncasecmp($curlResult, 'LOCK', 4)==0) {
 						// This URL is locked - do not send email - this is always temporary
-						$scanResult = "(An administrator has requested suppression of email alerts for $checkURL) \n$curlResult\n".$scanResult;
 						$suppressed = true;
+//						$scanResult = "(An administrator has requested suppression of email alerts for $checkURL) \n$curlResult\n".$scanResult;
 					}
 				}
 				curl_close($ch);
@@ -368,6 +373,7 @@ function sendMail($scanResults, &$properties) {
 				$scanResult = "cURL threw an exception {".$chgx->getMessage()."} for $checkURL : cURL handle contents appear below: \n$s\n".$scanResult;
 			}
 			// Add suppression info and link
+			$scanResult .= $dashedLine;
 			$scanResult .= "You may temporarily suppress these email alerts using this link:\n\t $suppressionURL?hash=$md5URL&url=$checkURL\n";
 			$scanResult .= "For other requests or questions, please contact info@cyberspark.net\n";
 			if (!$suppressed) {
