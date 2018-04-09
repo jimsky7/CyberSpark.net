@@ -13,17 +13,10 @@ $URL_HASHES		= array(
 					'b3eaf4bce2b85708a6c930a5d527340d'  // cyberspark.net
 			);
 
-require_once('cs-log-pw.php');
-require_once('cs-log-config.php');
-require_once('cs-log-functions.php');
-require_once('cs-analysis-functions.php');
-
-session_start();
-$_SESSION['USER_CAN_VISIT_RESTRICTED_PAGES'] = true;	
-		// Means user is HTTP authenticated
-		// We know it just because this page is running.
-		// I'd prefer to use $_SERVER['REMOTE_USER'] but
-		// it is not reliably set.
+require('cs-log-pw.php');
+require('cs-log-config.php');
+require('cs-log-functions.php');
+require ('cs-analysis-functions.php');
 
 ////////////////////////////////////////////////////////////////////////
 // Check/set any missing layout values
@@ -84,8 +77,8 @@ include ('index-cs-analysis-setupdates.php');
 	} /* not calendar */
 ?>
 	<title><? echo $TITLE; ?></title>
-    <link href="/css/d3.css"          rel="stylesheet" type="text/css" media="all" /> 
-	<link href="/css/cs-analysis.css" rel="stylesheet" type="text/css" media="all" />    
+    <link href="css/d3.css"          rel="stylesheet" type="text/css" media="all" /> 
+	<link href="css/cs-analysis.css" rel="stylesheet" type="text/css" media="all" />    
     <script type="text/javascript">
 		var timer = 0;
 		var counter=0;
@@ -160,7 +153,7 @@ include ('index-cs-analysis-setupdates.php');
 
 ////////////////////////////////////////////////////////////////////////
 // Write one SVG chart object
-include_once('index-cs-analysis-SVG.php');
+include('index-cs-analysis-SVG.php');
 
 ////////////////////////////////////////////////////////////////////////
 // Page footer
@@ -168,7 +161,7 @@ include_once('index-cs-analysis-SVG.php');
 $skipTips = true;
 $skipHR   = true;
 $skipCC   = true;
-include_once('index-cs-analysis-footer.php');
+include ('index-cs-analysis-footer.php');
 
 ?>
 </body>

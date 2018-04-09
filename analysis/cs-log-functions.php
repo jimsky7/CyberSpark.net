@@ -18,24 +18,6 @@ if (!function_exists('ifGetOrPost')) {
 }
 
 ////////////////////////////////////////////////////////////////////////
-if (!function_exists('hoursAndMinutes')) {
-	function hoursAndMinutes($seconds) {
-		$sTime = '';
-		// Hours
-		$sHours = (int)($seconds/(60*60));
-		if ($sHours > 0) {
-			$sTime  .= $sHours.' hour'.($sHours>1?'s':'');
-		}
-		// and minutes
-		$sMinutes = (int)(($seconds/60)-($sHours*60));
-		if ($sMinutes > 0) {
-			$sTime .= ' and '.$sMinutes.' minute'.($sMinutes>1?'s':'');
-		}
-		return $sTime;
-	}
-}
-
-////////////////////////////////////////////////////////////////////////
 // Sometimes cURL error symbolics are not defined, so be sure we have them.
 // Errors related to timing out or failing to resolve
 if (!defined('CURLE_OPERATION_TIMEDOUT')) {

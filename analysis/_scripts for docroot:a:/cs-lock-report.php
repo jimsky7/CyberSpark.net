@@ -25,6 +25,15 @@ $lockedDir = $path . LOCKED_DIR;						// lock files go here
 
 $now = time();	// current unix time in seconds
 
+function lessThanHours($seconds) {
+	$sv = (int)($seconds/(60*60)+0.999);
+	$ss = ' hours or less ';
+	if ($sv<2) {
+		$ss = ' hour or less ';
+	}
+	return $sv.$ss;
+}
+
 ?>
 <html>
 <head>
@@ -66,9 +75,9 @@ if (file_exists($lockedDir)) {
 		$result = asort($a);
 		echo "<ul style='list-style-type:none'>\n";
 		foreach($a as $url=>$value) {
-			$es = hoursAndMinutes($value['expires']-$now);
-			echo "<li>$url<br/><div style='font-size:smaller; margin-left:30px; margin-bottom:5px;'>($es remaining)\n";
-			echo "<a href='https://".$_SERVER['SERVER_NAME']."/".CS_SUPPRESS_URL."?url=".$value['url']."&hash=".$value['hash']."' target='_blank' style='font-size:smaller;'>change</a></div></li>\n";
+			$es = lessThanHours($value['expires']-$now);
+			echo "<li>$url<br/><span style='font-size:smaller;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;($es remaining)</span>\n";
+			echo "<a href='https://".$_SERVER['SERVER_NAME']."/".CS_SUPPRESS_URL."?url=".$value['url']."&hash=".$value['hash']."' target='_blank' style='font-size:smaller;'>change</a></li>\n";
 		}
 		echo "</ul\n";
 	}
