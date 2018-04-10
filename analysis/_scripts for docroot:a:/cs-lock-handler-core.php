@@ -112,7 +112,7 @@ if ($hours == 0) {
 			echo 'OK';
 		}
 		else {
-			echo "Email alerts are active for $url <br/>\n";
+			echo "Email alerts are active for $url <br/>\n";	// means 'not suppressed/locked'
 		}
 		exit;
 	}
@@ -151,7 +151,7 @@ if ($hours == 0) {
 // If hours > 0 then set suppression lock
 if ($hours > 0) {
 	$now = time();
-	$expires = $now + ($hours*60*60);
+	$expires = $now + ($hours*60*60);		// in seconds
 
 	// data written into lock file
 	// array(
@@ -170,8 +170,8 @@ if ($hours > 0) {
 		echo 'LOCKED ('.($expires-$now).' seconds remaining)';
 	}
 	else {
-		echo "Email alerts are now suspended for $url <br/>\n";
-		echo '('.lessThanHours($expires-$now)." remaining)<br/>\n";
+		echo "Email alerts will be suspended for $url <br/>\n";
+		echo '('.hoursAndMinutes($expires-$now)." remaining)<br/>\n";
 	}
 	exit;
 }
@@ -185,7 +185,7 @@ if ($hours < 0) {
 		echo 'GONE';
 	}
 	else {
-		echo "Email alerts will now resume for $url <br/>\n";
+		echo "Email alerts will resume for $url <br/>\n";
 	}
 	exit;
 }

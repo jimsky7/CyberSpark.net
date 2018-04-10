@@ -9,8 +9,6 @@
 
 // **** http://cyberspark.net/
 // **** https://github.com/jimsky7/CyberSpark.net
-// **** http://php.net/manual/en/class.mysqli.php
-// **** http://d3js.org/
 
 
 include('cs-log-config.php');
@@ -23,7 +21,15 @@ define ('LOCKED_DIR', 'locked/');
 $path 		 = substr(__FILE__,0,strrpos(__FILE__,'/',0)+1);	// including the last "/"
 $lockedDir = $path . LOCKED_DIR;						// lock files go here
 
-$now = time();	// current unix time in seconds
+$now 	= time();	// current unix time in seconds
+$sortOn	='url';		// sort the results by 'url'
+
+function urlCaseComp($a, $b) {
+	return strCaseCmp($a['url'], $b['url']);
+}
+function timeComp($a, $b) {
+	return strCaseCmp($a['expires'], $b['expires']);
+}
 
 ?>
 <html>
@@ -62,8 +68,8 @@ if (file_exists($lockedDir)) {
 			$a[$su] = array('expires'=>$sa['expires'], 'hash'=>$hash, 'url'=>$sa['url']);
 		}
 		closedir($dh);
-		// Report
-		$result = asort($a);
+		// Report will be sorted by URL.
+		$result = uasort($a, (($sortOn=='url')?'urlCaseComp':'timeComp'));
 		echo "<ul style='list-style-type:none'>\n";
 		foreach($a as $url=>$value) {
 			$es = hoursAndMinutes($value['expires']-$now);

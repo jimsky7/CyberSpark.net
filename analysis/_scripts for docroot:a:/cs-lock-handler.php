@@ -27,8 +27,6 @@
 
 // **** http://cyberspark.net/
 // **** https://github.com/jimsky7/CyberSpark.net
-// **** http://php.net/manual/en/class.mysqli.php
-// **** http://d3js.org/
 
 // Note: We want to execute this script from whatever directory it's placed in, but
 // want to use common core code for the lock/unlock functionality, which may be 

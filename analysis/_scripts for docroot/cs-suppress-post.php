@@ -1,5 +1,9 @@
 <?php
 /**** 
+	Receives <FORM> POST from cs-suppress.php and sets email suppression OR just reports
+	current status (depending on 'hours' parameter in POST). Uses the core code for
+	lock handler as described below...
+
 	Handler to manage all aspects of email alert suppression
 	(It's actually usable as a generic lock mechanism.)
 	via HTTP POST ... parameters are
@@ -27,8 +31,6 @@
 
 // **** http://cyberspark.net/
 // **** https://github.com/jimsky7/CyberSpark.net
-// **** http://php.net/manual/en/class.mysqli.php
-// **** http://d3js.org/
 
 // Note: We want to execute this script from whatever directory it's placed in, but
 // want to use common core code for the lock/unlock functionality, which may be 

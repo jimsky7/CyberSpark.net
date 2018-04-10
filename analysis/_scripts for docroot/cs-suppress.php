@@ -1,6 +1,19 @@
 <?php 
 	/**** Suppress email alerts for a URL
+
+	Displays a list offering choice of 24, 48, 72 hours or turn off, or just view status
+
+	Upon submit, it posts a form to cs-suppress-post.php using jQuery, and for any choice
+	inserts the result (as text) into a <DIV> on the page to be viewed by user.
+
+	If user is HTTP (Basic) logged in, inserts an <IFRAME> that shows a strip chart for
+	the URL that is being monitored.
+
 	****/
+
+// **** http://cyberspark.net/
+// **** https://github.com/jimsky7/CyberSpark.net
+
 include_once 'a/cs-log-config.php';
 
 $sessionAuth = SESSION_AUTH_USER;	// index of the $_SESSION[] var that indicates authenticated
