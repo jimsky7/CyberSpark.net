@@ -288,7 +288,10 @@ function sslScan($content, $args, $privateStore) {
 					$result = "Critical";
 					$analysisMessage .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! \n";
 					$analysisMessage .= INDENT."This is either a serious error or they've updated the cert. Check it carefully!\n\n";
-					$analysisMessage .= INDENT."You can check the certs at https://www.sslchecker.com/certdecoder\n\n";
+//	AS OF   2018-07-07
+					$analysisMessage .= INDENT."You can check the certs at https://www.sslshopper.com/certificate-decoder.html\n\n";
+//	DEFUNCT 2018-07-07
+//					$analysisMessage .= INDENT."You can check the certs at https://www.sslchecker.com/certdecoder\n\n";
 					$analysisMessage .= INDENT."CURRENT (NEW) CERT(S):\n" .$certs."\n\n";
 					$analysisMessage .= INDENT."PREVIOUS CERT(S):\n" .$privateStore[$filterName][$domain]['SSL_BASELINE_CERT']."\n\n";
 					$needErrString = true;
