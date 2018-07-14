@@ -355,7 +355,7 @@ function sendMail($scanResults, &$properties) {
 //					$scanResult .= $dashedLine;
 //					$scanResult = "cURL returned FALSE trying to check $checkURL: \ncURL handle contains $s\nThis is a Cyberspark internal error in mail.php\n$dashedLine".$scanResult;
 
-					$scanResult = "Oops! Checking email suppression failed [include/mail.php]. This is an internal CyberSpark error and the URL may be OK.".$scanResult;
+					$scanResult = "(Oops! Checking email suppression failed [include/mail.php]. This is an internal CyberSpark error and the URL may be OK, though any errors reported below should be investigated.)\n\n".$scanResult;
 				}
 				else {
 					if (strncasecmp($curlResult, 'LOCK', 4)==0) {

@@ -13,7 +13,8 @@
 ### END INIT INFO
 
 . /lib/lsb/init-functions
-. /etc/default/rcS
+# The next line failed in Ubuntu 18.04 LTS
+# . /etc/default/rcS
 
 set -e
 

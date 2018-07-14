@@ -111,7 +111,7 @@ function scan($properties, $filters, &$store) {
 					// Under 200 is a cURL response
 					$httpCode = "";
 					if (isset($httpResult['error']) && (strlen($httpResult['error']) > 0)) {
-						$message .= "          php5-curl says [$code] '$httpResult[error]'\n";
+						$message .= "          php-curl says [$code] '$httpResult[error]'\n";
 						// If available, add ASN information
 						// This only happens if the URL was previously successfully retrieved
 						//   and ASN information was saved.

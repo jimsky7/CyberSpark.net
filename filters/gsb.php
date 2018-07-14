@@ -61,15 +61,28 @@ function gsbDirectCheck($url, $bcs=null) {
 			$context  = stream_context_create($options);
 			$result = file_get_contents($APIurl, false, $context);
 
-			$GSBresult = json_decode($result);
+			if ($result !== false) {
+				$GSBresult = json_decode($result);
 
-			if (isset($GSBresult->matches)) {
-				$matches = $GSBresult->matches;
-				$mZero = $matches[0];
-				$m = $mZero->threatType;
-				$result = "GSB reports this URL as '$m'";
+				if (isset($GSBresult->matches)) {
+					$matches = $GSBresult->matches;
+					$mZero = $matches[0];
+					$m = $mZero->threatType;
+					$result = "GSB reports this URL as '$m'";
+				}
+				else {
+					$result = 'OK';
+				}
 			}
 			else {
+				// Error from HTTP request to GSB API
+				// Pick up all known error info and log it
+				$egl = error_get_last();
+				echoIfVerbose("GSB lookup on $url / $egl[message]: in $egl[file]: line $egl[line] \n");
+				writeLogAlert("GSB lookup on $url / $egl[message]: in $egl[file]: line $egl[line] \n");
+				// But don't send alerts to users because as far as we know there is nothing
+				// wrong with the URL we were checking. This kind of error is only for
+				// developer.
 				$result = 'OK';
 			}
 		}

@@ -10,7 +10,7 @@
 		on how to make one of these and integrate it into the CyberSpark daemons.
 	**/
 
-	/**
+/**
 		NOTE: if more than one url= directive in a single properties file uses the [dns] 
 	 	filter to observe DNS on the same FQDN it may not report accurately the changes
 		for both URLs. So it is best to only request the [dns] filter once for each FQDN
@@ -28,7 +28,7 @@
 		 	retrieve different results, which we would report as a "change" (and we'd  
 			send an alert). This can confuse everyone. Regardless, it is just "The 
 			Internet being the Internet."
-	**/
+**/
 
 // CyberSpark system variables, definitions, declarations
 global $path;
@@ -98,6 +98,8 @@ function dnsScan($content, $args, $privateStore) {
 	$fqdn   = $domain;
 	echoIfVerbose("Checking $domain \n");
 	
+	// NOTE: if more than one url= directive uses the [dns] condition, it will really only report
+	//   changes for the first url= line that contains 'dns'
 	$newURL = !isset($privateStore[$filterName][$domain]['soa']) || (strlen($privateStore[$filterName][$domain]['soa']) == 0);
 	echoIfVerbose("New domain? $newURL \n");
 	
@@ -127,8 +129,13 @@ function dnsScan($content, $args, $privateStore) {
 		$previousResult = $result;	
 			
 		////// SOA
-		// Staring with FQDN, whittle down until an SOA
-		// can be retrieved.
+		// Staring with FQDN, attempt to retrieve SOA. If one isn't available, then strip the
+		// leading token up to the first dot and try again. Continue whittling down the
+		// FQDN until either you retrieve an SOA or have no dots remaining. If you end up
+		// with no SOA at all, report it. Most FQDN will resolve once you reach the form 
+		// X.TLD (i.e. name dot top-level-domain) - meaning that for example 
+		// www.cyberspark.net would not have an SOA but stripping the 'www.' and trying
+		// cyberspark.net would yield an SOA.
 		$da = false;
 		$originalFQDN = $domain;
 		while (($i = strpos($domain, '.')) !== false) {
