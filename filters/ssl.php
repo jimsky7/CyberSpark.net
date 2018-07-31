@@ -287,9 +287,9 @@ function sslScan($content, $args, $privateStore) {
 					// This cert does not match the BASELINE cert!
 					$result = "Critical";
 					$analysisMessage .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! \n";
-					$analysisMessage .= INDENT."This is either a serious error or they've updated the cert. Check it carefully!\n\n";
+					$analysisMessage .= INDENT."This is either a serious error or the cert was recently updated. Check it carefully!\n\n";
 //	AS OF   2018-07-07
-					$analysisMessage .= INDENT."You can check the certs at https://www.sslshopper.com/certificate-decoder.html\n\n";
+					$analysisMessage .= INDENT."You can check certs at https://www.sslshopper.com/certificate-decoder.html\n\n";
 //	DEFUNCT 2018-07-07
 //					$analysisMessage .= INDENT."You can check the certs at https://www.sslchecker.com/certdecoder\n\n";
 					$analysisMessage .= INDENT."CURRENT (NEW) CERT(S):\n" .$certs."\n\n";
@@ -301,6 +301,9 @@ function sslScan($content, $args, $privateStore) {
 				// First time we've seen this server, so record a BASELINE version of the cert
 				$result = "Critical";
 				$analysisMessage .= INDENT."This is a certificate seen for the first time. Examine the interaction carefully. Things may be just fine. \n";
+//	AS OF   2018-07-07
+				$analysisMessage .= INDENT."You can check certs at https://www.sslshopper.com/certificate-decoder.html\n\n";
+				$analysisMessage .= INDENT."CURRENT (NEW) CERT(S):\n" .$certs."\n\n";
 				$analysisMessage .= INDENT."Here is info from the interaction with the HTTPS server.\n\n";
 				$needErrString = true;
 			}
