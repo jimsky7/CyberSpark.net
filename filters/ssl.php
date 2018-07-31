@@ -10,7 +10,7 @@
 			CURLOPT_SSL_VERIFYPEER
 			CURLOPT_SSL_VERIFYHOST
 		Thanks to Daniel Stenberg http://curl.haxx.se/ for the libcurl library and
-		    his suggestions on how to better utilize php5-curl. See notes inline.
+		    his suggestions on how to better utilize php-curl. See notes inline.
 	*/
 
 	/**
@@ -143,12 +143,12 @@ function sslScan($content, $args, $privateStore) {
 	///////////////////////////////// 
 	// General strategy:
 	//   Try to get the cert. Note that the URL has already been spidered, but we do a
-	//   separate HTTP GET here using php5-curl in order to get a lot more informaiton.
+	//   separate HTTP GET here using php-curl in order to get a lot more informaiton.
 	//   Other filters will use the "other" copy of the GET and any info it provided.
 	
 	if (!function_exists('curl_init')) {
 		$result = "Critical";
-		$message = "php5-curl is required by the SSL filter, but has not been installed on this server.";
+		$message = "php-curl is required by the SSL filter, but has not been installed on this server.";
 		return array($message, $result, $privateStore);
 	}
 	
@@ -160,7 +160,7 @@ function sslScan($content, $args, $privateStore) {
 	$certs      = '';
 	$analysis   = '';
 
-	$message .= "Verifying SSL/HTTPS on $fqdn using php5-curl (libcurl '$versionInfo[version]') with OpenSSL '$versionInfo[ssl_version]'\n";
+	$message .= "Verifying SSL/HTTPS on $fqdn using php-curl (libcurl '$versionInfo[version]') with OpenSSL '$versionInfo[ssl_version]'\n";
 		
 	try {
 		$stderrString='';

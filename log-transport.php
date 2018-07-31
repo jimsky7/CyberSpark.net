@@ -4,7 +4,7 @@
 /**** 
 	CyberSpark.net log daemon 
 	Monitor local logs, send entries to central repository.
-	Note: Requires php5-curl (not the PEAR HTTP client)
+	Note: Requires php-curl (not the PEAR HTTP client)
 ****/
 
 require_once 'log-transport-config.php';		// same directory as this script
