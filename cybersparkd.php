@@ -452,6 +452,27 @@ while ($running) {
 					}
 					catch (Exception $curlf) {
 					}
+
+					// Terminate log transport
+					$pfn = "$path/$ID-$i-transport". PID_EXT;
+					if (file_exists($pfn)) {
+						try {
+							$pidNumber = file_get_contents($pfn, PID_FILESIZE_LIMIT);
+						}
+						catch (Exception $x) {
+							$message .= "Couldn't read the PID file $pfn for the log transport. $timeStamp Error: ".$x->getMessage()."\n";
+							echo        "Couldn't read the PID file $pfn for the log transport. $timeStamp Error: ".$x->getMessage()."\n";
+						}
+						// Kill the log-transport process;
+						if (strlen($pidNumber) > 0) {
+							$message .= "The log transport for $ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
+							echo        "The log transport for $ID-$i is being terminated with 'kill -KILL $pidNumber' - $timeStamp\n";
+							shell_exec ("kill -KILL $pidNumber");	// terminate as if CTRL-C ... this is "graceful"
+						}
+						// When the monitor is restarted (next time around the loop) it will
+						// remove the log-transport PID files.
+					}
+
 					// Attempt to restart?  This can be set (defined) in the config file
 					if (RESTART_ON_FAILURE && $propsExist) {
 						echo "$ID Restarting $ID-$i - $timeStamp\n";
