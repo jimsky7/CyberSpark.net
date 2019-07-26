@@ -265,7 +265,7 @@ function cs_http_get($url) {
     	<option value='11' <?php if($_SESSION['MONTH']=='11') { echo 'selected'; } ?>>Nov</option>
     	<option value='12' <?php if($_SESSION['MONTH']=='12') { echo 'selected'; } ?>>Dec</option>
     </select>
-    <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION[DAY].'"'; } ?>  class='CS_SELECTOR' />
+    <input id='DAY' name='DAY' type='text' size='2' <?php if (isset($_SESSION['DAY'])) { echo ' value="'.$_SESSION['DAY'].'"'; } ?>  class='CS_SELECTOR' />
     <select id='YEAR' name='YEAR'  class='CS_SELECTOR'>
 <?php
 $yx = (int)date('Y');

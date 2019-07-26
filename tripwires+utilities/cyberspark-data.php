@@ -9,10 +9,10 @@ echo '<html>
 //////////////////////////////////////////////////////
 // MYSQLI 'true' if you want to use PHP mysqli
 //////////////////////////////////////////////////////
-define (MYSQLI, true);					// to use newer mysqli() class
-define (WATCH_SOME_ROW_COUNTS, true);	// to track change in SOME row counts of specific table
+define ('MYSQLI', true);					// to use newer mysqli() class
+define ('WATCH_SOME_ROW_COUNTS', true);	// to track change in SOME row counts of specific table
 										// BEST for WordPress sites
-define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
+define ('WATCH_ALL_ROW_COUNTS', false);	// if you want to watch ALL table sizes
 										// NOT advisable for WordPress sites
 
 //////////////////////////////////////////////////////
@@ -51,7 +51,10 @@ define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
 	// Names of files to check - must be path from docroot
 	$fichiers = array('wp-config.php', '.htaccess', 'wp-login.php');
 	// Names of tables to check lengths
-	$tables = array('wp_posts', 'wp_links', ' wp_options', ' wp_postmeta', 'wp_terms', 'wp_users');
+	// Include 'wp_users' only if you do not permit comments, otherwise every new commenter
+	// (including spam commenters) will cause this table to change size, and an alert may
+	// be sent. (bummer)
+	$tables = array('wp_posts', 'wp_links', ' wp_options', ' wp_postmeta', 'wp_terms'); // not 'wp_users'
 	// Color to emphasize words on the page
 	$emphasisColor = '#FF2222';
 	$emphasisStart = "<span style='color:$emphasisColor;'>";
@@ -66,7 +69,10 @@ define (WATCH_ALL_ROW_COUNTS, false);	// if you want to watch ALL table sizes
 	try {
 
 		if (MYSQLI) {
-			$mysqli = new mysqli($dbhost, $dbuser, $dbpassword, $dbname);
+
+			$mysqli = mysqli_init();
+			mysqli_real_connect ($mysqli, $dbhost, $dbuser, $dbpassword, $dbname);
+			echo 'Using mysqli version '.mysqli_get_server_version($mysqli)."<br/><br/>\r\n";
 
 			if ($mysqli == null) {
 				die("Error: mysqli couldn't connect to MySQL on ".MYSQL_HOST." with user name and password specified.");
