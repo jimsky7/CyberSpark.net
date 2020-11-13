@@ -10,6 +10,11 @@
 		on how to make one of these and integrate it into the CyberSpark daemons.
 	**/
 
+	/**
+		Sample:
+			url=https://example.com/;asn,dns,length,"Welcome."=me@example.com
+	**/
+
 
 // CyberSpark system variables, definitions, declarations
 global $path;
