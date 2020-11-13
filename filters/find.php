@@ -35,7 +35,7 @@ function findScan($content, $args, $privateStore) {
 	if (strpos($conditions, '"') !== false) {
 		$i = strpos	($conditions, '"');
 		$j = strpos	($conditions, '"', $i+1);
-		$key = substr($conditions, $i+1, $j-1);		
+		$key = substr($conditions, ($i+1), ($j-1-$i));		
 		if (stripos($content, $key) !== false) {
 			$result = "Alert";
 			$message = "The value \"$key\" was found on this page or file.\n";
