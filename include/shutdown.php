@@ -70,8 +70,18 @@ function doBeforeExit() {
 				catch (Exception $x) {
 				}
 			}
-			@fclose($pipes[1]);			// note MUST do this or proc_terminate() may fail
-			@fclose($pipes[2]);			// note MUST do this or proc_terminate() may fail
+			try {
+				if (isset($pipes[1]) && ($pipes[2] != null)) {
+					@fclose($pipes[1]);			// note MUST do this or proc_terminate() may fail
+				}
+				if (isset($pipes[2]) && ($pipes[2] != null)) {
+					@fclose($pipes[2]);			// note MUST do this or proc_terminate() may fail
+				}
+			}
+			catch (Exception $cx) {
+				// Either of those may fail due to temporary conditions or previous
+				// process failures, so just continue.
+			}
 			// Terminate the 'sh' process we launched
 			//   Each of these has a child log transport process which has already been
 			//   terminated (see the 'kill' above) and we have flushed the output pipe and

@@ -140,7 +140,8 @@ function dnsScan($content, $args, $privateStore) {
 		$originalFQDN = $domain;
 		while (($i = strpos($domain, '.')) !== false) {
 			$da = dns_get_record($domain, DNS_SOA);
-			if (count($da)) {
+			// Note: $da may be null on temporary DNS errors
+			if (($da != null) && count($da)) {
 				break;
 			}
 			$domain = substr($domain, $i+1);
@@ -396,7 +397,7 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 			
 			// Note any "new" records
 			// array_diff() gets us all members of $records that are NOT in the private store from earlier
-			if (isset($privateStore[$filterName][$domain][$typeString])) {
+			if (isset($privateStore[$filterName][$domain][$typeString]) && is_array($privateStore[$filterName][$domain][$typeString])) {
 				$newRecords = array_diff($records, $privateStore[$filterName][$domain][$typeString]);
 				foreach ($newRecords as $dms) {
 					// POOLS
