@@ -1,5 +1,8 @@
 <?php
 
+/** Version 4.16 on 2021-05-20 by Sky
+	Added ability to list PHP files while spidering
+**/
 /** Version 4.15 on 2014-04-11 **/
 
 /**
@@ -33,8 +36,15 @@
 	  Turns off the disk capacity and space checking.  (actually, just makes it fail)
 	/cpu=n
 	  Artificially waits 'n' seconds of wait time to measure overall CPU load 
+	/php
+      List the names of all the PHP files that were found.
+	/js
+      List the names of all the Javascript files that were found.
+	/html
+      List the names of all the HTML (not HTM) files that were found.
+
 	REPAIR CAPABILITIES ARE NOT PRESENT IN THIS SCRIPT.
-	
+
 	Create a directory /cyberspark within the docroot of the web server
 	Make this directory world-writeable (chmod 777    or chmod a+rwx    )
 	Within your Apache (or other) web server configuration, add:
@@ -77,6 +87,7 @@ $exclude    = array();		// strings that cause file/directory to be ignored
 							// PHP executables will still be examined
 $wordpress  = array('w3tc','cache');	// directories or files PRESENCE to ignore for WordPress
 $myName     = '';
+$listPHP	= false;		// if PHP filenames are to be listed
 
 $checkSignatures = array (
 	'eval('=>'[PHP/javascript]',
@@ -292,6 +303,7 @@ function spiderThis($baseDirectory, $maxDepth)
     global $exclude;
     global $checkSignatures;
     global $myName;		// "just the filename" of this script
+	global $listPHP, $listJS, $listHTML;
     
 	// Be sure we're working with a directory
 	if (is_dir($baseDirectory) && ($maxDepth>$depth)) {
@@ -374,6 +386,21 @@ function spiderThis($baseDirectory, $maxDepth)
 								$thisContents = fread($thisFile, $maxFileSize);
 								fclose($thisFile);
 								$phpFiles++;
+								if ($listPHP) {
+									if(($len > 4) and (strripos($thisEntry, ".php") == ($len-4))) {
+										echoAndLog("PHP file: $thisEntry");
+									}
+								}
+								if ($listJS) {
+									if(($len > 3) and (strripos($thisEntry, ".js") == ($len-3))) {
+										echoAndLog("Javascript file: $thisEntry");
+									}
+								}
+								if ($listHTML) {
+									if(($len > 5) and (strripos($thisEntry, ".html") == ($len-5))) {
+										echoAndLog("HTML file: $thisEntry");
+									}
+								}
 								if (strlen($thisContents) > 0) {
 									// check for PHP and javascript active code
 									foreach ($checkSignatures as $signature=>$value) {
@@ -511,7 +538,13 @@ if (isset($_GET['help']) || isset($_POST['help'])) {
 	  <p style='margin-left:30px;width:570px;'>Reports disk (filesystem) usage and capacity if a 'dev' is specified
 	  or Skips disk (filesystem) capacity reporting if =none is specified.  
 	  Common usages are disk=dev/sda or disk=home/username</p>
-	</body>\n</html>\n";
+	/php            <br>
+	  <p style='margin-left:30px;width:570px;'>List the names of all PHP files found. </p>
+	/js            <br>
+	  <p style='margin-left:30px;width:570px;'>List the names of all javascript files found. </p>
+	/html            <br>
+	  <p style='margin-left:30px;width:570px;'>List the names of all HTML files found. </p>
+</body>\n</html>\n";
 	return;
 }
 
@@ -520,6 +553,22 @@ if (isset($_GET['path'])) {
 	//  /path
 	echo "<html>\r\n<body>\r\n<div align='left'> $path </div>\r\n</body>\r\n</html>\r\n";
 	return;
+}
+
+$listPHP = false;
+if (isset($_GET['php'])) {
+	//	/php
+	$listPHP = true;
+}
+$listJS = false;
+if (isset($_GET['js'])) {
+	//	/js
+	$listJS = true;
+}
+$listHTML = false;
+if (isset($_GET['html'])) {
+	//	/html
+	$listHTML = true;
 }
 
 // 'except=xxxxxxx' or 'ignore=xxxxxxx' or 'exclude=xxxxxxx'
@@ -598,11 +647,11 @@ if ($report) {
 	echoAndLog ("Total files: $totalFiles");
 	if ($phpFiles > 0) {
 		echo "<br>\r\n";
-		echoAndLog( "PHP files examined: $phpFiles");
+		echoAndLog( "PHP/HTML/JS files examined: $phpFiles");
 		if (isset($store['phpfiles']) && ($phpFiles != $store['phpfiles'])) {
-			echoAndLog ("-> Warning: The number of PHP files has changed from ".$store['phpfiles']." to $phpFiles");
+			echoAndLog ("-> Warning: The number of PHP/HTML/JS files has changed from ".$store['phpfiles']." to $phpFiles");
 		}
-		echoAndLog ("PHP files with suspicious code: $newSuspect");
+		echoAndLog ("PHP/HTML/JS files with suspicious code: $newSuspect");
 		if (isset($store['suspectfiles']) && ($newSuspect != $store['suspectfiles'])) {
 			echoAndLog ("-> Critical: The number of suspicious files has changed from ".$store['suspectfiles']." to $newSuspect");
 		}
