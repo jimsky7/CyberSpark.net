@@ -71,7 +71,7 @@ function doBeforeExit() {
 				}
 			}
 			try {
-				if (isset($pipes[1]) && ($pipes[2] != null)) {
+				if (isset($pipes[1]) && ($pipes[1] != null)) {
 					@fclose($pipes[1]);			// note MUST do this or proc_terminate() may fail
 				}
 				if (isset($pipes[2]) && ($pipes[2] != null)) {
