@@ -42,6 +42,8 @@ function headersScan($content, $args, $privateStore) {
 		'Set-Cookie',
 		'Content-Length',
 		'Etag',
+//	2021 FASTLY suddenly added this
+		'Pantheon-Trace-Id',
 //		'Transfer-Encoding',				// Sad, but can't use reliably
 //		'Keep-Alive',						// Varies too much. Not so useful
 //		'Connection',						// 'keep-alive' and so forth
