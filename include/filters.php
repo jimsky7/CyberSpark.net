@@ -5,7 +5,7 @@
 	*/
 
 global $path;
-include_once $path."include/classdefs.php";
+include_once $path.'include/classdefs.php';
 
 /////////////////////////////////
 // findAndAddFilters()
@@ -27,15 +27,15 @@ function findAndAddFilters($dirName, $properties) {
 					try {
 							list($func, $extension) = explode(".", $file, 2);
 							if (strlen($func) > 0) {
-								echoIfVerbose("Attempting to add filter '" . $file . "'\n");	
+								echoIfVerbose("Attempting to add filter '$file'\n");	
 								include_once($dirName . $file);
 								// Execute the setup function for the filter
 								if (function_exists($func)) {
 									if (call_user_func($func, $setupArgs)) {
-										echoIfVerbose("The filter '" . $func . "' was installed.\n");
+										echoIfVerbose("The filter '$func' was installed.\n");
 									}
 									else {
-										echoIfVerbose("The filter '" . $func . "' failed to initialize.\n");
+										echoIfVerbose("The filter '$func' failed to initialize.\n");
 									}
 						
 						
@@ -43,14 +43,14 @@ function findAndAddFilters($dirName, $properties) {
 						}
 					}
 					catch (Exception $fx) {
-echo "Couldn't install the filter from the file " . $dirName . $file . " exception was " . $fx->getMessage() . "\n";					
+echo "Couldn't install the filter from the file $dirName$file exception was " . $fx->getMessage() . "\n";					
 					}
 				}
 				closedir($handle);
 			}
 		}
 		catch (Exception $x) {
-echo "Exception in findAndAddFilters" . $x->getMessage() . "\n";
+echo 'Exception in findAndAddFilters' . $x->getMessage() . "\n";
 			return false;
 		}
 	}

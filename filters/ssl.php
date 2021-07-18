@@ -28,10 +28,10 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
+include_once $path.'cyberspark.config.php';
 
-include_once $path."include/echolog.php";
-include_once $path."include/functions.php";
+include_once $path.'include/echolog.php';
+include_once $path.'include/functions.php';
 
 /////////////////////////////////////////////////////////////////////////////////
 // If you set SSL_FILTER_REQUIRE_EXPLICIT_OK to true, the 'ssl' filter looks for a definitive
@@ -117,9 +117,9 @@ function makeAnalysisMessage($analysisMessage, $certs, $analysis, $stderrString)
 
 ///////////////////////////////// 
 function sslScan($content, $args, $privateStore) {
-	$filterName = "ssl";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'ssl';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	if (isset($args['useragent'])) {
 		$userAgent = $args['useragent'];
 	}
@@ -128,7 +128,7 @@ function sslScan($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "";
+	$message = '';
 
 	echoIfVerbose("The [SSL] filter was invoked \n");
 	$domain = domainOnly($url);
@@ -147,18 +147,18 @@ function sslScan($content, $args, $privateStore) {
 	//   Other filters will use the "other" copy of the GET and any info it provided.
 	
 	if (!function_exists('curl_init')) {
-		$result = "Critical";
+		$result  = 'Critical';
 		$message = "php-curl is required by the SSL filter, but has not been installed on this server.";
 		return array($message, $result, $privateStore);
 	}
 	
-	$result = "OK";
-	$versionInfo = curl_version();
-	$message = '';				// message to be returned
-	$analysisMessage = '';		// detailed analysis messages from libCurl
-	$needErrString = false;
-	$certs      = '';
-	$analysis   = '';
+	$result 			= 'OK';
+	$versionInfo 		= curl_version();
+	$message 			= '';				// message to be returned
+	$analysisMessage 	= '';		// detailed analysis messages from libCurl
+	$needErrString 		= false;
+	$certs      		= '';
+	$analysis   		= '';
 
 	$message .= "Verifying SSL/HTTPS on $fqdn using php-curl (libcurl '$versionInfo[version]') with OpenSSL '$versionInfo[ssl_version]'\n";
 		
@@ -168,7 +168,7 @@ function sslScan($content, $args, $privateStore) {
 		//   Check for version
 		$cv = phpversion();
 		if (version_compare($cv, '5.3.2') < 0) {
-			$result = "Critical";
+			$result   = 'Critical';
 			$message .= INDENT."The 'ssl' filter requires PHP version 5.3.2 or later on the CyberSpark server.\n";
 			$message .= INDENT."The version being used is $cv\n";
 			$message .= INDENT."This is a CyberSpark configuration error, NOT an error on the monitored site or URL.\n";
@@ -222,7 +222,7 @@ function sslScan($content, $args, $privateStore) {
 				}
 			}
 			catch (Exception $certx) {
-				$result = "Critical";
+				$result   = 'Critical';
 				$message .= INDENT."The 'ssh' filter got snarled trying to use cURL. Exception:'".$certx->getMessage()."\n";
 				$message .= INDENT."INTERACTION:\n" .$stderrString."\n\n";
 				$needErrString = false;
@@ -237,7 +237,7 @@ function sslScan($content, $args, $privateStore) {
 				if (!$reported) {
 					// cURL is reporting a problem directly - return everything it said.
 					// This does NOT include any cert, so we don't update the store.
-					$result = "Critical";
+					$result   = 'Critical';
 					$message .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 					$reported = true;
 				}
@@ -256,7 +256,7 @@ function sslScan($content, $args, $privateStore) {
 		if (stripos($stderrString,'subjectaltname does not match')>0) {
 			//// cURL is reporting a problem directly - return everything it said.
 			//   This does NOT include any cert, so we don't update the store.
-			$result = "Critical";
+			$result = 'Critical';
 			$analysisMessage .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$analysisMessage .= INDENT."The name in the certificate does not match the site domain.\n\n";
 			$needErrString = true;
@@ -264,7 +264,7 @@ function sslScan($content, $args, $privateStore) {
 		else if (stripos($stderrString,'SSL peer certificate or SSH remote key was not OK')>0) {
 			// cURL is reporting a problem directly - return everything it said.
 			// This does NOT include any cert, so we don't update the store.
-			$result = "Critical";
+			$result = 'Critical';
 			$analysisMessage .= INDENT."There is a critical problem with the SSL certificate (HTTPS) for this site!\n";
 			$analysisMessage .= INDENT."The difficulty might be with the root CA signature.\n\n";
 			$needErrString = true;
@@ -272,20 +272,20 @@ function sslScan($content, $args, $privateStore) {
 		else if (stripos($stderrString,'SSL connection timeout')>0) {
 			// cURL timed out when attempting to connect.
 			// This does NOT include any cert, so we don't update the store.
-			$result = "Critical";
+			$result = 'Critical';
 			$analysisMessage .= INDENT."The HTTPS connection timed out, so there is no new (current) certificate info.\n";
 			$analysisMessage .= INDENT."The previous cert information will be retained for comparison during the next attempt.\n\n";
 			$needErrString = true;
 		}
 		else if ((!SSL_FILTER_REQUIRE_EXPLICIT_OK) || (stripos($stderrString,'SSL certificate verify ok')>0)) {
 			// The cert is valid.
-			$result = "OK";
+			$result = 'OK';
 			// Check the cert(s) that were presented to us against the BASELINE cert we have from last time
 			if (isset($privateStore[$filterName][$domain]['SSL_BASELINE_CERT'])) {
 				// Compare the cert(s) against what we have in our store
 				if (strcmp($certs, $privateStore[$filterName][$domain]['SSL_BASELINE_CERT']) != 0) {
 					// This cert does not match the BASELINE cert!
-					$result = "Critical";
+					$result = 'Critical';
 					$analysisMessage .= INDENT."The SSL certificate presented by the server is valid but doesn't match the previous cert! \n";
 					$analysisMessage .= INDENT."This is either a serious error or the cert was recently updated. Check it carefully!\n\n";
 //	AS OF   2018-07-07
@@ -299,7 +299,7 @@ function sslScan($content, $args, $privateStore) {
 			}
 			else {
 				// First time we've seen this server, so record a BASELINE version of the cert
-				$result = "Critical";
+				$result = 'Critical';
 				$analysisMessage .= INDENT."This is a certificate seen for the first time. Examine the interaction carefully. Things may be just fine. \n";
 //	AS OF   2018-07-07
 				$analysisMessage .= INDENT."You can check certs at https://www.sslshopper.com/certificate-decoder.html\n\n";
@@ -317,7 +317,7 @@ function sslScan($content, $args, $privateStore) {
 			//   so report out what it contains.
 			// This is a kind of ambiguous situation and many times we see this on a
 			// cert that verifies just fine using other methods.
-			$result = "Critical";
+			$result = 'Critical';
 			$analysisMessage .= INDENT."Something is odd here. The certificate is neither 'valid' nor 'failed' - - \n";
 			$analysisMessage .= INDENT."Examine the details carefully under 'CURRENT' below. \n";
 			$analysisMessage .= INDENT."You can check the certs at https://www.sslchecker.com/certdecoder\n\n";
@@ -334,7 +334,7 @@ function sslScan($content, $args, $privateStore) {
 		}
 	}
 	catch (Exception $dax) {
-		$result = "ssl";
+		$result   = 'ssl';
 		$message .= INDENT . "Exception in filter:SSL:SSLScan() $dax \n";
 		echoIfVerbose("Exception in filter:SSL:SSLScan() $dax\n");	
 	}
@@ -362,13 +362,13 @@ function sslScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function sslInit($content, $args, $privateStore) {
-	$filterName = "ssl";
+	$filterName = 'ssl';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$result   = "OK";						// default result
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
+	$result   = 'OK';						// default result
+	$message  = "[$filterName] Initialized. URL is $args[url]";
 
 	return array($message, $result, $privateStore);
 	
@@ -381,15 +381,15 @@ function sslDestroy($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$result   = "OK";						// default result
-	$message = "[$filterName] Shut down.";
+	$result   = 'OK';						// default result
+	$message  = "[$filterName] Shut down.";
 	return array($message, $result, $privateStore);
 	
 }
 
 ///////////////////////////////// 
 function SSL($args) {
-	$filterName = "ssl";
+	$filterName = 'ssl';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

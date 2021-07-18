@@ -32,10 +32,9 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-
-include_once $path."include/echolog.php";
-include_once $path."include/functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/functions.php';
 
 define ('SECONDS_PER_DAY', 86400);
 define ('SECONDS_PER_HOUR', 3600);
@@ -84,9 +83,9 @@ function niceTTL($seconds) {
 
 ///////////////////////////////// 
 function dnsScan($content, $args, $privateStore) {
-	$filterName = "dns";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName 	= 'dns';
+	$result   		= 'OK';						// default result
+	$url 			= $args['url'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
@@ -110,7 +109,7 @@ function dnsScan($content, $args, $privateStore) {
 	
 	try {
 		$soa = null;
-		$isSOA = checkdnsrr($domain, "SOA");
+		$isSOA = checkdnsrr($domain, 'SOA');
 		echoIfVerbose("SOA? $isSOA \n");
 			
 //	DNS_A, DNS_CNAME, DNS_HINFO, DNS_MX, DNS_NS, DNS_PTR, DNS_SOA, DNS_TXT, DNS_AAAA, DNS_SRV, 
@@ -163,10 +162,10 @@ function dnsScan($content, $args, $privateStore) {
 				// Non-cloudflare
 				$soa = $da0['host'].' '.$da0['class'].' '.$da0['type'].' '.$da0['mname'].'. '.$da0['rname'].' serial:' .$da0['serial'];
 			}
-			$soa .= " refresh:".$da0['refresh']    .' ('.niceTTL($da0['refresh'])    .')';
-			$soa .= " retry:"  .$da0['retry']      .' ('.niceTTL($da0['retry'])      .')';
-			$soa .= " expire:" .$da0['expire']     .' ('.niceTTL($da0['expire'])     .')';
-			$soa .= " min-ttl:".$da0['minimum-ttl'].' ('.niceTTL($da0['minimum-ttl']).')';
+			$soa .= ' refresh:' . $da0['refresh']     . ' (' . niceTTL($da0['refresh'])     . ')';
+			$soa .= ' retry:'   . $da0['retry']       . ' (' . niceTTL($da0['retry'])       . ')';
+			$soa .= ' expire:'  . $da0['expire']      . ' (' . niceTTL($da0['expire'])      . ')';
+			$soa .= ' min-ttl:' . $da0['minimum-ttl'] . ' (' . niceTTL($da0['minimum-ttl']) . ')';
 			echoIfVerbose("$soa \n");
 			if (isset($privateStore[$filterName][$domain]['SOA'])) {
 				if ($k=strcasecmp($soa, $privateStore[$filterName][$domain]['SOA'])) {
@@ -186,7 +185,7 @@ function dnsScan($content, $args, $privateStore) {
 // 			 As of today I don't see one, but I've seen them in the past.)
 //		If you activate these lines you'll treat SOA as possibly pooled.
 					list ($message, $result) = checkEntriesByType($domain, DNS_SOA, 'SOA', $privateStore, $filterName, $message, 'target', null, $notify, $expireMinutes);
-					if ($result != "OK") {
+					if ($result != 'OK') {
 						$previousResult = $result;
 					}		
 // ^^^
@@ -198,7 +197,7 @@ function dnsScan($content, $args, $privateStore) {
 			}
 			else {
 					// Have not seen any SOA before
-					$result = "Notice";
+					$result = 'Notice';
 					$message .=   "SOA first seen \"$soa\"\n";
 					echoIfVerbose("SOA first seen \"$soa\"\n");	
 			}
@@ -213,39 +212,39 @@ function dnsScan($content, $args, $privateStore) {
 			}		
 			////// NS
 			list ($message, $result) = checkEntriesByType($domain, DNS_NS, 'NS', $privateStore, $filterName, $message, 'target', null, $notify, $expireMinutes);
-			if ($result != "OK") {
+			if ($result != 'OK') {
 				$previousResult = $result;
 			}		
 		
 			////// TXT
 			list ($message, $result) = checkEntriesByType($domain, DNS_TXT, 'TXT', $privateStore, $filterName, $message, 'txt', null, $notify, $expireMinutes);
-			if ($result != "OK") {
+			if ($result != 'OK') {
 				$previousResult = $result;
 			}		
 		
 			////// A     (use fqdn)
 			list ($message, $result) = checkEntriesByType($fqdn, DNS_A, 'A', $privateStore, $filterName, $message, array('host', 'ip'), null, $notify, $expireMinutes);
-			if ($result != "OK") {
+			if ($result != 'OK') {
 				$previousResult = $result;
 			}		
 		
 			////// CNAME (use fqdn)
 			// (My recollection is that CNAME doesn't always get the right information - i.e. it is "unreliable") -Sky
 			list ($message, $result) = checkEntriesByType($fqdn, DNS_CNAME, 'CNAME', $privateStore, $filterName, $message, array('host', 'target'), null, $notify, $expireMinutes);
-			if ($result != "OK") {
+			if ($result != 'OK') {
 				$previousResult = $result;
 			}		
 
 			////// AAAA  (use fqdn)
 			list ($message, $result) = checkEntriesByType($fqdn, DNS_AAAA,  'AAAA',  $privateStore, $filterName, $message, array('host', 'ip'), null, $notify, $expireMinutes);
-			if ($result != "OK") {
+			if ($result != 'OK') {
 				$previousResult = $result;
 			}		
 
 			// checkEntriesByType() may have changed the result to OK even if it
 			//   previously was something else, so might have to reset it here to
 			//   return an error or alert that was previously spotted
-			if ($previousResult != "OK") {
+			if ($previousResult != 'OK') {
 				$result = $previousResult;
 			}
 			
@@ -257,13 +256,20 @@ function dnsScan($content, $args, $privateStore) {
 			///// Please note that we check the FQDN, then we progressively strip leading tokens, one dot at
 			/////    at a time, and if we get here we have checked every possible domain name right down to
 			/////    the TLD and they all failed.
-			$result = "Critical";
-			$message .= INDENT . "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n";
-			echoIfVerbose(       "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n");	
+			if ((stripos($originalFQDN, '.local') !== false) || (stripos($originalFQDN, '.mesh') !== false)) {
+				$result   = 'OK';
+				$message .= INDENT . "Note: The domain '$originalFQDN' does not have, and does not require, an SOA record.\n";
+				echoIfVerbose(       "Note: The domain '$originalFQDN' does not have, and does not require, an SOA record.\n");
+			}
+			else {
+				$result   = 'Critical';
+				$message .= INDENT . "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n";
+				echoIfVerbose(       "Could not retrieve SOA (start-of-authority) for \"$originalFQDN\"\n");	
+			}
 		}
 	}
 	catch (Exception $dax) {
-		$result = "Error";
+		$result   = 'Error';
 		$message .= INDENT . "Exception in dns.php::dnsScan() $dax\n";
 		echoIfVerbose(       "Exception in dns.php::dnsScan() $dax\n");	
 	}
@@ -275,12 +281,12 @@ function dnsScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function dnsInit($content, $args, $privateStore) {
-	$filterName = "dns";
+	$filterName = 'dns';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$result   = "OK";						// default result
+	$result  = 'OK';						// default result
 	$message = "[$filterName] Initialized. URL is " . $args['url'];
 
 	return array($message, $result, $privateStore);
@@ -289,12 +295,12 @@ function dnsInit($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function dnsDestroy($content, $args, $privateStore) {
-	$filterName = "dns";
+	$filterName = 'dns';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$result   = "OK";						// default result
+	$result  = 'OK';						// default result
 	$message = "[$filterName] Shut down.";
 	return array($message, $result, $privateStore);
 	
@@ -302,7 +308,7 @@ function dnsDestroy($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function dns($args) {
-	$filterName = "dns";
+	$filterName = 'dns';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
@@ -323,10 +329,10 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 	// Get all records of a particular type that exist in the domain's DNS
 	$da = dns_get_record($domain, $type);
 	echoIfVerbose("$typeString count: " . count($da) . "\n");
-	$nowTime = time();
-	$showPool = false;
-	$result = "OK";
-	$exmsg = niceTTL($expireMinutes*60);
+	$nowTime 	= time();
+	$showPool 	= false;
+	$result 	= 'OK';
+	$exmsg 		= niceTTL($expireMinutes*60);
 // vvv
 	// For debugging purposes
 	if (FALSE && isset($privateStore[$filterName][$domain][$typeString.'_POOL'])) {
@@ -345,7 +351,7 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 			// $da contains (array) all of the records of one particular type, 
 			//   as reported by our DNS
 			if (!isset($privateStore[$filterName][$domain][$typeString])) {
-				$result = "Alert";
+				$result   = 'Alert';
 				$message .= INDENT . "$typeString records are being seen for the first time.\n";
 				echoIfVerbose("$typeString records are being seen for the first time.\n");	
 			}
@@ -427,19 +433,19 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 							$privateStore[$filterName][$domain][$typeString.'_POOL'][$dms] = true;
 							$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = $nowTime;
 							// Return a change notification
-							$result = "Changed";
+							$result   = 'Changed';
 							$message .= INDENT . "New $typeString record: $dms \n";
-							echoIfVerbose("New $typeString record: $dms\n");
+							echoIfVerbose(       "New $typeString record: $dms\n");
 							echoIfVerbose("Was not found in pool\n");
 							$showPool = true;	// show pool upon completion
 						}
 					}
 					else {
 						// Return a change notification
-						$result = "Changed";
+						$result   = 'Changed';
 						$message .= INDENT . "New $typeString record: $dms \n";
+						echoIfVerbose(       "New $typeString record: $dms\n");
 						echoIfVerbose("No pool defined - (this is probably a bug in dns.php)\n");
-						echoIfVerbose("New $typeString record: $dms\n");
 					}
 				}
 
@@ -453,9 +459,9 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 					//   reappearance.
 					$goneRecords = array_diff($privateStore[$filterName][$domain][$typeString], $records);
 					foreach ($goneRecords as $dms) {
-						$result = "Changed";
+						$result   = 'Changed';
 						$message .= INDENT . "$typeString record deleted: $dms \n";
-						echoIfVerbose("$typeString deleted: $dms\n");	
+						echoIfVerbose(       "$typeString deleted: $dms\n");	
 					}
 				}
 			}
@@ -470,9 +476,9 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 					$privateStore[$filterName][$domain][$typeString.'_POOL'][$dms] = true;
 					$privateStore[$filterName][$domain][$typeString.'_LAST'][$dms] = $nowTime;
 					// Cause alert
-					$result = "Alert";
+					$result   = 'Alert';
 					$message .= INDENT . "Initial $typeString record: $dms \n";
-					echoIfVerbose("Initial $typeString record: $dms\n");	
+					echoIfVerbose(       "Initial $typeString record: $dms\n");	
 				}
 			}
 
@@ -486,7 +492,7 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 				foreach ($privateStore[$filterName][$domain][$typeString.'_POOL'] as $dms=>$value) {
 					$last = $privateStore[$filterName][$domain][$typeString.'_LAST'][$dms];
 					if ($last < $expireTime) {
-						$result = "Alert";
+						$result   = 'Alert';
 						$showPool = true;
 						// A record is added to our internal pool whenever it first appears in DNS. It then expires from our pool after
 						//   a time (default is once a day) IF it has not been seen again during that time. (If it is seen,
@@ -532,19 +538,19 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 							$expiresSoonMessage   = '';
 							if ($tR < 60*60*2) {
 								// Little time remaining for this record in pool
-								$expiresSoonMessage = " || expires soon!";
+								$expiresSoonMessage = ' || expires soon!';
 							}
 							$tSS = $nowTime - $last;
 							$timeSeenMessage = '';
 							$timeSinceSeen = niceTTL($tSS);
 							if ($tSS < 1) {
-								$timeSeenMessage = "new || ";
+								$timeSeenMessage = 'new || ';
 							}
 							else {
 								$timeSeenMessage = "last seen $timeSinceSeen ago || ";
 							}
 							$message .= INDENT . INDENT . "$dms ($timeSeenMessage$timeRemainingMessage$expiresSoonMessage)\n";
-							echoIfVerbose("»»» $dms ($timeSeenMessage$timeRemainingMessage$expiresSoonMessage)\n");
+							echoIfVerbose(            "»»» $dms ($timeSeenMessage$timeRemainingMessage$expiresSoonMessage)\n");
 						}
 					}
 				}
@@ -558,8 +564,8 @@ function checkEntriesByType($domain, $type, $typeString, &$privateStore, $filter
 		}
 	}
 	catch (Exception $x) {
-		$result = "DNSexcep";
-		$message .= "Exception in [$filterName] function checkEntriesByType($typeString): " . $x->getMessage() . "\n";
+		$result   = 'DNSexcep';
+		$message .=   "Exception in [$filterName] function checkEntriesByType($typeString): " . $x->getMessage() . "\n";
 		echoIfVerbose("Exception in [$filterName] function checkEntriesByType($typeString): " . $x->getMessage() . "\n");
 	}
 	return array($message, $result);

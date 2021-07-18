@@ -15,11 +15,11 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."cyberspark.sysdefs.php";
-include_once $path."include/echolog.php";
-include_once $path."include/http.php";
-include_once $path."include/functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'cyberspark.sysdefs.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/http.php';
+include_once $path.'include/functions.php';
 
 ///////////////////////////////// 
 // getGeoInfo() » Use FREEGEOIP software we have installed on our own server
@@ -70,11 +70,11 @@ function getGeoInfo($url) {
 
 ///////////////////////////////// 
 function geoScan($content, $args, $privateStore) {
-	$filterName = 'geo';
-	$attributeName = 'ip';
-	$result     = 'OK';						// default result
-	$url        = $args['url'];
-	$message    = '';
+	$filterName 	= 'geo';
+	$attributeName	= 'ip';
+	$result     	= 'OK';						// default result
+	$url        	= $args['url'];
+	$message    	= '';
 
 	// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
 	$privateStore[$url][$filterName.'_ran_today'] = false;
@@ -99,11 +99,11 @@ function geoScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function geoNotify($content, $args, $privateStore) {
-	$filterName = 'geo';
-	$attributeName = 'ip';
-	$result     = 'OK';						// default result
-	$url        = $args['url'];
-	$message    = '';
+	$filterName 	= 'geo';
+	$attributeName	= 'ip';
+	$result     	= 'OK';						// default result
+	$url        	= $args['url'];
+	$message    	= '';
 
 	if (isset($args['notify']) && isset($privateStore[$url][$filterName.'_ran_today']) && isNotifyHour($args['notify']) && !$privateStore[$url][$filterName.'_ran_today']) {
 		$result = 'OK';
@@ -117,12 +117,12 @@ function geoNotify($content, $args, $privateStore) {
 			if (isset($privateStore[$url][$attributeName]) && isset($privateStore[$url]['metro_code'])) {
 				$changed = ($privateStore[$url]['metro_code'] != $geoInfo['metro_code']);
 				if ($changed) {
-					$result = 'Critical';
+					$result   = 'Critical';
 					$message .= INDENT . "Geolocation information changed! \n";
 				}
 			}
 			else {
-				$result = 'Warning';
+				$result   = 'Warning';
 				$message .= INDENT . "Geolocation information is available for the first time. (This is good.)\n";
 			}
 			// Document the current and changed values in the message
@@ -183,8 +183,8 @@ function geoNotify($content, $args, $privateStore) {
 ///////////////////////////////// 
 function geoInit($content, $args, $privateStore) {
 	$filterName = 'geo';
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 //	$contentLength = strlen($content);
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -203,8 +203,8 @@ function geoDestroy($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }

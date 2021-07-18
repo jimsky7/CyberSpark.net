@@ -90,8 +90,8 @@ Create a function with the same name as the file (but not the ".php" extension).
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."include/echolog.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
 
 //// how_to_make_a_plugin_filterScan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -108,11 +108,14 @@ include_once $path."include/echolog.php";
 ////   $privateStore[$url]['value']
 ////
 function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
-	$filterName = 'how_to_make_a_plugin_filter';
-	$attributeName = 'my_value';
-	$result   = "OK";						// default result
-	$url = $args['url'];					// the actual URL, not its contents
+	$filterName 	= 'how_to_make_a_plugin_filter';
+	$attributeName	= 'my_value';
+	$result   		= 'OK';				// default result
+	$url 			= $args['url'];		// the actual URL, not its contents
 
+	// PHP note: Strings in single quotes have no escape substitutions and no vars, 
+	//	while string in double quotes have both. Be careful. On occasion we use a
+	//	double quote just because it's likely you might was a var or escape char.
 
 	//// Do everything you want below here
 	$message = "Build the text for your email alert here.";
@@ -133,9 +136,9 @@ function how_to_make_a_plugin_filterScan($content, $args, $privateStore) {
 
 	//// If something changed, for example, return status
 	if (strcasecmp($sampleData, 'foo') != 0) {
-		$result = "Changed";	// This causes status to be reported in email
+		$result   = 'Changed';	// This causes status to be reported in email
 		$newValue = 'foo';		// you'd normally calculate something for the new value
-		$message = "The value of sampleData has changed from $sampleData to $newValue.";
+		$message  = "The value of sampleData has changed from $sampleData to $newValue.";
 	}
 	
 	//// Must return three things always
@@ -168,8 +171,8 @@ function how_to_make_a_plugin_filterInit($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the 
 	//   main script, and  available only for use by this plugin filter.
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
-	$result   = "OK";
+	$message  = "[$filterName] Initialized. URL is " . $args['url'];
+	$result   = 'OK';
 
 	$message = trim($message , "\n");				// remove any trailing LF
 	return array($message, $result, $privateStore);
@@ -186,8 +189,8 @@ function how_to_make_a_plugin_filterDestroy($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }

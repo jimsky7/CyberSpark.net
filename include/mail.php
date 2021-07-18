@@ -57,7 +57,7 @@ function textMail($to='', $from='', $replyTo='', $abuseTo='', $subject='', $mess
 		$headers['Content-type'] = "text/plain; charset=\"US-ASCII\"";
 		$headers['Date'] = date("r");
 		$headers['X-Mailer'] = $identity;
-		$headers['X-Report-abuse'] = "Please report abuse to " . $abuseTo;
+		$headers['X-Report-abuse'] = "Please report abuse to $abuseTo";
 // If your SMTP doesn't create a Message-ID: header, then you may want to enable this
 //		$headers['Message-ID'] = '<'.sha1(microtime()).'@'.str_replace('ssl://','',$smtpServer).'>';
 
@@ -161,19 +161,19 @@ function attachmentMail($to='', $from='', $replyTo='', $abuseTo='', $subject='',
 			$mimeMessage = $message;
 		}
 
-		$headers = array();
-		$headers['To'] = $to;				// this is everyone (altered later)
-		$headers['From'] = $from;
+		$headers 			= array();
+		$headers['To'] 		= $to;				// this is everyone (altered later)
+		$headers['From'] 	= $from;
 		if (isset($replyTo)) {
-			$headers['Reply-To'] = $replyTo;
+			$headers['Reply-To'] 	= $replyTo;
 			$headers['Return-Path'] = $replyTo;
 		}
-		$headers['Subject'] = $subject;
-		$headers['MIME-Version'] = "1.0";
-		$headers['Content-type'] = $contentType;
-		$headers['Date'] = date("r");
-		$headers['X-Mailer'] = $identity;
-		$headers['X-Report-abuse'] = "Please report abuse to " . $abuseTo;
+		$headers['Subject'] 		= $subject;
+		$headers['MIME-Version'] 	= '1.0';
+		$headers['Content-type'] 	= $contentType;
+		$headers['Date'] 			= date("r");
+		$headers['X-Mailer'] 		= $identity;
+		$headers['X-Report-abuse'] 	= "Please report abuse to $abuseTo";
 // If your SMTP doesn't create a Message-ID: header, then you may want to enable this
 //		$headers['Message-ID'] = '<'.sha1(microtime()).'@'.str_replace('ssl://','',$smtpServer).'>';
 		
@@ -295,7 +295,7 @@ function sendMail($scanResults, &$properties) {
 			$message .= "This is a daily administrative message sent even if everything is OK.\n\n";		
 			$subject = $properties['shortid'] . " OK $timeStamp";
 			$sendMessage = true;
-			echoIfVerbose("Sending administrative check-in message to: " . $to . "\n");
+			echoIfVerbose("Sending administrative check-in message to: $to\n");
 			if ($properties['time'] <= 60) {
 				// Avoid notifying more than once a day
 				$properties['notifiedtoday'] = true;
@@ -382,7 +382,7 @@ function sendMail($scanResults, &$properties) {
 
 			// Special audit copy?
 			if (isset($audit)) {
-				sendAlert($audit, "AUDIT copy: \n".$scanResult, $properties, $timeStamp);
+				sendAlert($audit, "AUDIT copy: \n$scanResult", $properties, $timeStamp);
 			}
 
 			// Special alerts related to HTTP error codes

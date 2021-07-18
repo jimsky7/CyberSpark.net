@@ -16,7 +16,7 @@ function getProperties($propsFileName, $substitutions=null) {
 		$iu			= 0;		// the index into the $urls array
 		
 		try {
-//echo "Opening " . $propsFileName . "\n";
+// 			echoIfVerbose("Opening properties: $propsFileName\n");
 			if($readHandle = fopen($propsFileName, 'r')) {
 				while (!feof($readHandle)) {
 					$line = fgets($readHandle);
@@ -43,7 +43,6 @@ function getProperties($propsFileName, $substitutions=null) {
 								$key = $tline;
 								$value = '';
 							}
-//echo "$key : $value \n";
 							if (isset($key) && isset($value)) {
 								$key = trim($key);
 								$value = trim($value);

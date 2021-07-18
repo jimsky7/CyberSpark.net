@@ -60,7 +60,7 @@ function endLog() {
 	global $logHandle;
 	
 	echoIfVerbose("Closing log file: $logFileName\n");
-	writeLogAlert("End");
+	writeLogAlert('End');
 	if (isset($logHandle)) {
 		fflush($logHandle);
 		fclose($logHandle);
@@ -69,7 +69,7 @@ function endLog() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 function writeLogAlert($message) {
-	writeLog($message, 0, 0, "", "", "", "", 0);
+	writeLog($message, 0, 0, '', '', '', '', 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

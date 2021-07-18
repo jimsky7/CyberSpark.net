@@ -14,25 +14,25 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
+include_once $path.'cyberspark.config.php';
 
-include_once $path."include/echolog.php";
-include_once $path."include/functions.php";
-include_once $path."include/filter_functions.php";
+include_once $path.'include/echolog.php';
+include_once $path.'include/functions.php';
+include_once $path.'include/filter_functions.php';
 
 define('SMARTSCAN_MAX_ALERTS', 2);
 
 ///////////////////////////////// 
 function smartscanScan($content, $args, $privateStore) {
-	$filterName = "smartscan";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'smartscan';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "";
-	$lengthsString = '';
+	$message 		= '';
+	$lengthsString 	= '';
 
 	// Remove chars that don't make any difference and can get in the way
 	$content = str_replace(array("\r","\n","\t"), "", $content);
@@ -66,7 +66,7 @@ function smartscanScan($content, $args, $privateStore) {
 			// The page does not contain a closing </HTML>
 			$alertCount++;
 			echoIfVerbose("Alert count $alertCount in [$filterName]\n");
-			$result = "Advice";
+			$result   = 'Advice';
 			$message .= "This page doesn't contain a closing </HTML> tag,\n";
 			$message .= INDENT . "  or there may be a problem with the sequence of the tags\n";
 			$message .= INDENT . "  <HTML><HEAD></HEAD><BODY></BODY></HTML> on this page. \n";
@@ -88,10 +88,10 @@ function smartscanScan($content, $args, $privateStore) {
 			if ($lastHTMLPosition < ($contentLength - 7)) {
 				// There's at least one character after the last </html>
 				$excess = substr($content, $lastHTMLPosition+7);
-				if (stripos($excess, "script") !== false) {
+				if (stripos($excess, 'script') !== false) {
 					$alertCount++;
 					echoIfVerbose("Alert count $alertCount in [$filterName]\n");
-					$result = "Warning";
+					$result   = 'Warning';
 					$message .= "There's probably a SCRIPT after the closing </HTML> on this page. \n";
 					$message .= INDENT . "  Please fix this to ensure proper monitoring and browser rendering. \n";
 					$message .= INDENT . "  The script MAY be malware, so check it carefully. \n";
@@ -115,7 +115,7 @@ function smartscanScan($content, $args, $privateStore) {
 			// There's javascript before the opening <HTML>
 			$alertCount++;
 			echoIfVerbose("Alert count $alertCount in [$filterName]\n");
-			$result = "Warning";
+			$result   = 'Warning';
 			$message .= "There's a SCRIPT before the opening <HTML> on this page. \n";
 			$message .= INDENT . "  This almost certainly indicates the presence of malware. \n";
 			if ($alertCount == SMARTSCAN_MAX_ALERTS) {
@@ -155,7 +155,7 @@ function smartscanScan($content, $args, $privateStore) {
 				}
 				$message .= INDENT."Smart scan says <meta name='generator'> has changed to '$genContent'\n";
 				$message .= INDENT."Smart scan says <meta name='generator'> was previously '$s'\n";
-				$result = "Warning";
+				$result = 'Warning';
 				$privateStore[$filterName][$url]['generator'] = $genContent;
 			}
 		}
@@ -163,7 +163,7 @@ function smartscanScan($content, $args, $privateStore) {
 			// New generator name
 			$privateStore[$filterName][$url]['generator'] = $genContent;
 			$message .= INDENT."Smart scan says <meta name='generator'> has appeared '$genContent'\n";
-			$result = "Warning";
+			$result = 'Warning';
 		}	
 	}
 
@@ -218,7 +218,7 @@ function smartscanScan($content, $args, $privateStore) {
 				}
 				$message .= INDENT."Smart scan says Open Graph <meta name='og:'> items have changed to '$ogContent'\n";
 				$message .= INDENT."Smart scan says Open Graph <meta name='og:'> items were previously '$s'\n";
-				$result = "Warning";
+				$result   = 'Warning';
 				$privateStore[$filterName][$url]['og'] = $ogContent;
 			}
 		}
@@ -226,7 +226,7 @@ function smartscanScan($content, $args, $privateStore) {
 			// New og items
 			$privateStore[$filterName][$url]['og'] = $ogContent;
 			$message .= INDENT."Smart scan says Open Graph <meta name='og:'> items have appeared '$ogContent'\n";
-			$result = "Warning";
+			$result = 'Warning';
 		}	
 	}
 
@@ -253,7 +253,7 @@ function smartscanScan($content, $args, $privateStore) {
 			// New generator name
 			$privateStore[$filterName][$url]['gsv'] = $gsvContent;
 			$message .= INDENT."Smart scan says <meta name='google-site-verification'> has appeared '$gsvContent'\n";
-			$result = "Warning";
+			$result = 'Warning';
 		}	
 	}
 
@@ -262,8 +262,8 @@ function smartscanScan($content, $args, $privateStore) {
 	//   Thanks for the DOM suggestion! - see
 	//     http://w-shadow.com/blog/2009/10/20/how-to-extract-html-tags-and-their-attributes-with-php/
 	$smartContent = "";
-	$smartContent .= extractHTMLtags("script", array("src", "type", "language"), $dom);
-	$smartContent .= extractHTMLtags("iframe", "src", $dom);
+	$smartContent .= extractHTMLtags('script', array('src', 'type', 'language'), $dom);
+	$smartContent .= extractHTMLtags('iframe', 'src', $dom);
 	echoIfVerbose($smartContent . "\n");
 	
 	// Check against previous
@@ -289,12 +289,12 @@ function smartscanScan($content, $args, $privateStore) {
 		
 		if (!$lengthMatched) {
 			// Changed
-			if ($result != "OK") {
+			if ($result != 'OK') {
 				// Some message was inserted above, so need extra space
 				$message .= "          ";
 			}
 			$message .= "Smart scan indicates script or iframe content has changed length to " . $contentLength . "\n            Previous lengths include [" . $lengthsString . "]";
-			$result = "Critical";
+			$result   = 'Critical';
 			$lengthsString .= "," . (string)$contentLength;
 		}
 		else {
@@ -315,9 +315,9 @@ function smartscanScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function smartscanInit($content, $args, $privateStore) {
-	$filterName = "smartscan";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'smartscan';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	$contentLength = strlen($content);
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -331,20 +331,20 @@ function smartscanInit($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function smartscanDestroy($content, $args, $privateStore) {
-	$filterName = "smartscan";
+	$filterName = 'smartscan';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }
 
 ///////////////////////////////// 
 function smartscan($args) {
-	$filterName = "smartscan";
+	$filterName = 'smartscan';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

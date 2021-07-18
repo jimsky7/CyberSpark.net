@@ -16,9 +16,9 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."include/echolog.php";
-include_once $path."include/filter_functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/filter_functions.php';
 
 
 //// ...Scan()
@@ -60,13 +60,13 @@ function headersScan($content, $args, $privateStore) {
 		'ETag'
 	);
 
-	$filterName = 'headers';
-	$result   = "OK";						// default result
-	$url = $args['url'];
-	$headers = $args['httpresult']['headers'];
+	$filterName 	= 'headers';
+	$result   		= 'OK';						// default result
+	$url 			= $args['url'];
+	$headers 		= $args['httpresult']['headers'];
 //	$hs = '';
-	$message = "\n";
-	$ignored = false;
+	$message 		= "\n";
+	$ignored 		= false;
 	$ignoredHeaders = '';
 		
 	// Remove headers we do not intend to check or retain
@@ -134,9 +134,9 @@ function headersScan($content, $args, $privateStore) {
 			} 
 			if ($isNew) {
 				// This value of this header is new
-				$result = "Warning";
+				$result = 'Warning';
 				$privateStore[$filterName][$url]['header_values'][$hk][] = $hv;
-				$analysis .= INDENT . INDENT . INDENT ."(A new value)";
+				$analysis .= INDENT . INDENT . INDENT .'(A new value)';
 				if ($pva != null) {
 					$analysis .= " Previous values seen:\n";
 					foreach ($pva as $pk=>$pv) {
@@ -175,8 +175,8 @@ function headersInit($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
-	$result   = "OK";
+	$message  = "[$filterName] Initialized. URL is " . $args['url'];
+	$result   = 'OK';
 //echo "filter 'init' 'length'\n";	
 	return array($message, $result, $privateStore);
 	
@@ -192,8 +192,8 @@ function headersDestroy($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }

@@ -12,10 +12,9 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-
-include_once $path."include/echolog.php";
-include_once $path."include/functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/functions.php';
 
 define('CYBERSCAN_MAX_ALERTS', 2);
 define('DISKWARNING', 80);
@@ -25,14 +24,14 @@ define('LOADCRITICAL', 4);		// integer only
 
 ///////////////////////////////// 
 function cyberscanScan($content, $args, $privateStore) {
-	$filterName = "cyberscan";
-	$result   = "OK";						// default result
+	$filterName = 'cyberscan';
+	$result   	= 'OK';						// default result
 	$url = $args['url'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "";
+	$message = '';
 
 	$contentLength = strlen($content);
 
@@ -126,7 +125,7 @@ function cyberscanScan($content, $args, $privateStore) {
 					}
 					else if ($key == 'alert') {
 						$s = condenseBlanks($s);
-						$result = "Critical";
+						$result = 'Critical';
 						$message .= ($first?"\n":"").INDENT."Alert: ($s)\n";
 						$first = false;
 					}
@@ -136,7 +135,7 @@ function cyberscanScan($content, $args, $privateStore) {
 							// Previously-seen URL
 							if (strcmp($s, $privateStore[$filterName][$url][$key]) != 0) {
 								// Changed
-								$result = "Changed";
+								$result = 'Changed';
 								$message .= ($first?"\n":"").INDENT."Current state (" . $s . ") Previous state (" . $privateStore[$filterName][$url][$key] . ")\n";
 								echoIfVerbose(($first?"\n":"")."NEW $s WAS " . $privateStore[$filterName][$url][$key] . " \n");
 								$first = false;
@@ -162,13 +161,13 @@ function cyberscanScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function cyberscanInit($content, $args, $privateStore) {
-	$filterName = "cyberscan";
+	$filterName = 'cyberscan';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$result   = "OK";						// default result
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
+	$result   	= 'OK';						// default result
+	$message 	= "[$filterName] Initialized. URL is $args[url]";
 
 	return array($message, $result, $privateStore);
 	
@@ -181,15 +180,15 @@ function cyberscanDestroy($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$result   = "OK";						// default result
-	$message = "[$filterName] Shut down.";
+	$result   	= 'OK';						// default result
+	$message 	= "[$filterName] Shut down.";
 	return array($message, $result, $privateStore);
 	
 }
 
 ///////////////////////////////// 
 function cyberscan($args) {
-	$filterName = "cyberscan";
+	$filterName = 'cyberscan';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

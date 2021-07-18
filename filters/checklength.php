@@ -17,17 +17,17 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."include/echolog.php";
-include_once $path."include/filter_functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/filter_functions.php';
 
 function checklengthScan($content, $args, $privateStore) {
-	$filterName = 'checklength';
-	$result   = "OK";						// default result
-	$url = $args['url'];
-	$contentLength = strlen($content);
-	$message = "";
-	$lengthsString = '';
+	$filterName 	= 'checklength';
+	$result   		= 'OK';						// default result
+	$url 			= $args['url'];
+	$contentLength 	= strlen($content);
+	$message 		= '';
+	$lengthsString 	= '';
 
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -49,9 +49,9 @@ function checklengthScan($content, $args, $privateStore) {
 		
 		if (!$lengthMatched) {
 			// Changed
-			$message .= "Length changed to " . $contentLength . "\n";
-			$message .= INDENT . "Previous lengths include [" . $lengthsString . "]";
-			$result = "Changed";
+			$message .= "Length changed to $contentLength\n";
+			$message .= INDENT . "Previous lengths include [$lengthsString]";
+			$result   = 'Changed';
 			$lengthsString .= "," . (string)$contentLength;
 		}
 		else {
@@ -75,8 +75,8 @@ function checklengthInit($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
-	$result   = "OK";
+	$message 	= "[$filterName] Initialized. URL is $args[url]";
+	$result   	= 'OK';
 //echo "filter 'init' 'checklength'\n";	
 	return array($message, $result, $privateStore);
 	
@@ -88,8 +88,8 @@ function checklengthDestroy($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message 	= "[$filterName] Shut down.";
+	$result   	= 'OK';
 	return array($message, $result, $privateStore);
 	
 }

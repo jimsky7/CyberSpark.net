@@ -9,7 +9,7 @@ function readStore($storeFileName, $maxDataSize) {
 		$store = unserialize(@file_get_contents($storeFileName, $maxDataSize));	
 	}
 	catch (Exception $x) {
-echo "Exception in readStore(): " . $x->getMessage() . "\n";
+		echo 'Exception in readStore(): ' . $x->getMessage() . "\n";
 		$store = null;
 	}
 	return $store;
@@ -20,7 +20,7 @@ function writeStore($storeFileName, $store) {
 		file_put_contents($storeFileName, serialize($store));
 	}
 	catch (Exception $x) {
-echo "Exception in writeStore(): " . $x->getMessage() . "\n";
+		echo 'Exception in writeStore(): ' . $x->getMessage() . "\n";
 	}
 }
 

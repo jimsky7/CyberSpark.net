@@ -13,7 +13,7 @@ function isNotifyHour($notify) {
 	// Returns 'true' if we are in the "notify" hour
 	// date "H" gives us hour with leading zeros (00 thru 23)
 	// (Note quote in order to ensure string for comparison)
-	return (date("H")=="$notify");
+	return (date('H')=="$notify");
 }
 
 ///////////////////////////////// 
@@ -82,7 +82,7 @@ function fqdnOnly($url) {
 
 ///////////////////////////////// 
 function domainOnly($url) {
-	$result = str_replace(" ", "", $url);
+	$result = str_replace(' ', '', $url);
 	try {
 		// Remove 'protocol://'
 		$i = strpos($result, '://');
@@ -114,7 +114,7 @@ function domainOnly($url) {
 function lowercaseFQDN($url) {
 	// Convert the FQDN (only) to lower case, leaving the rest of the protocol and URL alone.
 	$result = $url;
-	$candidate = str_replace(" ", "", $url);
+	$candidate = str_replace(' ', '', $url);
 	try {
 		// HTTP://WWW.DOMAIN.COM/abc.php
 		// 01234567890123456789012345678
@@ -150,7 +150,7 @@ function roundTime($time, $roundTime=ROUNDTIME) {
 // hostname()
 // Given a URL, find the hostname
 function hostname($url) {
-	$result = str_replace(" ", "", $url);
+	$result = str_replace(' ', '', $url);
 	try {
 		// Remove 'protocol://'
 		$i = strpos($result, '://');

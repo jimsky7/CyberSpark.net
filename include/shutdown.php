@@ -29,7 +29,7 @@ function doBeforeExit() {
 	// Let filters get a last crack at their private stores
 	try {
 		list($result, $message) = destroyFilters($properties, $filters, $store);
-		if ($result != "OK") {
+		if ($result != 'OK') {
 			echo "$result: \n$message\n";
 		}
 	}
@@ -150,7 +150,7 @@ function destroyFilters($properties, $filters, &$store) {
 	
 	$rankIndex	= 0;
 	$top		= count($filters);
-	$message	= "";
+	$message	= '';
 	$isOK		= true;
 	
 	echoIfVerbose("Begin shutting down ('destroy') filters\n");

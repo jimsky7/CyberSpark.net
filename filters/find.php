@@ -18,16 +18,16 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."include/echolog.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
 
 function findScan($content, $args, $privateStore) {
-	$filterName = "find";
-	$result   = "OK";						// default result
-	$url = $args['url'];
-	$message = '';
-	$contentLength = strlen($content);
-	$conditions = $args['conditions'];		// This is the raw set of conditions from properties file
+	$filterName 	= 'find';
+	$result   		= 'OK';						// default result
+	$url 			= $args['url'];
+	$message 		= '';
+	$contentLength	= strlen($content);
+	$conditions 	= $args['conditions'];		// This is the raw set of conditions from properties file
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
@@ -37,7 +37,7 @@ function findScan($content, $args, $privateStore) {
 		$j = strpos	($conditions, '"', $i+1);
 		$key = substr($conditions, ($i+1), ($j-1-$i));		
 		if (stripos($content, $key) !== false) {
-			$result = "Alert";
+			$result  = 'Alert';
 			$message = "The value \"$key\" was found on this page or file.\n";
 		}
 		else {
@@ -55,33 +55,33 @@ function findScan($content, $args, $privateStore) {
 }
 
 function findInit($content, $args, $privateStore) {
-	$filterName = "find";
+	$filterName = 'find';
 	// $content is the CONTENT returned from the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	//    The actual URL is in $args['url']
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
-	$result   = "OK";
+	$message  = "[$filterName] Initialized. URL is " . $args['url'];
+	$result   = 'OK';
 
 	return array($message, $result, $privateStore);
 	
 }
 
 function findDestroy($content, $args, $privateStore) {
-	$filterName = "find";
+	$filterName = 'find';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }
 
 function find($args) {
-	$filterName = "find";
+	$filterName = 'find';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

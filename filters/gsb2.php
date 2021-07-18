@@ -13,9 +13,8 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-
-include_once $path."include/echolog.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
 
 // IMPORTANT NOTE:
 // Some functions required for this filter are in gsb.php and
@@ -23,14 +22,14 @@ include_once $path."include/echolog.php";
 
 ///////////////////////////////// 
 function gsb2Scan($content, $args, $privateStore) {
-	$filterName = "gsb2";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'gsb2';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "";
+	$message = '';
 
 	// Check for presence of server info and API KEY
 	// If either one is missing, then return 'OK' but with a message.
@@ -49,13 +48,13 @@ function gsb2Scan($content, $args, $privateStore) {
 	// Get the pertinent HTML tags
 	echoIfVerbose("GSB check \n");
 	
-	$maxDepth	= GSB_DEPTH_2;				// how deep we will spider
-	$failures	= 0;						// number of GSB connection failures
+	$maxDepth		= GSB_DEPTH_2;				// how deep we will spider
+	$failures		= 0;						// number of GSB connection failures
 	$numberOfChecks = 0;					// number of GSB attempts
-	$prefix = "";
-	$checkedURLs = array();					// URLs that have been followed already
+	$prefix 		= '';
+	$checkedURLs 	= array();					// URLs that have been followed already
 	$checkedDomains = array();				// domains that have been GSB'd already (including subdirs)
-	$howToGetThere= array();			// 'breadcrumbs' for alert message
+	$howToGetThere	= array();			// 'breadcrumbs' for alert message
 	
 	///////////////////////////////// 
 	try {
@@ -67,7 +66,7 @@ function gsb2Scan($content, $args, $privateStore) {
 //		array_push($howToGetThere, $url);
 		// Check one URL
 		list($r, $mess) = gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
-		if ($r != "OK") {
+		if ($r != 'OK') {
 			$result = $r;
 		}
 		$message .= "$mess";
@@ -75,7 +74,7 @@ function gsb2Scan($content, $args, $privateStore) {
 		// Go deeper
 		list($r, $mess) = gsbExploreLinks($args, $url, 0, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
 		
-		if ($r != "OK") {
+		if ($r != 'OK') {
 			$result = $r;
 		}
 		$message .= "$mess";
@@ -83,7 +82,7 @@ function gsb2Scan($content, $args, $privateStore) {
 	catch (Exception $x) {
 	}
 
-	if ($result == "OK") {
+	if ($result == 'OK') {
 		$message .= "GSB reports all is OK\n";
 	}
 	$message .= INDENT . "$numberOfChecks GSB inquiries were made.\n";
@@ -98,10 +97,10 @@ function gsb2Scan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function gsb2Init($content, $args, $privateStore) {
-	$filterName = "gsb2";
-	$result   = "OK";						// default result
-	$url = $args['url'];
-	$contentLength = strlen($content);
+	$filterName 	= 'gsb2';
+	$result   		= 'OK';						// default result
+	$url 			= $args['url'];
+	$contentLength	= strlen($content);
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
@@ -114,20 +113,20 @@ function gsb2Init($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function gsb2Destroy($content, $args, $privateStore) {
-	$filterName = "gsb2";
+	$filterName = 'gsb2';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }
 
 ///////////////////////////////// 
 function gsb2($args) {
-	$filterName = "gsb2";
+	$filterName = 'gsb2';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

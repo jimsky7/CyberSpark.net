@@ -13,14 +13,14 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."include/echolog.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
 
 function basicScan($content, $args, $privateStore) {
 	$REFUSAL_TIME = 5;						// connections failing FASTER than this are "refusals"
 											// longer than this number will be "timeouts" - in seconds
 	$filterName = 'basic';
-	$result   = "OK";						// default result
+	$result   	= 'OK';						// default result
 	$url = $args['url'];
 	$message = '';
 	$elapsedTime = roundTime($args['elapsedtime']);	// rounding precision is defined in cyberspark.sysdefs.php
@@ -32,7 +32,7 @@ function basicScan($content, $args, $privateStore) {
 
 	if (!isset($httpResult['code'])) {
 		// No code means connection failed (could be many reasons)
-		$result = "Failed";
+		$result = 'Failed';
 		if ($elapsedTime < $REFUSAL_TIME) {
 			$message = "Connection failed or was refused within $elapsedTime seconds.";
 //echo "[$filtername] HTTP code " . $httpResult['code'] . " HTTP error " . $httpResult['error'] . " time $elapsedTime $url \n"; 
@@ -46,19 +46,19 @@ function basicScan($content, $args, $privateStore) {
 	}
 	else {
 		if ($elapsedTime > $args['slow']) {
-			$result = "Slow";
+			$result  = 'Slow';
 			$message = "Slow response after " . $elapsedTime . " seconds.";
 //echo "  Slow\n";
 		}
 		if (($httpResult['code'] != 200) && ($elapsedTime > $args['timeout'])) {
-			$result = "Timeout";
+			$result  = 'Timeout';
 			$message = "Timeout after " . $elapsedTime . " seconds.";
 //echo "  Timeout\n";
 		}
 		// CLOUDFLARE 520 thru 524
 		if ($httpResult['code'] >= 520 && $httpResult['code'] <= 524) {
-			$result = "HTTP";
-			$message = "If the site uses Cloudflare, and if Cloudflare thinks the underlying host is unresponsive, it returns a error number between 520 and 524. ";
+			$result   = 'HTTP';
+			$message  = "If the site uses Cloudflare, and if Cloudflare thinks the underlying host is unresponsive, it returns a error number between 520 and 524. ";
 			$message .= "If the site is not using Cloudflare, then you still should look into this error. ";
 			$message .= "The HTTP error number is ".$httpResult['code'].". ";
 			try {
@@ -75,8 +75,8 @@ function basicScan($content, $args, $privateStore) {
 		}
 		// CLOUDFLARE 410
 		if ($httpResult['code'] == 410) {
-			$result = "HTTP";
-			$message = "If the site uses Cloudflare, and if Cloudflare thinks the underlying host is 'gone' it returns error 410. ";
+			$result   = 'HTTP';
+			$message  = "If the site uses Cloudflare, and if Cloudflare thinks the underlying host is 'gone' it returns error 410. ";
 			$message .= "If the site is not using Cloudflare, then you still should look into this error. ";
 			$message .= "The HTTP error number is ".$httpResult['code'].". ";
 			try {
@@ -103,8 +103,8 @@ function basicInit($content, $args, $privateStore) {
 	//    The actual URL is in $args['url']
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
-	$result   = "OK";
+	$message  = "[$filterName] Initialized. URL is " . $args['url'];
+	$result   = 'OK';
 
 	return array($message, $result, $privateStore);
 	
@@ -116,8 +116,8 @@ function basicDestroy($content, $args, $privateStore) {
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }

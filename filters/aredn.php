@@ -12,25 +12,24 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-
-include_once $path."include/echolog.php";
-include_once $path."include/functions.php";
-include_once $path."include/filter_functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/functions.php';
+include_once $path.'include/filter_functions.php';
 
 define('AREDN_MAX_ALERTS', 200);
 
 ///////////////////////////////// 
 function arednScan($content, $args, $privateStore) {
-	$filterName = "aredn";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName 	= 'aredn';
+	$result   		= 'OK';						// default result
+	$url 			= $args['url'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "";
-	$lengthsString = '';
+	$message 		= '';
+	$lengthsString 	= '';
 
 	// Remove chars that don't make any difference and can get in the way
 	$content = str_replace(array("\r","\n","\t"), "", $content);
@@ -69,10 +68,8 @@ function arednScan($content, $args, $privateStore) {
 					if (strcasecmp($nodeName, $previousNodeName) != 0) {
 						$result = 'Alert';
 						$alertCount++;
-						$message .= "New node name:\n";
-						$message .= INDENT . "  $nodeName\n";
-						$message .= INDENT . "Previous node name was:\n";
-						$message .= INDENT . "  $previousNodeName\n";
+						$message .= "New node name: $nodeName\n";
+						$message .= INDENT . "Previous node name: $previousNodeName\n";
 						$privateStore[$filterName][$url]['nodename'] = $nodeName;
 					}
 					else {
@@ -82,8 +79,7 @@ function arednScan($content, $args, $privateStore) {
 				else {
 					$privateStore[$filterName][$url]['nodename'] = $nodeName;
 					$result = 'Alert';
-					$message .= "The node name is:\n";
-					$message .= INDENT . "  $nodeName\n";
+					$message .= "The node name is: $nodeName\n";
 				}
 			}
 		} 
@@ -102,7 +98,7 @@ function arednScan($content, $args, $privateStore) {
 						$message .= "Uptime is $uptime\n";
 					}
 					else {
-						$result = 'Alert';
+						$result   = 'Alert';
 						$alertCount++;
 						$message .= "This node has rebooted in the last hour.\n";
 						$message .= INDENT . "Uptime is $uptime\n";
@@ -128,9 +124,9 @@ function arednScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function arednInit($content, $args, $privateStore) {
-	$filterName = "aredn";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'aredn';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	$contentLength = strlen($content);
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -144,20 +140,20 @@ function arednInit($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function arednDestroy($content, $args, $privateStore) {
-	$filterName = "aredn";
+	$filterName = 'aredn';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }
 
 ///////////////////////////////// 
 function aredn($args) {
-	$filterName = "aredn";
+	$filterName = 'aredn';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
@@ -172,49 +168,5 @@ function aredn($args) {
 	}
 	return true;
 }
-
-///////////////////////////////// 
-///////////////////////////////// 
-//function extractHTMLtags($tag, $subs, $dom) {
-//	if (!is_array($subs)) {
-//		$subs = array($subs);
-//	}
-//	$elements = $dom->getElementsByTagName($tag);
-//	$tagContent = '';
-//	foreach($elements as $element) {
-//		$tagContent .= "<$tag>";
-//		foreach ($subs as $sub) {
-//			if ($element->hasAttribute($sub)) {
-//				$tagContent .= $element->getAttribute($sub) . "|";
-//			}
-//		}
-//		$tagContent .= $element->textContent;
-//		$tagContent .= "</$tag>";
-//	}
-//	return $tagContent;
-//}
-
-///////////////////////////////// 
-///////////////////////////////// 
-//function extractHTMLsubtag($tag, $sub, $subMatch, $subExtract, $dom) {
-//	// Example
-//	// extractHTMLsubtag('metta', 'name', 'generator', 'content', $dom);
-//// 	$genContent = extractHTMLsubtag('metta', 'name', 'generator', 'content', $dom);
-//	// looks for
-//	// <meta name='generator' content='xxxxxxx' />
-//	// and returns 'xxxxxxx'
-//	// return null if nothing found
-//	$elements = $dom->getElementsByTagName($tag);
-//	foreach($elements as $element) {
-//		if ($element->hasAttribute($sub)) {
-//			if (strcasecmp($element->getAttribute($sub), $subMatch) == 0) {
-//				if ($element->hasAttribute($subExtract)) {
-//					return $element->getAttribute($subExtract);
-//				}
-//			}
-//		}
-//	}
-//	return null;
-//} 
 
 ?>

@@ -22,9 +22,8 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-
-include_once $path."include/echolog.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
 
 /////////////////////////////////
 // As of at least 2017, google provides an API that can be used to directly check
@@ -39,7 +38,7 @@ function gsbDirectCheck($url, $bcs=null) {
 		$APIurl = GSB_SERVER;
 		$APIurl = str_replace('GSB_API_KEY', GSB_API_KEY, $APIurl);
 
-		$postBody =  "{";
+		$postBody  =  "{";
 		$postBody .=   "'client':{";
 		$postBody .=     "'clientId':'cyberspark.net/agent','clientVersion':'20171111'";
 		$postBody .=   "},";
@@ -98,14 +97,14 @@ function gsbDirectCheck($url, $bcs=null) {
 
 ///////////////////////////////// 
 function gsbScan($content, $args, $privateStore) {
-	$filterName = "gsb";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'gsb';
+	$result     = 'OK';						// default result
+	$url 		= $args['url'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "";
+	$message = '';
 
 	// Check for presence of server info and API KEY
 	// If either one is missing, then return 'OK' but with a message.
@@ -126,14 +125,14 @@ function gsbScan($content, $args, $privateStore) {
 	$dom = new DOMDocument();
 	@$dom->loadHTML($content);
 
-	$links = extractLinks("a", "href", $dom, array());
-	$links = extractLinks("form", "action", $dom, $links);
-	$links = extractLinks("img", "src", $dom, $links);
-	$links = extractLinks("link", array("rel","href"), $dom, $links);
-	$links = extractLinks("script", "src", $dom, $links);
+	$links = extractLinks('a',      'href',   				$dom, array());
+	$links = extractLinks('form',   'action', 				$dom, $links);
+	$links = extractLinks('img',    'src',    				$dom, $links);
+	$links = extractLinks('link',   array('rel','href'),	$dom, $links);
+	$links = extractLinks('script', 'src',    				$dom, $links);
 
 	$numberOfChecks = 0;
-	$prefix = "";
+	$prefix = '';
 	foreach ($links as $link) {
 		$checkLink = str_replace(' ', '+', domainAndSubdirs($link));
 		$cl = count($links);
@@ -147,12 +146,12 @@ function gsbScan($content, $args, $privateStore) {
 		}
 		else {
 			// URL is unsafe
-			$result = "Alert";
+			$result   = 'Alert';
 			$message .= $prefix . "This link from the main page needs attention: $checkLink... Google Safe Browsing says \"$gsbResult\"\n";
 			$prefix = INDENT;
 		}
 	}
-	if ($result == "OK") {
+	if ($result == 'OK') {
 		$message .= "GSB reports all is OK\n";
 	}
 	$message .= INDENT . "  The page contains " . count($links) . " relevant links.";
@@ -167,9 +166,9 @@ function gsbScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function gsbInit($content, $args, $privateStore) {
-	$filterName = "gsb";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'gsb';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	$contentLength = strlen($content);
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -183,13 +182,13 @@ function gsbInit($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function gsbDestroy($content, $args, $privateStore) {
-	$filterName = "gsb";
+	$filterName = 'gsb';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }
@@ -199,7 +198,7 @@ function gsbDestroy($content, $args, $privateStore) {
 // Note that there is no special Notify hook for this filter, meaning that the
 //   gsbScan() function is used even during the Notify hour.
 function gsb($args) {
-	$filterName = "gsb";
+	$filterName = 'gsb';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;
@@ -295,9 +294,9 @@ function domainAndSubdirs($url) {
 function breadcrumbsString($howToGetThere, $finalURL="") {
 	$top = count($howToGetThere);
 	$i = 0;
-	$mess = "";
+	$mess = '';
 	while ($i < $top) {
-		$mess .= $howToGetThere[$i++] . " -> ";
+		$mess .= $howToGetThere[$i++] . ' -> ';
 	}
 	$mess .= " $finalURL";
 	return $mess;
@@ -306,8 +305,8 @@ function breadcrumbsString($howToGetThere, $finalURL="") {
 ///////////////////////////////// 
 function gsbCheckURL($args, $url, &$numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, &$howToGetThere) {
 	
-	$result = "OK";
-	$message = "";
+	$result  = 'OK';
+	$message = '';
 	
 	try {
 		$das = str_replace(' ', '+', domainAndSubdirs($url));
@@ -326,7 +325,7 @@ function gsbCheckURL($args, $url, &$numberOfChecks, $failures, $prefix, $checked
 
 		if ($gsbResult=='OK') {
 			// URL is safe
-			$result = "OK";
+			$result = 'OK';
 			echoIfVerbose("  OK \n");
 		}
 		elseif (strncmp($gsbResult, 'GSB failed', 10) == 0) {
@@ -365,15 +364,15 @@ function keepAliveURL($numberOfChecks, $url) {
 ///////////////////////////////// 
 function gsbExploreLinks($args, $url, $depth, $maxDepth, &$numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere) {
 	
-	$result = "OK";
-	$message = "";
+	$result  = 'OK';
+	$message = '';
 	echoIfVerbose ("Reached depth $depth with maximum $maxDepth \n");
 	if ($depth == $maxDepth) {
 		return array($result, $message);
 	}
 	echoIfVerbose ("gsbExploreLinks($url) at depth $depth \n");
 	array_push($howToGetThere, $url);
-	$link = "";						// for proper scope
+	$link = '';						// for proper scope
 	try {
 		// Get the contents of the page
 		$httpResult = httpGet($url, $args['useragent'], 15);
@@ -387,11 +386,11 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, &$numberOfChecks, $fail
 				@$dom->loadHTML($body);
 
 				// Find all the links on the page
-				$links = extractLinks("a", "href", $dom, array());
-				$links = extractLinks("form", "action", $dom, $links);
-				$links = extractLinks("img", "src", $dom, $links);
-				$links = extractLinks("link", array("rel","href"), $dom, $links);
-				$links = extractLinks("script", "src", $dom, $links);
+				$links = extractLinks('a', 		'href', 				$dom, array());
+				$links = extractLinks('form', 	'action', 				$dom, $links);
+				$links = extractLinks('img', 	'src', 					$dom, $links);
+				$links = extractLinks('link', 	array('rel','href'), 	$dom, $links);
+				$links = extractLinks('script',	'src', 					$dom, $links);
 				echoIfVerbose (count($links)." links to explore \n");
 
 				foreach ($links as $link) {
@@ -406,7 +405,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, &$numberOfChecks, $fail
 					$link = ltrim($link, '_');
 					// Check this link against GSB. The remote GSB server, in Python, keeps track of malware and phishing domains.
 					list($r, $mess) = gsbCheckURL($args, $link, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
-					if ($r != "OK") {
+					if ($r != 'OK') {
 						$result = $r;
 					}
 					$message .= $mess;
@@ -416,7 +415,7 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, &$numberOfChecks, $fail
 						echoIfVerbose ("Going to depth " . ($depth+1) . " maximum " . $maxDepth . "\n");
 						list($r, $mess) = gsbExploreLinks($args, $link, $depth+1, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
 						echoIfVerbose ("Done at depth " . ($depth+1) . " \n");
-						if ($r != "OK") {
+						if ($r != 'OK') {
 							$result = $r;
 						}
 						$message .= $mess; 
@@ -429,15 +428,15 @@ function gsbExploreLinks($args, $url, $depth, $maxDepth, &$numberOfChecks, $fail
 					// into 100% CPU loop sometimes), so we will not check overly-large pages.
 					$das = str_replace(' ', '+', domainAndSubdirs($url));
 					$bcs = breadcrumbsString($howToGetThere, $das);
-					echoIfVerbose ("Page ($url) is too large (".strlen($body).") to check programmatically. How we got there: $bcs\n");
-					$message .= "Page ($url) is really too large (".strlen($body).") to check programmatically. You might want to check manually. How we got there: $bcs\n";
+					echoIfVerbose ("Page ($url) is really too large (".strlen($body).") to check programmatically. How we got there: $bcs\n");
+					$message .=    "Page ($url) is really too large (".strlen($body).") to check programmatically. You might want to check manually. How we got there: $bcs\n";
 			}
 		}
 	}
 	catch (Exception $x) {
 		$bcs = breadcrumbsString($howToGetThere, $das);
-		echoIfVerbose("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $bcs\n");
-		writeLogAlert("In gsbCheckURL Exception: " . $x->getMessage() . " $das How we got there: $bcs\n");
+		echoIfVerbose('In gsbCheckURL Exception: ' . $x->getMessage() . " $das How we got there: $bcs\n");
+		writeLogAlert('In gsbCheckURL Exception: ' . $x->getMessage() . " $das How we got there: $bcs\n");
 	}
 
 	array_pop($howToGetThere);

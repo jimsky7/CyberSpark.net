@@ -13,11 +13,11 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."cyberspark.sysdefs.php";
-include_once $path."include/echolog.php";
-include_once $path."include/http.php";
-include_once $path."include/functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'cyberspark.sysdefs.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/http.php';
+include_once $path.'include/functions.php';
 
 ///////////////////////////////// 
 // getASNinfo()
@@ -26,9 +26,9 @@ include_once $path."include/functions.php";
 function getASNinfo($url) {
 	$paramArray = array();
 
-	$paramArray['action'] = 'do_whois';
-	$paramArray['family'] = 'ipv4';
-	$paramArray['method_whois'] = 'whois';
+	$paramArray['action'] 		= 'do_whois';
+	$paramArray['family'] 		= 'ipv4';
+	$paramArray['method_whois']	= 'whois';
 
 	$paramArray['bulk_paste'] = '8.8.8.8';
 	$ip = getIPforHost(hostname($url));
@@ -70,7 +70,7 @@ function getASNinfo($url) {
 			$j = stripos($r['body'], '</PRE>', $i);
 			if ($j !== false) {
 				$rx = substr($r['body'], ($i+5), ($j-$i-5));
-				$e = explode("\n", $rx);
+				$e  = explode("\n", $rx);
 				// $e[0] contains headers, delimited by "|"
 				// $e[1] contains data, delimited by "|"
 // echoIfVerbose("0:$e[0] \n");
@@ -99,11 +99,11 @@ function getASNinfo($url) {
 
 ///////////////////////////////// 
 function asnScan($content, $args, $privateStore) {
-	$filterName = 'asn';
-	$attributeName = 'asn';
-	$result     = 'OK';						// default result
-	$url        = $args['url'];
-	$message    = '';
+	$filterName 	= 'asn';
+	$attributeName	= 'asn';
+	$result     	= 'OK';						// default result
+	$url        	= $args['url'];
+	$message    	= '';
 
 	// Clear the 'flag' that says we've sent today's notification. So it can be sent tomorrow.
 	$privateStore[$url][$filterName.'_ran_today'] = false;
@@ -123,13 +123,13 @@ function asnScan($content, $args, $privateStore) {
 		$host = hostname($url);
 
 		if ($asnInfo == null) {
-			$result = 'Warning';
+			$result   = 'Warning';
 			$message .= " (Could not retrieve any ASN info for '$host' [1])";
 			echoIfVerbose(" Could not retrieve any ASN info for '$host' [1]\n");
 			$message .= INDENT . "Data is from Team Cymru http://www.team-cymru.org/Services/ip-to-asn.html and is checked once a day.";
 		}
 		else {
-			$result = 'Warning';
+			$result   = 'Warning';
 			$message .= "\n";
 			$message .= INDENT . "ASN information is available for the first time. (This is good.) [1]\n";
 			$message .= INDENT . "You will be notified if ASN information changes.\n";
@@ -158,11 +158,11 @@ function asnScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function asnNotify($content, $args, $privateStore) {
-	$filterName = 'asn';
-	$attributeName = 'asn';
-	$result     = 'OK';						// default result
-	$url        = $args['url'];
-	$message    = '';
+	$filterName 	= 'asn';
+	$attributeName 	= 'asn';
+	$result     	= 'OK';						// default result
+	$url        	= $args['url'];
+	$message    	= '';
 
 	if (isset($args['notify']) && isset($privateStore[$url][$filterName.'_ran_today']) && isNotifyHour($args['notify']) && !$privateStore[$url][$filterName.'_ran_today']) {
 		$asnInfo = getASNinfo($url);
@@ -185,7 +185,7 @@ function asnNotify($content, $args, $privateStore) {
 				}
 			}
 			else {
-				$result = 'Warning';
+				$result   = 'Warning';
 				$message .= INDENT . "ASN information is available for the first time. (This is good.)\n";
 				$message .= INDENT . "You will be notified if ASN information changes.\n";
 				$message .= INDENT . "Please also note that if ASN information disappears in the future, \n";
@@ -218,10 +218,10 @@ function asnNotify($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function asnInit($content, $args, $privateStore) {
-	$filterName = 'asn';
-	$attributeName = 'asn';
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName 	= 'asn';
+	$attributeName 	= 'asn';
+	$result   		= 'OK';						// default result
+	$url 			= $args['url'];
 //	$contentLength = strlen($content);
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -235,14 +235,14 @@ function asnInit($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function asnDestroy($content, $args, $privateStore) {
-	$filterName = 'asn';
-	$attributeName = 'asn';
+	$filterName 	= 'asn';
+	$attributeName 	= 'asn';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }

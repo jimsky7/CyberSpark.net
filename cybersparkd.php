@@ -33,19 +33,19 @@
 // include supporting code
 ///////////////////////////////// 
 // Local (your installation) variables, definitions, declarations
-include_once "cyberspark.config.php";
+include_once 'cyberspark.config.php';
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.sysdefs.php";
+include_once 'cyberspark.sysdefs.php';
 
 // Other supporting code
-include_once "include/args.php";
-include_once "include/mail.php";
+include_once 'include/args.php';
+include_once 'include/mail.php';
 declare(ticks = 1);					// allows shutdown functions to work
 
 ///////////////////////////////// 
 // 
 $ID 		= INSTANCE_ID;		// example "CS8"
-$propsFileName= "";				// exact name of the properties file
+$propsFileName= '';				// exact name of the properties file
 $isDaemon   = false;			// true if running in 'daemon' mode
 $running	= false;
 $time		= 1;				// default is to run every 1 minutes
@@ -107,7 +107,7 @@ catch (Exception $x) {
 // Delete the file.
 $startupMessage = @file_get_contents($startupFileName);
 if ($startupMessage !== false) {
-	$timeStamp = date("r");
+	$timeStamp = date('r');
 	$subject = "$ID recovered from powerfail $timeStamp";
 	$message = $startupMessage;
 	textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
@@ -137,12 +137,12 @@ catch (Exception $x) {
 // Find the properties files and launch a monitoring instance for each one
 $subID = 0;
 while (file_exists($propsDir . "/$ID-$subID" . PROPS_EXT)) {
-	$timeStamp = date("r");
+	$timeStamp = date('r');
 	echo "$ID is launching $ID-$subID - $timeStamp\n";	
 	$descriptorspec = array(
-  		0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
-  		1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
-  		2 => array("file", "/tmp/error-output-$ID-$subID.txt", "a") // stderr is a file to write to
+  		0 => array('pipe', 'r'),  // stdin is a pipe that the child will read from
+  		1 => array('pipe', 'w'),  // stdout is a pipe that the child will write to
+  		2 => array('file', "/tmp/error-output-$ID-$subID.txt", 'a') // stderr is a file to write to
 	);	
 	// Launch a child process corresponding to this properties file.
 	// Actually a 'sh' gets launched, and that in turn runs 'php' which picks up the
@@ -170,7 +170,7 @@ $subID--;						// back off by one to be accurate with end of the array
 //   It could send an email to the administrator if a process fails (already written, see below).
 //   It could restart the failing process, unless it fails too many times (written, see below).
 
-$timeStamp = date("r");
+$timeStamp = date('r');
 $subject = "$ID cybersparkd launched $timeStamp";
 $message = "$ID cybersparkd launched $timeStamp";
 textMail($administrator, $from, $replyTo, $abuseTo, $subject, $message, SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD);
@@ -224,8 +224,8 @@ while ($running) {
 		// notify hour. ($notified is 'true' and we're not in the notified hour any more.)
 		$i = 0;
 		$fileCount = 0;
-		$message = '';
-		$message .= "There are ".($subID+1)." agents defined on $ID.\n";
+		$message   = '';
+		$message  .= "There are ".($subID+1)." agents defined on $ID.\n";
 		while (($i <= $subID) && $running) {
 			try {
 				$rotFileName = "$path$ID-$i".ROT_EXT;
@@ -270,7 +270,7 @@ while ($running) {
 	// These are the 'sh' processes, not the cyberspark.php processes
 	$i = 0;
 	while (($i <= $subID) && $running) {
-		$timeStamp = date("r");
+		$timeStamp = date('r');
 		try {
 			$status = proc_get_status($process[$i]);
 		

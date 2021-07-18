@@ -19,9 +19,9 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."include/echolog.php";
-include_once $path."include/filter_functions.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
+include_once $path.'include/filter_functions.php';
 
 //// lengthScan()
 //// This function is called when a URL is being scanned and when 'length' has been
@@ -59,9 +59,9 @@ function lengthScan($content, $args, $privateStore) {
 		}
 		else {
 			// Changed
-			$message .= "Length changed to " . $contentLength . "\n";
-			$message .= INDENT . "Previous lengths include [" . $lengthsString . "]";
-			$result = "Changed";
+			$message .= "Length changed to $contentLength\n";
+			$message .= INDENT . "Previous lengths include [$lengthsString]";
+			$result   = 'Changed';
 			// $lengthsString contains (comma separated) all of the lengths of this URL
 			// that have ever been seen by this filter. Note that it persists even if
 			// our parent daemon is shut down and restarted.
@@ -84,13 +84,13 @@ function lengthScan($content, $args, $privateStore) {
 //// This function is called by the daemon once when it is first loaded.
 //// It returns a message, but doesn't touch the private date (in $privateStore).
 function lengthInit($content, $args, $privateStore) {
-	$filterName = "length";
+	$filterName = 'length';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Initialized. URL is " . $args['url'];
-	$result   = "OK";
+	$message  = "[$filterName] Initialized. URL is $args[url]";
+	$result   = 'OK';
 //echo "filter 'init' 'length'\n";	
 	return array($message, $result, $privateStore);
 	
@@ -101,13 +101,13 @@ function lengthInit($content, $args, $privateStore) {
 //// the daemon's "private" database in $privateStore, which we simply pass back. We also
 //// pass back a message saying that this filter has properly shut down.
 function lengthDestroy($content, $args, $privateStore) {
-	$filterName = "length";
+	$filterName = 'length';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $privateStore is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }
@@ -118,7 +118,7 @@ function lengthDestroy($content, $args, $privateStore) {
 //// Data is kept in the database that is presented during execution as $privateStore.
 //// (Note that the name "length" matches the filename "length.php" -- this is required.)
 function length($args) {
-	$filterName = "length";
+	$filterName = 'length';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

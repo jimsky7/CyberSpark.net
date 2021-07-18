@@ -13,8 +13,8 @@
 
 // CyberSpark system variables, definitions, declarations
 global $path;
-include_once $path."cyberspark.config.php";
-include_once $path."include/echolog.php";
+include_once $path.'cyberspark.config.php';
+include_once $path.'include/echolog.php';
 
 // IMPORTANT NOTE:
 // Some functions required for this filter are in gsb.php and
@@ -22,14 +22,14 @@ include_once $path."include/echolog.php";
 
 ///////////////////////////////// 
 function gsbdailyScan($content, $args, $privateStore) {
-	$filterName = "gsbdaily";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'gsbdaily';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "";
+	$message = '';
 
 	// Check for presence of server info and API KEY
 	// If either one is missing, then return 'OK' but with a message.
@@ -50,20 +50,20 @@ function gsbdailyScan($content, $args, $privateStore) {
 		// Get the pertinent HTML tags
 		echoIfVerbose("GSB check \n");
 		
-		$maxDepth	= MAX_GSB_DEPTH;			// how deep we will spider
-		$failures	= 0;						// number of GSB connection failures
+		$maxDepth		= MAX_GSB_DEPTH;			// how deep we will spider
+		$failures		= 0;						// number of GSB connection failures
 		$numberOfChecks = 0;					// number of GSB attempts
-		$prefix = "";
-		$checkedURLs = array();					// URLs that have been followed already
+		$prefix 		= '';
+		$checkedURLs 	= array();					// URLs that have been followed already
 		$checkedDomains = array();				// domains that have been GSB'd already (including subdirs)
-		$howToGetThere= array();			// 'breadcrumbs' for alert message
+		$howToGetThere	= array();			// 'breadcrumbs' for alert message
 		
 		///////////////////////////////// 
 		try {
 			// Check the main URL first
 //		array_push($howToGetThere, $url);
 			list($r, $mess) = gsbCheckURL($args, $url, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
-			if ($r != "OK") {
+			if ($r != 'OK') {
 				$result = $r;
 			}
 			$message .= "$mess";
@@ -71,7 +71,7 @@ function gsbdailyScan($content, $args, $privateStore) {
 			// Go deeper
 			list($r, $mess) = gsbExploreLinks($args, $url, 0, $maxDepth, $numberOfChecks, $failures, $prefix, $checkedURLs, $checkedDomains, $howToGetThere);
 			
-			if ($r != "OK") {
+			if ($r != 'OK') {
 				$result = $r;
 			}
 			$message .= "$mess";
@@ -81,7 +81,7 @@ function gsbdailyScan($content, $args, $privateStore) {
 			writeLogAlert("In gsbDailyScan Exception: " . $x->getMessage() . " $url\n");  // use $url not $das
 		}
 	
-		if ($result == "OK") {
+		if ($result == 'OK') {
 			$message .= "GSB reports all is OK\n";
 		}
 		$message .= INDENT . "$numberOfChecks GSB inquiries were made.\n";
@@ -103,9 +103,9 @@ function gsbdailyScan($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function gsbdailyInit($content, $args, $privateStore) {
-	$filterName = "gsbdaily";
-	$result   = "OK";						// default result
-	$url = $args['url'];
+	$filterName = 'gsbdaily';
+	$result   	= 'OK';						// default result
+	$url 		= $args['url'];
 	$contentLength = strlen($content);
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
@@ -119,13 +119,13 @@ function gsbdailyInit($content, $args, $privateStore) {
 
 ///////////////////////////////// 
 function gsbdailyDestroy($content, $args, $privateStore) {
-	$filterName = "gsbdaily";
+	$filterName = 'gsbdaily';
 	// $content is the URL being checked right now
 	// $args are arguments/parameters/properties from the main PHP script
 	// $store is my own private and persistent store, maintained by the main script, and
 	//   available only for use by this plugin filter.
-	$message = "[$filterName] Shut down.";
-	$result   = "OK";
+	$message  = "[$filterName] Shut down.";
+	$result   = 'OK';
 	return array($message, $result, $privateStore);
 	
 }
@@ -135,7 +135,7 @@ function gsbdailyDestroy($content, $args, $privateStore) {
 //   function. It will internally determine whether to fire off and it will only analyze
 //   during the daily 'Notify' hour, not during other hours.
 function gsbDaily($args) {
-	$filterName = "gsbdaily";
+	$filterName = 'gsbdaily';
  	if (!registerFilterHook($filterName, 'scan', $filterName.'Scan', 10)) {
 		echo "The filter '$filterName' was unable to add a 'Scan' hook. \n";	
 		return false;

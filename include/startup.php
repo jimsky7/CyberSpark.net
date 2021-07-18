@@ -9,7 +9,7 @@
 function initFilters($filters, $properties, &$store) {
 	$rankIndex	= 0;
 	$top		= count($filters);
-	$message	= "";
+	$message	= '';
 	$isOK		= true;
 	
 	echoIfVerbose("Begin initializing filters\n");
@@ -35,27 +35,27 @@ function initFilters($filters, $properties, &$store) {
 				}
 			}
 			catch (Exception $x) {
-				$result = "Exception";
-				$mess = "Exception: " . $x->getMessage();
+				$result = 'Exception';
+				$mess = 'Exception: ' . $x->getMessage();
 			}
 			if (isset($mess) && isset($result)) {
 				// If filter said anything other than "OK" then there's
 				//   an overall failure.
-				if ($result != "OK") {
-					$isOK = false;
+				if ($result != 'OK') {
+					$isOK     = false;
 					$message .= "Filter [$filterName] did not initialize properly. ($mess)\n";
 				}
-				$isOK = $isOK && ($result == "OK");		// (both terms must be true)
+				$isOK = $isOK && ($result == 'OK');		// (both terms must be true)
 			}
 		}
 		$rankIndex++;
 	}
 	if ($isOK) {
-		$result  = "OK";
-		$message = "";
+		$result  = 'OK';
+		$message = '';
 	}
 	else {
-		$result = "Failed";
+		$result = 'Failed';
 	}
 	
 	echoIfVerbose("Filters have been initialized.\n");

@@ -17,14 +17,14 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Local (your installation) variables, definitions, declarations
-include_once "cyberspark.config.php";
+include_once 'cyberspark.config.php';
 // CyberSpark system variables, definitions, declarations
-include_once "cyberspark.sysdefs.php";
+include_once 'cyberspark.sysdefs.php';
 
 declare(ticks = 1);					// allows shutdown functions to work
-include_once "include/shutdown.php";
-include_once "include/startup.php";
-include_once "include/functions.php";
+include_once 'include/shutdown.php';
+include_once 'include/startup.php';
+include_once 'include/functions.php';
 
 ///////////////////////////////////////////////////////////////////////////////////
 // 
@@ -36,18 +36,18 @@ $dataDir	= DATA_DIR;				// where data will live
 $propsDir	= PROPS_DIR;			// where properties files live
 $filtersDir	= FILTERS_DIR;			// where the scanning filters live
 $logDir		= LOG_DIR;				// where the csv logs will be written
-$propsFileName= "";					// exact name of the properties file
+$propsFileName= '';					// exact name of the properties file
 $storeFileName=	DATA_EXT;			// filename for the data store
 $logFileName  = LOG_EXT;			// filename for log
 $logHandle	= null;					// handle for log file (used as a global elsewhere)
 $path		= APP_PATH;				// path to the executing script (WITHOUT script file name)
-$scriptName	= "";					// this script's name, picked up from $argv[0]
+$scriptName	= '';					// this script's name, picked up from $argv[0]
 $isDaemon   = false;				// true if running in 'daemon' mode
 $running	= false;
 $time		= DEFAULT_LOOP_TIME;	// default minutes between loops
 $notify		= DEFAULT_NOTIFY_HOUR;	// default "midnight hour" is "23	"
-$messageSeed= "";					// initial portion of message
-$host		= "";					// human-readable host name
+$messageSeed= '';					// initial portion of message
+$host		= '';					// human-readable host name
 $loop		= 0;
 $crashes	= 0;
 $properties = array();					// properties as returned by getProperties()
@@ -66,7 +66,7 @@ $gsbServer = GSB_SERVER;			// from config
 // Filters are *.php files within the filters/ subdirectory that contain code to
 //   be applied to the URLs we examine.  See filters/basic.php for internal
 //   documentation about how to write and "call" filters.
-include "include/classdefs.php";
+include 'include/classdefs.php';
 $filters = array();					// this array is numerically ordered/indexed
 									// and contains all filter information.
 	
@@ -87,14 +87,14 @@ $abuseTo	= EMAIL_ABUSETO;				// default from config
 	
 ///////////////////////////////////////////////////////////////////////////////////
 // include supporting code
-include_once "include/store.php";
-include_once "include/args.php";
-include_once "include/properties.php";
-include_once "include/mail.php";
-include_once "include/http.php";
-include_once "include/scan.php";
-include_once "include/filters.php";
-include_once "include/echolog.php";
+include_once 'include/store.php';
+include_once 'include/args.php';
+include_once 'include/properties.php';
+include_once 'include/mail.php';
+include_once 'include/http.php';
+include_once 'include/scan.php';
+include_once 'include/filters.php';
+include_once 'include/echolog.php';
 	
 ///////////////////////////////////////////////////////////////////////////////////
 // initialization
@@ -166,7 +166,7 @@ beginLog();
 // Launched from command line it is entirely possible to run with no
 //   messages to console and nothing else except alerts.
 if ($isDaemon) {
-	$subject = $ID . " Daemon launched " . date("r");
+	$subject = "$ID Daemon launched " . date('r');
 	$message =  "$ID was launched as a daemon.\n";
 	$message .=  date('r')."\n";
 	$message .= "The default hour for notifications and log rotations will be $notify:00 UTC (24-hour clock)\n";
@@ -180,9 +180,9 @@ if (file_exists('log-transport.php')) {
 	$timeStamp = date("r");
 	echo "$ID is launching its log transport - $timeStamp\n";	
 	$descriptorspec = array(
-  		0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
-  		1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
-  		2 => array("file", "/tmp/stderr-log-transport-$ID.txt", "a") // stderr is a file to write to
+  		0 => array('pipe', 'r'),  // stdin is a pipe that the child will read from
+  		1 => array('pipe', 'w'),  // stdout is a pipe that the child will write to
+  		2 => array('file', "/tmp/stderr-log-transport-$ID.txt", "a") // stderr is a file to write to
 	);	
 	// Launch a child process corresponding to self.
 	// Actually a 'sh' gets launched, and that in turn runs 'php' which picks up the

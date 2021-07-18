@@ -6,8 +6,8 @@
 
 global $path;
 
-include_once $path."include/classdefs.php";
-include_once $path."cyberspark.sysdefs.php";
+include_once $path.'include/classdefs.php';
+include_once $path.'cyberspark.sysdefs.php';
 
 ///////////////////////////////////////////////////////////////////////////////////
 function scan($properties, $filters, &$store) {
@@ -15,13 +15,13 @@ function scan($properties, $filters, &$store) {
 	
 	$scanResults = array();
 	
-	$urlCount = count($properties['urls']);		// number of URLs to examine
+	$urlCount  = count($properties['urls']);		// number of URLs to examine
 	$urlNumber = 0;								// index into $urls array
 
 	$urls = $properties['urls'];		// array of URLs to look at
 	while ($urlNumber < $urlCount) {
 		$url 				= $urls[$urlNumber]->url;
-		$conditions		= $urls[$urlNumber]->conditions;
+		$conditions			= $urls[$urlNumber]->conditions;
 		$emails 			= $urls[$urlNumber]->emails;
 		
 		// Note that a very few servers cannot handle CAPS in FQDNs, so purify them now.
@@ -44,11 +44,49 @@ function scan($properties, $filters, &$store) {
 		
 		// Do an HTTP GET on this URL. It begins "http://" or "https://"
 		// (Note that we do not send any explicit AUTH information and SSL cert will not be checked.)
-		if (isset($properties['maxredirects'])) {
-			$httpResult = httpGet($url, $properties['useragent'], $properties['timeout'], null, array('maxredirects'=>$properties['maxredirects']));
+		if (stripos($url, 'ldap://') !== false) {
+			echoIfVerbose("LDAP requested\n");
+
+			$headers = array();
+			$body = '';
+
+			try {
+				$ch = curl_init();
+				if ($ch !== false) {
+					curl_setopt($ch, CURLOPT_URL, $url);
+					curl_setopt($ch, CURLOPT_RETURNTRANSFER,	1);		// return HTTP result rather than display it
+   					curl_setopt($ch, CURLOPT_HEADER, 			1); 	// Return all headers
+    				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT,  (($properties['timeout']>0)?$properties['timeout']:DEFAULT_SOCKET_TIMEOUT));
+    				curl_setopt($ch, CURLOPT_TIMEOUT,		  (($properties['timeout']>0)?$properties['timeout']:DEFAULT_SOCKET_TIMEOUT));
+					$ldapResult = curl_exec($ch);
+					$cen = curl_errno($ch);
+					$cerr= curl_error($ch);
+					if ($cen == 0) {
+						$httpResult = array('code'=>200, 'error'=>'', 'headers'=>array(), 'curl_info'=>array(), 'body'=>$ldapResult);
+					}
+					else {
+						$httpResult = array('code'=>$cen, 'error'=>$cerr, 'headers'=>array(), 'curl_info'=>array(), 'body'=>'');
+					}
+					curl_close($ch);
+					echoIfVerbose("-------------------------\n");
+					echoIfVerbose("$httpResult[body]\n");
+					echoIfVerbose("-------------------------\n");
+				}
+			}
+			catch (Exception $ldapx) {
+				$mess = '  Exception near LDAP curl_init(): ' . $ldapx->getMessage() . "\n";
+				echoIfVerbose("[$filterName] $mess");
+				writeLogAlert("[$filterName] $mess");
+				$result = 'Exception';
+			}
 		}
 		else {
-			$httpResult = httpGet($url, $properties['useragent'], $properties['timeout'], null, null);
+			if (isset($properties['maxredirects'])) {
+				$httpResult = httpGet($url, $properties['useragent'], $properties['timeout'], null, array('maxredirects'=>$properties['maxredirects']));
+			}
+			else {
+				$httpResult = httpGet($url, $properties['useragent'], $properties['timeout'], null, null);
+			}
 		}
 		
 		// Calculate elapsed time
@@ -94,13 +132,13 @@ function scan($properties, $filters, &$store) {
 			/////////////////////////////////////////////////////////
 			// HTTP failed - some error code other than "200"
 			// Still need to execute some filters even in this case
-			$message = "";
+			$message = '';
 			$isOK = false;
 			$content = null;
 			if (isset($httpResult['body'])) {
 				$content = $httpResult['body'];
 			}
-			$result = "Failed";
+			$result = 'Failed';
 						
 			$httpCode = "";
 			if (isset($httpResult['code'])) {
@@ -109,7 +147,7 @@ function scan($properties, $filters, &$store) {
 				// Check and process cURL responses
 				if ($httpResult['code'] < 200) {
 					// Under 200 is a cURL response
-					$httpCode = "";
+					$httpCode = '';
 					if (isset($httpResult['error']) && (strlen($httpResult['error']) > 0)) {
 						$message .= "          php-curl says [$code] '$httpResult[error]'\n";
 						// If available, add ASN information
@@ -229,10 +267,10 @@ function scan($properties, $filters, &$store) {
 						}
 						catch (Exception $fx) {
 							// The filter barfed
-							$mess = "  Exception: " . $fx->getMessage() . "\n";
+							$mess = '  Exception: ' . $fx->getMessage() . "\n";
 							echoIfVerbose("[$filterName] $mess");
 							writeLogAlert("[$filterName] $mess");
-							$result = "Exception";
+							$result = 'Exception';
 						}
 						if (isset($mess) && isset($tempResult)) {
 							$pf = sprintf("%-' 10s", $tempResult);	// pad string out to 10 chars
@@ -243,8 +281,8 @@ function scan($properties, $filters, &$store) {
 				}
 			}
 	
-			$prefix = "Failed    ";
-			if ($result != "OK") {
+			$prefix = 'Failed    ';
+			if ($result != 'OK') {
 				$prefix = sprintf("%-' 10s", $result);	// pad string out to 10 chars
 			}
 			
@@ -255,9 +293,9 @@ function scan($properties, $filters, &$store) {
 			/////////////////////////////////////////////////////////
 			// HTTP succeeded (code==200)
 			// SCAN ONE URL HERE USING ALL DEFINED FILTERS
-			$message = "";
-			$isOK = true;
-			$content = null;
+			$message 		= '';
+			$isOK 			= true;
+			$content 		= null;
 			$contentLength = 0;
 			if (isset($httpResult['body'])) {
 				$content = $httpResult['body'];
@@ -270,7 +308,7 @@ function scan($properties, $filters, &$store) {
 				// They've already been ranked in the order they should be applied (and thus displayed or emailed)
 				if (isset($filter->scan)) {
 					$filterName = $filter->name;
-					if (($filterName == "basic") || ($filterName == "find") || isACondition($urls[$urlNumber], $filterName)) {
+					if (($filterName == 'basic') || ($filterName == 'find') || isACondition($urls[$urlNumber], $filterName)) {
 						// Filter either was asked for in the properties for this URL,
 						// OR its name is 'basic' OR its name is 'find'
 						echoIfVerbose("Applying filter '$filterName' to URL $url \n");		
@@ -291,10 +329,10 @@ function scan($properties, $filters, &$store) {
 						}
 						catch (Exception $fx) {
 							// The filter barfed
-							$mess = "  Exception: " . $fx->getMessage() . "\n";
+							$mess = '  Exception: ' . $fx->getMessage() . "\n";
 							echoIfVerbose("[$filterName] $mess");
 							writeLogAlert("[$filterName] $mess");
-							$result = "Exception";
+							$result = 'Exception';
 							$isOK = false;
 						}
 						if (isset($mess) && isset($result)) {
@@ -303,7 +341,7 @@ function scan($properties, $filters, &$store) {
 							$message .= $prefix . "[$filterName] $mess \n";
 							// If filter said anything other than "OK" then there's
 							//   an overall failure for this URL.
-							$isOK = $isOK && ($result == "OK");		// (both terms must be true)
+							$isOK = $isOK && ($result == 'OK');		// (both terms must be true)
 						}
 					}
 				}
